@@ -19,9 +19,11 @@ const tempAddy: Address = {
 }
 
 const testPerson: Individual = {
-    firstName: "John",
-    lastName: "Smith",
-    phone: "19056162504"
+    first_name: "John",
+    last_name: "Smith",
+    phone: "19056162504",
+    email: null,
+    dob: null
 }
 
 
@@ -45,6 +47,10 @@ async function createEntity(){
 
 const postEntity = async (request: Request, response: Response) => {
     var rawNewEntity = request.body
+
+
+    //1.2 complete
+
     const newEntity = await method.entities.create({
         type: 'individual',
         individual: {
@@ -53,6 +59,12 @@ const postEntity = async (request: Request, response: Response) => {
             phone: request.body.phone
         }
     });
+
+    //1.3
+
+    console.log(newEntity);
+
+
 }
 
 const getEntity = async (request: Request, response: Response) => {
