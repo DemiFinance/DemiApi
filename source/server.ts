@@ -6,7 +6,11 @@ import entityRoutes from "./routes/entity"
 import dotenv from "dotenv"
 
 const router: Express = express();
-dotenv.config()
+
+require('dotenv').config();
+
+
+//dotenv.config()
 
 router.use(express.urlencoded({ extended: false }));
 
@@ -36,6 +40,9 @@ router.use((req, res, next) => {
 
 
 const startAPI = async function () {
+
+    console.log("hmm" + process.env.METHODKEY_DEVELOPMENT);
+    
     const httpServer = http.createServer(router);
     const PORT: any = process.env.PORT ?? 8080;
     console.log(process.env);
