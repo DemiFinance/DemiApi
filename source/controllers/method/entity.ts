@@ -57,27 +57,27 @@ const postEntity = async (request: Request, response: Response) => {
 
 const getEntity = async (request: Request, response: Response) => {
     let id: string = request.params.id;
-    let requestedEntity: Entity = await method.entities.get(id)!;
+    let requestedEntity: any = await method.entities.get(id)!;
 }
 
 async function newEntity(person: Entity) {
     const newEntity = await method.entities.create({
         type: 'individual',
         individual: {
-            first_name: person.individual.firstName,
-            last_name: person.individual.lastName,
+            first_name: person.individual.first_name,
+            last_name: person.individual.last_name,
             phone: person.individual.phone
         }
     });
 
- //   newEntity = dog
+
 
     return response.status(200).json({
-        message: "dongwaterr",
+        message: "TODO",
         cat: newEntity
     })
 
 }
 
 
-export default { newEntity }; 
+export default { newEntity, getEntity }; 
