@@ -1,6 +1,7 @@
 import http from "http";
 import express, { Express } from "express";
-import employeeRoutes from "./routes/employee";
+
+import entityRoutes from "./routes/entity"
 
 import dotenv from "dotenv"
 
@@ -24,7 +25,7 @@ router.use((req, res, next) => {
     next();
 });
 
-router.use('/', employeeRoutes);
+router.use('/', entityRoutes);
 
 router.use((req, res, next) => {
     const error = new Error('404 - Error not found!');
