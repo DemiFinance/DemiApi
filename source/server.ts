@@ -2,15 +2,13 @@ import http from "http";
 import express, { Express } from "express";
 
 import entityRoutes from "./routes/entity"
+import authRoutes from "./routes/auth"
 
 import dotenv from "dotenv"
 
 const router: Express = express();
 
 require('dotenv').config();
-
-
-//dotenv.config()
 
 router.use(express.urlencoded({ extended: false }));
 
@@ -30,6 +28,7 @@ router.use((req, res, next) => {
 });
 
 router.use('/', entityRoutes);
+router.use('/', authRoutes);
 
 router.use((req, res, next) => {
     const error = new Error('404 - Error not found!');
@@ -40,8 +39,6 @@ router.use((req, res, next) => {
 
 
 const startAPI = async function () {
-
-    console.log("hmm" + process.env.METHODKEY_DEVELOPMENT);
     
     const httpServer = http.createServer(router);
     const PORT: any = process.env.PORT ?? 8080;
