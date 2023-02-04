@@ -6,8 +6,17 @@ import { Address } from "../../models/address"
 
 import { Method, Environments } from 'method-node';
 
+
+// import dotenv from "dotenv"
+ require('dotenv').config();
+
+ console.log("dev key " + process.env.METHOD_DEVELOPEMENTKEY);
+ 
+
+ let apiKey = process.env.METHOD_DEVELOPEMENTKEY!
+
 const method = new Method({
-    apiKey: process.env.METHOD_DEVELOPEMENTKEY ?? '',
+    apiKey: apiKey!,
     env: Environments.dev
 })
 
@@ -48,6 +57,9 @@ async function createEntity(){
 const postEntity = async (request: Request, response: Response) => {
     var rawNewEntity = request.body
 
+    console.log("post hit... processing");
+    
+
 
     //1.2 complete
 
@@ -62,14 +74,20 @@ const postEntity = async (request: Request, response: Response) => {
 
     //1.3
 
-    console.log(newEntity);
+    console.log("Method response from new entity post request");
 
+    return response.status(200).json({
+        newEntity
+    })
 
 }
 
 const getEntity = async (request: Request, response: Response) => {
     let id: string = request.params.id;
     let requestedEntity: any = await method.entities.get(id)!;
+
+    console.log("requested entity" + requestedEntity);
+    
 }
 
 async function newEntity(person: Entity) {
@@ -92,4 +110,4 @@ async function newEntity(person: Entity) {
 }
 
 
-export default { newEntity, getEntity }; 
+export default { newEntity, getEntity, postEntity }; 
