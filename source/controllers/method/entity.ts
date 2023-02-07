@@ -87,27 +87,11 @@ const getEntity = async (request: Request, response: Response) => {
     let requestedEntity: any = await method.entities.get(id)!;
 
     console.log("requested entity" + requestedEntity);
+
+    return response.status(200).json({
+        requestedEntity
+    })
     
 }
 
-async function newEntity(person: Entity) {
-    const newEntity = await method.entities.create({
-        type: 'individual',
-        individual: {
-            first_name: person.individual.first_name,
-            last_name: person.individual.last_name,
-            phone: person.individual.phone
-        }
-    });
-
-
-
-    return response.status(200).json({
-        message: "TODO",
-        cat: newEntity
-    })
-
-}
-
-
-export default { newEntity, getEntity, postEntity }; 
+export default { getEntity, postEntity }; 
