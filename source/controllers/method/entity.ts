@@ -55,12 +55,6 @@ async function createEntity(){
  */
 
 const postEntity = async (request: Request, response: Response) => {
-    var rawNewEntity = request.body
-
-    console.log("post hit... processing");
-    
-
-
     //1.2 complete
 
     const newEntity = await method.entities.create({
@@ -75,6 +69,8 @@ const postEntity = async (request: Request, response: Response) => {
     //1.3
 
     console.log("Method response from new entity post request");
+
+    //push to db here... awaiting details on auth implementation
 
     return response.status(200).json({
         newEntity
