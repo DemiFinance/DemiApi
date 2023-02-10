@@ -1,12 +1,11 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { startAPI } from "./server";
 import { Method, Environments } from 'method-node'
 
 
-require('dotenv').config();
-
-
 const method = new Method({
-    apiKey: process.env.METHODKEY_DEVELOPMENT ?? '',
+    apiKey: process.env.METHODKEY_DEVELOPMENT!,
     env: Environments.dev,
 });
 

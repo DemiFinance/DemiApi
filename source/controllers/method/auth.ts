@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import {Request, response, Response} from "express";
 import axios, { AxiosResponse } from "axios";
 
@@ -5,9 +7,6 @@ import { Entity , Individual} from "../../models/entity"
 import { Address } from "../../models/address"
 
 import { Method, Environments } from 'method-node';
-
-
-require('dotenv').config();
 
 const method = new Method({
     apiKey: process.env.METHOD_DEVELOPEMENTKEY!,
