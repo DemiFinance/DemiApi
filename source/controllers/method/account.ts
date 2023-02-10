@@ -30,7 +30,7 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 
     let opts: IAccountListOpts = {
         holder_id: request.params.id
-    }
+    };
     
     let accountList: any = await method.accounts.list(opts)!;
 
@@ -38,7 +38,7 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 
     return response.status(200).json({
        accounts: accountList
-    })
+    });
     
 }
 
