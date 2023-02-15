@@ -1,3 +1,4 @@
+require('dotenv').config();
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -35,6 +36,8 @@ router.use((req, res, next) => {
     }
     next();
 });
+
+router.use(jwtCheck);
 
 router.use('/', entityRoutes);
 router.use('/', authRoutes);
