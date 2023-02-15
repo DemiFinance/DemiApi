@@ -4,10 +4,18 @@ dotenv.config();
 import http from "http";
 import express, { Express } from "express";
 
+const { auth } = require('express-oauth2-jwt-bearer')
+
 import entityRoutes from "./routes/entity";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 
+
+const jwtCheck = auth({
+    audience: 'https://api.demifinance.com',
+    issuerBaseURL: `https://dev-0u7isllacvzlfhww.us.auth0.com/`,
+    tokenSigningAlg: 'RS256'
+});
 
 const router: Express = express();
 
