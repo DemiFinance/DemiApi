@@ -4,7 +4,7 @@ import { Request, Response} from "express";
 import { Method, Environments, IAccountListOpts } from 'method-node';
 
 const method = new Method({
-    apiKey: process.env.METHOD_DEVELOPMENTKEY!,
+    apiKey: process.env.METHODKEY_DEVELOPMENT!,
     env: Environments.dev
 })
 

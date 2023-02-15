@@ -1,5 +1,5 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
+// import * as dotenv from 'dotenv';
+// dotenv.config();
 import {Request, response, Response} from "express";
 import axios, { AxiosResponse } from "axios";
 
@@ -9,7 +9,7 @@ import { Address } from "../../models/address"
 import { Method, Environments } from 'method-node'; 
 
 
-const key =  process.env.METHOD_DEVELOPMENTKEY!
+const key =  process.env.METHODKEY_DEVELOPMENT!
 
 console.log(key);
 
