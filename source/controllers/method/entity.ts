@@ -11,8 +11,6 @@ import { Method, Environments } from 'method-node';
 
 const key =  process.env.METHODKEY_DEVELOPMENT!
 
-console.log(key);
-
 const method = new Method({
     apiKey: /*process.env.METHOD_DEVELOPMENTKEY!*/ key!,
     env: Environments.dev
