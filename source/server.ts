@@ -1,4 +1,3 @@
-require("dotenv").config();
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -13,7 +12,7 @@ import accountRoutes from "./routes/account";
 
 const jwtCheck = auth({
 	audience: "https://api.demifinance.com",
-	issuerBaseURL: `https://dev-0u7isllacvzlfhww.us.auth0.com/`,
+	issuerBaseURL: "https://dev-0u7isllacvzlfhww.us.auth0.com/",
 	tokenSigningAlg: "RS256",
 });
 

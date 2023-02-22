@@ -1,4 +1,6 @@
-require("dotenv").config();
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import {startAPI} from "./server";
 import {Method, Environments} from "method-node";
 

@@ -15,7 +15,7 @@ const method = new Method({
 
 //working
 const newAuthSession = async (request: Request, response: Response) => {
-	let id: string = request.params.id;
+	const id: string = request.params.id;
 
 	const token = await method.elements.createToken({
 		entity_id: id,

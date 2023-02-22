@@ -8,13 +8,9 @@ const method = new Method({
 	env: Environments.dev,
 });
 
-async function tesinting() {
-	const urmom = method.accounts.list();
-}
-
 //complete
 const getAccountById = async (request: Request, response: Response) => {
-	let account: any = await method.accounts.get(request.params.id);
+	const account: any = await method.accounts.get(request.params.id);
 
 	return response.status(200).json({
 		account: account,
@@ -23,11 +19,11 @@ const getAccountById = async (request: Request, response: Response) => {
 
 //complete
 const listAccountsByHolder = async (request: Request, response: Response) => {
-	let opts: IAccountListOpts = {
+	const opts: IAccountListOpts = {
 		holder_id: request.params.id,
 	};
 
-	let accountList: any = await method.accounts.list(opts)!;
+	const accountList: any = await method.accounts.list(opts)!;
 
 	console.log("Accounts" + accountList);
 

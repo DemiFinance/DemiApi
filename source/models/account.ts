@@ -1,1 +1,4 @@
-export interface Account {}
+export interface Account {
+	accountId: string;
+	holderId: string;
+}

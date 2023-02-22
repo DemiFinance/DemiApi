@@ -16,4 +16,4 @@ export interface Individual {
 	ssn?: string;
 }
 
-export interface corporation {}
+//export interface corporation {}
