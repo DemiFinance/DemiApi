@@ -1,3 +1,1 @@
-export interface Account {
-    
-}
+export interface Account {}
