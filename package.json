@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon source/app.ts",
-    "build": "rm- rf/ build/ && prettier --write source/ && tsc",
+    "build": "rm -rf /build/ && prettier --write source/ && tsc",
+    "clean": "tsc --build --clean",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

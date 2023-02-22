@@ -1,0 +1,9 @@
+version: 1.0
+runtime: nodejs16
+build:
+  commands:
+    build:
+      - npm install --production
+
+run:
+  command: npm start
