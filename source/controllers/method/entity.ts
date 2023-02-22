@@ -8,11 +8,8 @@ import { Address } from "../../models/address"
 
 import { Method, Environments } from 'method-node'; 
 
-
-const key =  process.env.METHODKEY_DEVELOPMENT!
-
 const method = new Method({
-    apiKey: /*process.env.METHOD_DEVELOPMENTKEY!*/ key!,
+    apiKey: process.env.METHOD_API_KEY!,
     env: Environments.dev
 })
 
