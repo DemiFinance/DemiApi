@@ -9,6 +9,8 @@ build:
       - npm ci
 
 run:
+  network:
+    port: 4519
   command: npm serve
   secrets:
     - name: doppler
