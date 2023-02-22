@@ -2,8 +2,14 @@ version: 1.0
 runtime: nodejs16
 build:
   commands:
+    pre-build:
+      - npm ci
+      - npm run build
     build:
-      - npm install --production
+      - npm ci
 
 run:
-  command: npm start
+  command: npm serve
+  secrets:
+    - name: doppler
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9"
