@@ -1,25 +1,24 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
-import { Request, Response} from "express";
-import { Method, Environments, IAccountListOpts } from 'method-node';
+import {Request, Response} from "express";
+import {Method, Environments, IAccountListOpts} from "method-node";
 
 const method = new Method({
-    apiKey: process.env.METHOD_API_KEY!,
-    env: Environments.dev
-})
+	apiKey: process.env.METHOD_API_KEY!,
+	env: Environments.dev,
+});
 
 const sendPayment = async (request: Request, response: Response) => {
+	const payment = await method.payments.create({
+		amount: 10,
+		source: request.body.sourceAccount,
+		destination: request.body.destinationAccount,
+		description: request.body.description,
+	});
 
-    const payment = await method.payments.create({
-        amount: 10,
-        source: request.body.sourceAccount,
-        destination: request.body.destinationAccount,
-        description: request.body.description,
-    });
+	return response.status(200).json({
+		"Populate me?": "Maybe someday",
+	});
+};
 
-    return response.status(200).json({
-        "Populate me?": "Maybe someday"
-    });
-}
-
-export default { sendPayment};
+export default {sendPayment};

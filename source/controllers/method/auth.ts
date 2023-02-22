@@ -1,34 +1,32 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, response, Response} from "express";
-import axios, { AxiosResponse } from "axios";
+import axios, {AxiosResponse} from "axios";
 
-import { Entity , Individual} from "../../models/entity"
-import { Address } from "../../models/address"
+import {Entity, Individual} from "../../models/entity";
+import {Address} from "../../models/address";
 
-import { Method, Environments } from 'method-node';
+import {Method, Environments} from "method-node";
 
 const method = new Method({
-    apiKey: process.env.METHOD_API_KEY!,
-    env: Environments.dev
-})
-
+	apiKey: process.env.METHOD_API_KEY!,
+	env: Environments.dev,
+});
 
 //working
 const newAuthSession = async (request: Request, response: Response) => {
-    let id: string = request.params.id;
+	let id: string = request.params.id;
 
-    const token = await method.elements.createToken({
-        entity_id: id,
-        team_name: 'Demi Finance',
-        type: 'auth',
-        auth: {},
-    });
+	const token = await method.elements.createToken({
+		entity_id: id,
+		team_name: "Demi Finance",
+		type: "auth",
+		auth: {},
+	});
 
-    return response.status(200).json({
-        element_token: token.element_token
-    })
-}
+	return response.status(200).json({
+		element_token: token.element_token,
+	});
+};
 
-
-export default { newAuthSession };
+export default {newAuthSession};
