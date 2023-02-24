@@ -11,7 +11,7 @@ build:
 run:
   network:
     port: 4519
-  command: npm serve
+  command: npm run serve
   secrets:
     - name: doppler
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9"
