@@ -15,5 +15,5 @@ run:
     port: 4519
   command: npm run serve
   secrets:
-      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:METHOD_API_KEY::"
     - name: METHOD_API_KEY
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:METHOD_API_KEY::"
