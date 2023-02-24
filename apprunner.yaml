@@ -16,4 +16,4 @@ run:
   command: npm run serve
   secrets:
     - name: METHOD-API-KEY
-      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9"
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:METHOD-API-KEY::"
