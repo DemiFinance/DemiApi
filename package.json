@@ -5,6 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"serve": "node build/app.js",
+    "serve:dev": "doppler run -- node build/app.js",
 		"start": "npm run build:live",
 		"dev": "doppler run -- nodemon source/app.ts",
 		"build": "npm run lint && npm run build-ts",
