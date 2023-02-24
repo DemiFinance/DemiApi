@@ -4,9 +4,8 @@ build:
   commands:
     pre-build:
       - npm ci
-      - npm run build
     build:
-      - npm ci
+      - npm run build-ts
 
 run:
   network:
