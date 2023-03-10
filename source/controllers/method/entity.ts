@@ -63,9 +63,7 @@ const postEntity = async (request: Request, response: Response) => {
 
 	//push to db here... awaiting details on auth implementation
 
-	return response.status(200).json({
-		newEntity,
-	});
+	return response.status(200).json({newEntity});
 };
 
 //this works
