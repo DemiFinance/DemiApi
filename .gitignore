@@ -105,3 +105,6 @@ dist
 
 #Built Project
 build/
+
+#macos shenanegans
+.DS_Store

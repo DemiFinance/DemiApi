@@ -38,11 +38,13 @@ router.use((req, res, next) => {
 	next();
 });
 
-router.use(jwtCheck);
+const path = require("path");
+//router.use(jwtCheck);
 
-router.use("/", entityRoutes);
-router.use("/", authRoutes);
-router.use("/", accountRoutes);
+router.use("/assets", express.static(path.join(__dirname, "/public")));
+router.use("/", jwtCheck, entityRoutes);
+router.use("/", jwtCheck, authRoutes);
+router.use("/", jwtCheck, accountRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");
