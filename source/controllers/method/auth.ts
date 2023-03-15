@@ -20,6 +20,7 @@ const newAuthSession = async (request: Request, response: Response) => {
 	const token = await method.elements.createToken({
 		entity_id: id,
 		team_name: "Demi Finance",
+		team_icon: process.env.LOGO_URL!,
 		type: "auth",
 		auth: {},
 	});

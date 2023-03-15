@@ -41,7 +41,7 @@ router.use((req, res, next) => {
 const path = require("path");
 //router.use(jwtCheck);
 
-router.use("/", entityRoutes);
+router.use("/assets", express.static(path.join(__dirname, "/public")));
 router.use("/", jwtCheck, entityRoutes);
 router.use("/", jwtCheck, authRoutes);
 router.use("/", jwtCheck, accountRoutes);
