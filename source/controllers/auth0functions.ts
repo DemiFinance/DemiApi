@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import axios from "axios";
 
 /**
  * Update a user's metadata in Auth0.
@@ -24,15 +24,14 @@ export async function updateUserMetadata(
 		const endpoint = `https://auth.demifinance.com/api/v2/users/${userId}`;
 
 		// Send a PATCH request to the Auth0 Management API to update the user's metadata
-		const response = await fetch(endpoint, {
-			method: "PATCH",
-			headers,
-			body: JSON.stringify({user_metadata: metadata}),
-		});
+		const response = await axios.patch(
+			endpoint,
+			{user_metadata: metadata},
+			{headers}
+		);
 
-		// Parse the response JSON and return it
-		const data = await response.json();
-		return data;
+		// Return the response data
+		return response.data;
 	} catch (error) {
 		console.error(
 			`Error updating user metadata for user with ID ${userId}:`,
