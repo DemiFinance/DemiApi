@@ -12,7 +12,7 @@ import accountRoutes from "./routes/account";
 
 const jwtCheck = auth({
 	audience: "https://api.demifinance.com",
-	issuerBaseURL: "https://dev-0u7isllacvzlfhww.us.auth0.com/",
+	issuerBaseURL: "https://auth.demifinance.com/",
 	tokenSigningAlg: "RS256",
 });
 
