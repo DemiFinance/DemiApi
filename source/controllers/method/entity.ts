@@ -8,7 +8,7 @@ import {Address} from "../../models/address";
 
 import {Method, Environments} from "method-node";
 
-import { updateUserMetadata } from "../auth0functions";
+import {updateUserMetadata} from "../auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -49,36 +49,36 @@ async function createEntity() {
 
 const postEntity = async (request: Request, response: Response) => {
 	try {
-	  // Create a new entity
-	  const newEntity = await method.entities.create({
-		type: 'individual',
-		individual: {
-		  first_name: request.body.first_name,
-		  last_name: request.body.last_name,
-		  phone: request.body.phone
-		}
-	  });
-  
-	  // Update the user's metadata in Auth0
-	  const userId = request.body.auth0_id
-	  const metadata = {
-		first_name: request.body.first_name,
-		last_name: request.body.last_name,
-		entity_id: newEntity.id
-	  };
-	  await updateUserMetadata(request.body.auth0_token, userId, metadata);
-  
-	  console.log('Method response from new entity post request');
-  
-	  // Push to DB here
-	  // ...
-  
-	  return response.status(200).json({ newEntity });
+		// Create a new entity
+		const newEntity = await method.entities.create({
+			type: "individual",
+			individual: {
+				first_name: request.body.first_name,
+				last_name: request.body.last_name,
+				phone: request.body.phone,
+			},
+		});
+
+		// Update the user's metadata in Auth0
+		const userId = request.body.auth0_id;
+		const metadata = {
+			first_name: request.body.first_name,
+			last_name: request.body.last_name,
+			entity_id: newEntity.id,
+		};
+		await updateUserMetadata(request.body.auth0_token, userId, metadata);
+
+		console.log("Method response from new entity post request");
+
+		// Push to DB here
+		// ...
+
+		return response.status(200).json({newEntity});
 	} catch (error) {
-	  console.error('Error creating new entity:', error);
-	  return response.status(500).json({ error: 'Failed to create new entity' });
+		console.error("Error creating new entity:", error);
+		return response.status(500).json({error: "Failed to create new entity"});
 	}
-  };
+};
 
 // const postEntity = async (request: Request, response: Response) => {
 // 	//1.2 do this
