@@ -1,5 +1,4 @@
 import express from "express";
-
 import paymentController from "../controllers/method/payment";
 
 const router = express.Router();
@@ -11,6 +10,6 @@ const jwtCheck = auth({
 	tokenSigningAlg: "RS256",
 });
 
-router.post("/payment", paymentController.sendPayment);
+router.post("/payment", jwtCheck, paymentController.sendPayment);
 
 export = router;

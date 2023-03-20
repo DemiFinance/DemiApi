@@ -1,6 +1,5 @@
 import express from "express";
 import accountController from "../controllers/method/account";
-import {jwtCheck} from "../globals";
 
 const router = express.Router();
 const {auth} = require("express-oauth2-jwt-bearer");
