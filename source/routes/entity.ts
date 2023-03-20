@@ -3,7 +3,7 @@ import entityController from "../controllers/method/entity";
 
 const router = express.Router();
 
-router.post("/entity", entityController.postEntity);
-router.get("/entity/:id", entityController.getEntity);
+router.post("/entity", jwtCheck, entityController.postEntity);
+router.get("/entity/:id", jwtCheck, entityController.getEntity);
 
 export = router;
