@@ -33,9 +33,10 @@ router.use((req, res, next) => {
 const path = require("path");
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
-router.use("/", entityRoutes);
-router.use("/", authRoutes);
-router.use("/", accountRoutes);
+
+router.use("/entity", entityRoutes);
+router.use("/auth", authRoutes);
+router.use("/accounts", accountRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");

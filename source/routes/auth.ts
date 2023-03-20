@@ -3,7 +3,14 @@ import authController from "../controllers/method/auth";
 import {jwtCheck} from "../globals";
 
 const router = express.Router();
+const {auth} = require("express-oauth2-jwt-bearer");
 
-router.post("/auth/:id", jwtCheck, authController.newAuthSession);
+const jwtCheck = auth({
+	audience: "https://api.demifinance.com",
+	issuerBaseURL: "https://auth.demifinance.com/",
+	tokenSigningAlg: "RS256",
+});
+
+router.post("/:id", jwtCheck, authController.newAuthSession);
 
 export = router;
