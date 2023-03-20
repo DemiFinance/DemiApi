@@ -42,9 +42,9 @@ const path = require("path");
 //router.use(jwtCheck);
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
-router.use("/", jwtCheck, entityRoutes);
-router.use("/", jwtCheck, authRoutes);
-router.use("/", jwtCheck, accountRoutes);
+router.use("/entity", jwtCheck, entityRoutes);
+router.use("/auth", jwtCheck, authRoutes);
+router.use("/accounts", jwtCheck, accountRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");
