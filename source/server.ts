@@ -4,17 +4,9 @@ dotenv.config();
 import http from "http";
 import express, {Express} from "express";
 
-const {auth} = require("express-oauth2-jwt-bearer");
-
 import entityRoutes from "./routes/entity";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
-
-const jwtCheck = auth({
-	audience: "https://api.demifinance.com",
-	issuerBaseURL: "https://auth.demifinance.com/",
-	tokenSigningAlg: "RS256",
-});
 
 const router: Express = express();
 
@@ -39,12 +31,12 @@ router.use((req, res, next) => {
 });
 
 const path = require("path");
-//router.use(jwtCheck);
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
-router.use("/entity", jwtCheck, entityRoutes);
-router.use("/auth", jwtCheck, authRoutes);
-router.use("/accounts", jwtCheck, accountRoutes);
+
+router.use("/entity", entityRoutes);
+router.use("/auth", authRoutes);
+router.use("/accounts", accountRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");
