@@ -21,7 +21,7 @@ export async function updateUserMetadata(
 		};
 
 		// Define the endpoint to update the user's metadata
-		const endpoint = `https://auth.demifinance.com/api/v2/users/${userId}`;
+		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
 
 		// Send a PATCH request to the Auth0 Management API to update the user's metadata
 		const response = await axios.patch(
