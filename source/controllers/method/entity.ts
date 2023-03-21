@@ -60,13 +60,13 @@ const postEntity = async (request: Request, response: Response) => {
 			entity_id: newEntity.id,
 		};
 
-		const data = await updateUserMetadata(
-			request.body.auth0_token,
-			userId,
-			metadata
-		);
-
-		console.log(data);
+		updateUserMetadata(request.body.auth0_token, userId, metadata)
+			.then((updatedMetaData: {[key: string]: any}) => {
+				console.log("updated user metadata: ", updatedMetaData);
+			})
+			.catch((error: Error) => {
+				console.error(error.message);
+			});
 
 		console.log("Method response from new entity post request");
 
