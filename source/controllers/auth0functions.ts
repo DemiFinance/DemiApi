@@ -43,23 +43,22 @@ export async function updateUserMetadata(
 
 export async function getToken(): Promise<string> {
 	const options = {
-	  method: 'POST',
-	  url: 'https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token',
-	  headers: { 'content-type': 'application/x-www-form-urlencoded' },
-	  data: new URLSearchParams({
-		grant_type: 'client_credentials',
-		client_id: 'zkCzuZm3qchILm3LCbYXicdPIzF90EUg',
-		client_secret: process.env.AUTH0_CLIENT_SECRET!,
-		audience: 'https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/',
-	  }),
+		method: "POST",
+		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token",
+		headers: {"content-type": "application/x-www-form-urlencoded"},
+		data: new URLSearchParams({
+			grant_type: "client_credentials",
+			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
+			client_secret: process.env.AUTH0_CLIENT_SECRET!,
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+		}),
 	};
-  
+
 	try {
-	  const response = await axios.request(options);
-	  return response.data.access_token;
+		const response = await axios.request(options);
+		return response.data.access_token;
 	} catch (error) {
-	  console.error(error);
-	  return '';
+		console.error(error);
+		return "";
 	}
-  }
-  
+}
