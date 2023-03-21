@@ -8,7 +8,7 @@ import {Address} from "../../models/address";
 
 import {Method, Environments} from "method-node";
 
-import {updateUserMetadata} from "../auth0functions";
+import {updateUserMetadata, getToken} from "../auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -60,7 +60,9 @@ const postEntity = async (request: Request, response: Response) => {
 			entity_id: newEntity.id,
 		};
 
-		updateUserMetadata(request.body.auth0_token, userId, metadata)
+		const token = await getToken();
+
+		updateUserMetadata(token, userId, metadata)
 			.then((updatedMetaData: {[key: string]: any}) => {
 				console.log("updated user metadata: ", updatedMetaData);
 			})
