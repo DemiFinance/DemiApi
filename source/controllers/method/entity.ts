@@ -30,13 +30,6 @@ const testPerson: Individual = {
 	dob: null,
 };
 
-async function createEntity() {
-	const testEnt = await method.entities.create({
-		type: "individual",
-		individual: testPerson,
-	});
-}
-
 //TODO - Needs
 /**
  * 1. create new entity
@@ -66,7 +59,14 @@ const postEntity = async (request: Request, response: Response) => {
 			last_name: request.body.last_name,
 			entity_id: newEntity.id,
 		};
-		await updateUserMetadata(request.body.auth0_token, userId, metadata);
+
+		const data = await updateUserMetadata(
+			request.body.auth0_token,
+			userId,
+			metadata
+		);
+
+		console.log(data);
 
 		console.log("Method response from new entity post request");
 
