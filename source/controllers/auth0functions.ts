@@ -17,7 +17,7 @@ export async function updateUserMetadata(
 		// Define the headers to send with the API request
 		const headers = {
 			"Content-Type": "application/json",
-			authorization: 'Bearer ${accessToken}',
+			authorization: `Bearer ${accessToken}`,
 		};
 
 		// Define the endpoint to update the user's metadata
