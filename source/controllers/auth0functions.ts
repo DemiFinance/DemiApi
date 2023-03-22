@@ -20,6 +20,8 @@ export async function updateUserMetadata(
 			authorization: `Bearer ${accessToken}`,
 		};
 
+		console.log(`[UPDATEUSERMETA] Headers: ${headers}`);
+
 		// Define the endpoint to update the user's metadata
 		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
 
