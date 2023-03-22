@@ -29,7 +29,7 @@ export async function updateUserMetadata(
 		const response = await axios.patch(
 			endpoint,
 			{user_metadata: metadata},
-			{headers}
+			{headers: headers}
 		);
 
 		// Return the response data
