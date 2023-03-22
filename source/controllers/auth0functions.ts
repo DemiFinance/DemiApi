@@ -15,12 +15,12 @@ export async function updateUserMetadata(
 ): Promise<any> {
 	try {
 		// Define the headers to send with the API request
-		const headers = {
-			"Content-Type": "application/json",
-			"authorization": `Bearer ${accessToken}`,
-		};
+		// const headers = {
+		// 	"Content-Type": "application/json",
+		// 	"authorization": `Bearer ${accessToken}`,
+		// };
 
-		console.log(`[UPDATEUSERMETA] Headers: ${headers}`);
+		// console.log(`[UPDATEUSERMETA] Headers: ${headers}`);
 
 		// Define the endpoint to update the user's metadata
 		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
@@ -29,7 +29,10 @@ export async function updateUserMetadata(
 		const response = await axios.patch(
 			endpoint,
 			{user_metadata: metadata},
-			{headers: headers}
+			{headers: {
+				"Content-Type": "application/json",
+				"authorization": `Bearer ${accessToken}`,
+			}}
 		);
 
 		// Return the response data
