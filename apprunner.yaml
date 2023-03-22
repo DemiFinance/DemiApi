@@ -17,3 +17,5 @@ run:
   secrets:
     - name: METHOD_API_KEY
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:METHOD_API_KEY::"
+    - name: AUTH0_CLIENT_SECRET
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:AUTH0_CLIENT_SECRET::"
