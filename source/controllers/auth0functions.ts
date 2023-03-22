@@ -29,7 +29,7 @@ export async function updateUserMetadata(
 		const response = await axios.patch(
 			endpoint,
 			{user_metadata: metadata},
-			{headers: {"Content-Type": "application/json","authorization": `Bearer ${accessToken}`}}
+			{headers: {"Content-Type": "application/json", authorization: `Bearer ${accessToken}`}}
 		);
 
 		// Return the response data
