@@ -1,5 +1,28 @@
 import axios from "axios";
 
+import {ManagementClient, ObjectWithId, UserMetadata} from "auth0";
+
+//var ManagementClient = require('auth0').ManagementClient;
+
+var management = new ManagementClient({
+	domain: "dev-0u7isllacvzlfhww.auth0.com",
+	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
+	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+	scope: "read:users update:users",
+});
+
+export async function pushMetadata(userId: string, metadata: UserMetadata) {
+	var params = {id: userId};
+	management
+		.updateUserMetadata(params, metadata)
+		.then((updatedMetaData: {[key: string]: any}) => {
+			console.log("updated user metadata: ", updatedMetaData);
+		})
+		.catch((error: Error) => {
+			console.error(error.message);
+		});
+}
+
 /**
  * Update a user's metadata in Auth0.
  *
@@ -29,7 +52,12 @@ export async function updateUserMetadata(
 		const response = await axios.patch(
 			endpoint,
 			{user_metadata: metadata},
-			{headers: {"Content-Type": "application/json", authorization: `Bearer ${accessToken}`}}
+			{
+				headers: {
+					"Content-Type": "application/json",
+					authorization: `Bearer ${accessToken}`,
+				},
+			}
 		);
 
 		// Return the response data
