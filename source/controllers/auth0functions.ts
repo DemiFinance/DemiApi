@@ -1,10 +1,10 @@
 import axios from "axios";
 
-import {ManagementClient, ObjectWithId, UserMetadata} from "auth0";
+import {ManagementClient, UserMetadata} from "auth0";
 
 //var ManagementClient = require('auth0').ManagementClient;
 
-var management = new ManagementClient({
+const management = new ManagementClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
 	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
@@ -12,7 +12,7 @@ var management = new ManagementClient({
 });
 
 export async function pushMetadata(userId: string, metadata: UserMetadata) {
-	var params = {id: userId};
+	const params = {id: userId};
 	management
 		.updateUserMetadata(params, metadata)
 		.then((updatedMetaData: {[key: string]: any}) => {
