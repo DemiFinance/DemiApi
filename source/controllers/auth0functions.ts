@@ -4,15 +4,16 @@ import {ManagementClient, UserMetadata} from "auth0";
 
 //var ManagementClient = require('auth0').ManagementClient;
 
-const management = new ManagementClient({
-	audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-	domain: "dev-0u7isllacvzlfhww.auth0.com",
-	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
-	scope: "read:users update:users",
-});
-
 export async function pushMetadata(userId: string, metadata: UserMetadata) {
+	const management = new ManagementClient({
+		token: await getToken(),
+		audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+		domain: "dev-0u7isllacvzlfhww.auth0.com",
+		clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
+		clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+		scope: "read:users update:users",
+	});
+
 	const params = {id: userId};
 	management
 		.updateUserMetadata(params, metadata)
@@ -55,8 +56,8 @@ export async function updateUserMetadata(
 			{user_metadata: metadata},
 			{
 				headers: {
-					"Content-Type": "application/json",
 					authorization: `Bearer ${accessToken}`,
+					"Content-Type": "application/json",
 				},
 			}
 		);
