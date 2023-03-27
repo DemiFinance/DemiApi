@@ -7,7 +7,7 @@ import {ManagementClient, UserMetadata} from "auth0";
 export async function pushMetadata(userId: string, metadata: UserMetadata) {
 	const management = new ManagementClient({
 		token: await getToken(),
-		audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/",
+		audience: "https://dev-0u7isllacvzlfhww.auth0.com/api/v2/",
 		domain: "dev-0u7isllacvzlfhww.auth0.com",
 		clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 		clientSecret: process.env.AUTH0_CLIENT_SECRET!,
