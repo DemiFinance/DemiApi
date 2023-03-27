@@ -18,13 +18,17 @@ const auth0Auth = new AuthenticationClient({
 
 // Example function to obtain an access token with the necessary scopes
 export const getAccessToken = async (): Promise<string> => {
+	console.log("Attempting Token Retrevial");
 	try {
 		const tokenResponse = await auth0Auth.clientCredentialsGrant({
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			scope: "read:users update:users",
 		});
+		
 		return tokenResponse.access_token;
 	} catch (err) {
+		console.error("Token Gathering Failed");
+		
 		console.error(err);
 		return "";
 	}
