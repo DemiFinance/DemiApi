@@ -8,7 +8,12 @@ import {Address} from "../../models/address";
 
 import {Method, Environments} from "method-node";
 
-import {updateUserMetadata, getToken, pushMetadata} from "../auth0functions";
+import {
+	updateUserMeta,
+	updateUserMetadata,
+	getToken,
+	pushMetadata,
+} from "../auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -70,7 +75,8 @@ const postEntity = async (request: Request, response: Response) => {
 		// 		console.error(error.message);
 		// 	});
 
-		pushMetadata(userId, metadata);
+		//pushMetadata(userId, metadata);
+		updateUserMetadata(userId, metadata);
 
 		console.log("Method response from new entity post request");
 

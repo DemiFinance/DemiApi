@@ -2,7 +2,27 @@ import axios from "axios";
 
 import {ManagementClient, UserMetadata} from "auth0";
 
-//var ManagementClient = require('auth0').ManagementClient;
+const auth0 = new ManagementClient({
+	domain: "dev-0u7isllacvzlfhww.auth0.com",
+	clientId: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
+	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+	scope: "read:users update:users",
+	audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+});
+
+// Example request to update a user's metadata
+export const updateUserMetadata = async (
+	userId: string,
+	metadata: UserMetadata
+) => {
+	try {
+		const accessToken = await auth0.getAccessToken();
+		const updatedUser = await auth0.updateUserMetadata({id: userId}, metadata);
+		console.log(updatedUser);
+	} catch (err) {
+		console.error(err);
+	}
+};
 
 export async function pushMetadata(userId: string, metadata: UserMetadata) {
 	const management = new ManagementClient({
@@ -34,7 +54,7 @@ export async function pushMetadata(userId: string, metadata: UserMetadata) {
  * @param metadata The metadata to set for the user.
  * @returns The updated user object.
  */
-export async function updateUserMetadata(
+export async function updateUserMeta(
 	accessToken: string,
 	userId: string,
 	metadata: {[key: string]: any}
