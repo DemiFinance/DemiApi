@@ -77,7 +77,7 @@ const postEntity = async (request: Request, response: Response) => {
 		// 	});
 
 		//pushMetadata(userId, metadata);
-		updateUserMetadata(await getAccessToken(), userId, metadata);
+		updateUserMetadata(await getToken(), userId, metadata);
 
 		console.log("Method response from new entity post request");
 
