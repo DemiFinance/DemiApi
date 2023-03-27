@@ -32,4 +32,6 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 	});
 };
 
+//const verifyAchAccount = async (request: Request, response: Response) => {};
+
 export default {getAccountById, listAccountsByHolder};

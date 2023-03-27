@@ -1,23 +1,54 @@
 import axios from "axios";
 
-import {ManagementClient, UserMetadata} from "auth0";
+import {ManagementClient, AuthenticationClient, UserMetadata} from "auth0";
 
 const auth0 = new ManagementClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
-	clientId: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
+	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
 	scope: "read:users update:users",
 	audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 });
 
+const auth0Auth = new AuthenticationClient({
+	domain: "dev-0u7isllacvzlfhww.auth0.com",
+	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
+	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+});
+
+// Example function to obtain an access token with the necessary scopes
+const getAccessToken = async (): Promise<string> => {
+	try {
+		const tokenResponse = await auth0Auth.clientCredentialsGrant({
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			scope: "read:users update:users",
+		});
+		return tokenResponse.access_token;
+	} catch (err) {
+		console.error(err);
+		return "";
+	}
+};
+
 // Example request to update a user's metadata
 export const updateUserMetadata = async (
 	userId: string,
-	metadata: UserMetadata
+	metadata: Record<string, any>
 ) => {
 	try {
-		const accessToken = await auth0.getAccessToken();
-		const updatedUser = await auth0.updateUserMetadata({id: userId}, metadata);
+		const accessToken = await getAccessToken();
+		const auth0WithToken = new ManagementClient({
+			domain: "dev-0u7isllacvzlfhww.auth0.com",
+			clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
+			clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+			scope: "read:users update:users",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			token: accessToken,
+		});
+		const updatedUser = await auth0WithToken.updateUserMetadata(
+			{id: userId},
+			metadata
+		);
 		console.log(updatedUser);
 	} catch (err) {
 		console.error(err);
