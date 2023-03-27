@@ -16,7 +16,7 @@ const method = new Method({
 //working
 const newAuthSession = async (request: Request, response: Response) => {
 	//const id: string = request.params.id;
-	const id: string = "ent_JFMar7hpLxwP7";
+	const id  = "ent_JFMar7hpLxwP7";
 	const token = await method.elements.createToken({
 		entity_id: id,
 		team_name: "Demi Finance",
