@@ -41,16 +41,13 @@ export const updateUserMetadata = async (
 	metadata: Record<string, any>
 ) => {
 	try {
-		const accessToken = await getAccessToken();
-		console.log("This is the TOKEN!!!!: " + accessToken);
-		
 		const auth0WithToken = new ManagementClient({
 			domain: "dev-0u7isllacvzlfhww.auth0.com",
 			clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 			clientSecret: process.env.AUTH0_CLIENT_SECRET!,
 			scope: "read:users update:users",
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			token: accessToken,
+			token: token,
 		});
 		const updatedUser = await auth0WithToken.updateUserMetadata(
 			{id: userId},
@@ -148,8 +145,6 @@ export async function getToken(): Promise<string> {
 
 	try {
 		const response = await axios.request(options);
-		console.log("Token Req Response: " + response);
-		
 		return response.data.access_token;
 	} catch (error) {
 		console.error(error);
