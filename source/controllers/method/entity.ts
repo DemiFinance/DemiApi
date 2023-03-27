@@ -70,19 +70,11 @@ const postEntity = async (request: Request, response: Response) => {
 
 		console.log(token);
 		
-
-		// updateUserMetadata(token, userId, metadata)
-		// 	.then((updatedMetaData: {[key: string]: any}) => {
-		// 		console.log("updated user metadata: ", updatedMetaData);
-		// 	})
-		// 	.catch((error: Error) => {
-		// 		console.error(error.message);
-		// 	});
-
-		//pushMetadata(userId, metadata);
 		updateUserMetadata(token, userId, metadata);
 
 		console.log("Method response from new entity post request");
+		console.log("[ENTITY]" + newEntity);
+		
 
 		// Push to DB here
 		// ...
