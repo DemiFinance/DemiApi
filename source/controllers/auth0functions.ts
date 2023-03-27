@@ -42,6 +42,8 @@ export const updateUserMetadata = async (
 ) => {
 	try {
 		const accessToken = await getAccessToken();
+		console.log("This is the TOKEN!!!!: " + accessToken);
+		
 		const auth0WithToken = new ManagementClient({
 			domain: "dev-0u7isllacvzlfhww.auth0.com",
 			clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
