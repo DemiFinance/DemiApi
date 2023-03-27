@@ -17,7 +17,7 @@ const auth0Auth = new AuthenticationClient({
 });
 
 // Example function to obtain an access token with the necessary scopes
-const getAccessToken = async (): Promise<string> => {
+export const getAccessToken = async (): Promise<string> => {
 	try {
 		const tokenResponse = await auth0Auth.clientCredentialsGrant({
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
@@ -32,6 +32,7 @@ const getAccessToken = async (): Promise<string> => {
 
 // Example request to update a user's metadata
 export const updateUserMetadata = async (
+	token: string,
 	userId: string,
 	metadata: Record<string, any>
 ) => {

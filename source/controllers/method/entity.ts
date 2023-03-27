@@ -12,6 +12,7 @@ import {
 	updateUserMeta,
 	updateUserMetadata,
 	getToken,
+	getAccessToken,
 	pushMetadata,
 } from "../auth0functions";
 
@@ -76,7 +77,7 @@ const postEntity = async (request: Request, response: Response) => {
 		// 	});
 
 		//pushMetadata(userId, metadata);
-		updateUserMetadata(userId, metadata);
+		updateUserMetadata(await getAccessToken(), userId, metadata);
 
 		console.log("Method response from new entity post request");
 
