@@ -53,7 +53,9 @@ export const updateUserMetadata = async (
 			{id: userId},
 			metadata
 		);
-		console.log(updatedUser);
+		console.log(
+			"[AUTH0 Response] - Update User Metadata" + updatedUser.user_metadata
+		);
 	} catch (err) {
 		console.error(err);
 	}
@@ -128,6 +130,8 @@ export async function updateUserMeta(
 		throw new Error("Failed to update user metadata");
 	}
 }
+
+//returns a token, tested and working
 
 export async function getToken(): Promise<string> {
 	const options = {
