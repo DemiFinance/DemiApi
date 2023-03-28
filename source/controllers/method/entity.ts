@@ -43,6 +43,9 @@ const testPerson: Individual = {
 const postEntity = async (request: Request, response: Response) => {
 	try {
 		console.log("Request body from new entity post request");
+		console.log(request.body);
+		console.log("Body end");
+		
 		
 		// Create a new entity
 		const newEntity = await method.entities.create({
