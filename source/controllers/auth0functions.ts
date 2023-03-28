@@ -24,11 +24,11 @@ export const getAccessToken = async (): Promise<string> => {
 			audience: "https://api.demifinance.com",
 			scope: "read:users update:users",
 		});
-		
+
 		return tokenResponse.access_token;
 	} catch (err) {
 		console.error("Token Gathering Failed");
-		
+
 		console.error(err);
 		return "";
 	}

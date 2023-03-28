@@ -63,12 +63,11 @@ const postEntity = async (request: Request, response: Response) => {
 		const token = await getToken();
 
 		console.log(token);
-		
+
 		updateUserMetadata(token, userId, metadata);
 
 		console.log("Method response from new entity post request");
 		console.log("[ENTITY]" + newEntity);
-		
 
 		// Push to DB here
 		// ...

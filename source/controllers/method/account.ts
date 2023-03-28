@@ -30,14 +30,13 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 };
 
 const createACHAccount = async (request: Request, response: Response) => {
-
 	const opts: IACHCreateOpts = {
-		holder_id: request.params.id,
+		holder_id: request.body.id,
 		ach: {
 			routing: request.body.routing_number,
 			number: request.body.account_number,
 			type: request.body.type,
-		}
+		},
 	};
 
 	const newAccount: any = await method.accounts.create(opts);
@@ -48,40 +47,52 @@ const createACHAccount = async (request: Request, response: Response) => {
 };
 
 const createACHVerification = async (request: Request, response: Response) => {
-
 	try {
-		const verification: any = await method.accounts(request.params.account_id).verification.create({
-			type: "micro_deposits",
-		});
-	
+		const verification: any = await method
+			.accounts(request.params.account_id)
+			.verification.create({
+				type: "micro_deposits",
+			});
+
 		return response.status(200).json({
 			verification: verification,
 		});
-	}
-	catch (error) {
+	} catch (error) {
 		console.error("Error creating new verification:", error);
-		return response.status(500).json({error: "Failed to create new verification"});
+		return response
+			.status(500)
+			.json({error: "Failed to create new verification"});
 	}
-
 };
 
-
-const updateMicroDepositVerification = async (request: Request, response: Response) => {
-
+const updateMicroDepositVerification = async (
+	request: Request,
+	response: Response
+) => {
 	try {
-		const verification: any = await method.accounts(request.params.account_id).update({
-			micro_deposits: {
-				amounts: [request.body.amount1, request.body.amount2],
-			},
-		});
-	
+		const verification: any = await method
+			.accounts(request.params.account_id)
+			.update({
+				micro_deposits: {
+					amounts: [request.body.amount1, request.body.amount2],
+				},
+			});
+
 		return response.status(200).json({
 			verification: verification,
 		});
 	} catch (error) {
 		console.error("Error updating micro deposit verification:", error);
-		return response.status(500).json({error: "Failed to update micro deposit verification"});
+		return response
+			.status(500)
+			.json({error: "Failed to update micro deposit verification"});
 	}
 };
 
-export default {getAccountById, listAccountsByHolder, createACHAccount, createACHVerification, updateMicroDepositVerification};
+export default {
+	getAccountById,
+	listAccountsByHolder,
+	createACHAccount,
+	createACHVerification,
+	updateMicroDepositVerification,
+};

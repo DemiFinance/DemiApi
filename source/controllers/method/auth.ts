@@ -21,7 +21,6 @@ const newAuthSession = async (request: Request, response: Response) => {
 		auth: {},
 	});
 	console.log(token.element_token);
-	
 
 	return response.status(200).json({
 		element_token: token.element_token,
