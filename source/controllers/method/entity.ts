@@ -69,36 +69,12 @@ const postEntity = async (request: Request, response: Response) => {
 		console.log("Method response from new entity post request");
 		console.log("[ENTITY]" + newEntity);
 
-		// Push to DB here
-		// ...
-
 		return response.status(200).json({newEntity});
 	} catch (error) {
 		console.error("Error creating new entity:", error);
 		return response.status(500).json({error: "Failed to create new entity"});
 	}
 };
-
-// const postEntity = async (request: Request, response: Response) => {
-// 	//1.2 do this
-
-// 	const newEntity = await method.entities.create({
-// 		type: "individual",
-// 		individual: {
-// 			first_name: request.body.first_name,
-// 			last_name: request.body.last_name,
-// 			phone: request.body.phone,
-// 		},
-// 	});
-
-// 	//1.3 push name to auth0 metadata
-
-// 	console.log("Method response from new entity post request");
-
-// 	//push to db here... awaiting details on auth implementation
-
-// 	return response.status(200).json({newEntity});
-// };
 
 //this works
 const getEntity = async (request: Request, response: Response) => {
