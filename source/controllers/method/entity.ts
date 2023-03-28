@@ -69,7 +69,7 @@ const postEntity = async (request: Request, response: Response) => {
 		updateUserMetadata(token, userId, metadata);
 
 		console.log("Method response from new entity post request");
-		console.log("[ENTITY]" + newEntity);
+		console.log("[ENTITY]" + JSON.parse(newEntity.toString()));
 
 		return response.status(200).json({newEntity});
 	} catch (error) {
