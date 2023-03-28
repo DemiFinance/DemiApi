@@ -16,15 +16,18 @@ const method = new Method({
 //working
 const newAuthSession = async (request: Request, response: Response) => {
 	//const id: string = request.params.id;
-	const id  = "ent_JFMar7hpLxwP7";
+	//const id  = "ent_JFMar7hpLxwP7";
 	const token = await method.elements.createToken({
-		entity_id: id,
+		entity_id: "ent_JFMar7hpLxwP7",
 		team_name: "Demi Finance",
 		team_icon: process.env.LOGO_URL!,
 		team_logo: process.env.LOGO_URL!,
 		type: "auth",
 		auth: {},
 	});
+
+	console.log("[TOKEN RESPONSE] " + token);
+	
 
 	return response.status(200).json({
 		element_token: token.element_token,
