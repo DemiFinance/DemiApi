@@ -151,7 +151,7 @@ export async function getToken(): Promise<string> {
 		const response = await axios.request(options);
 		return response.data.access_token;
 	} catch (error) {
-		console.error(error);
+		console.error("[Token Fetching Error]" + error);
 		return "";
 	}
 }
