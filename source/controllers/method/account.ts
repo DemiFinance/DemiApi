@@ -1,12 +1,9 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
-import {Method, Environments, IAccountListOpts} from "method-node";
+import {IAccountListOpts, IACHCreateOpts} from "method-node";
 
-const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
-	env: Environments.dev,
-});
+import {method} from "../../globals";
 
 //complete
 const getAccountById = async (request: Request, response: Response) => {

@@ -6,7 +6,7 @@ import axios, {AxiosResponse} from "axios";
 import {Entity, Individual} from "../../models/entity";
 import {Address} from "../../models/address";
 
-import {Method, Environments} from "method-node";
+import {method} from "../../globals";
 
 import {
 	updateUserMeta,
@@ -15,11 +15,6 @@ import {
 	getAccessToken,
 	pushMetadata,
 } from "../auth0functions";
-
-const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
-	env: Environments.sandbox,
-});
 
 const tempAddy: Address = {
 	line1: "485 Sandmere Place",
@@ -45,7 +40,6 @@ const testPerson: Individual = {
  * 1.4 push entity information + user info to database
  * 1.5 return entity info to app?
  */
-
 const postEntity = async (request: Request, response: Response) => {
 	try {
 		// Create a new entity
