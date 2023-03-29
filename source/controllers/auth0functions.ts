@@ -140,7 +140,7 @@ export async function getToken(): Promise<string> {
 		headers: {"content-type": "application/json"},
 		body: `{
 		"client_id":"HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-		"client_secret":"${process.env.AUTH0_CLIENT_SECRET}",
+		"client_secret":${process.env.AUTH0_CLIENT_SECRET},
 		"audience":"https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 		"grant_type":"client_credentials"}`,
 	};
