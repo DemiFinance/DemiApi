@@ -10,7 +10,7 @@ const jwtCheck = auth({
 	tokenSigningAlg: "RS256",
 });
 
-router.post("/", entityController.testWithMethod);
+router.post("/", entityController.postEntity);
 router.get("/:id", jwtCheck, entityController.getEntity);
 
 export = router;
