@@ -95,7 +95,7 @@ const postEntity = async (request: Request, response: Response) => {
 		console.log("[TOKEN RESPONSE]" + JSON.stringify(tokena));
 		
 		try {
-			updateUserMetadata(tokena, userId, metadata);
+			updateUserMeta(tokena, userId, metadata);
 		} catch (error) {
 			console.log("[UPDATE METADATA ERROR]" + error);
 		}

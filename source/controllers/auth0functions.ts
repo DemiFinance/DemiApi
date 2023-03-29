@@ -46,8 +46,8 @@ export const updateUserMetadata = async (
 			clientId: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
 			clientSecret: process.env.AUTH0_CLIENT_SECRET!,
 			scope: "read:users update:users",
-			audience: "https://api.demifinance.com",
-			//audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			//audience: "https://api.demifinance.com",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com",
 			token: token,
 		});
 		const updatedUser = await auth0WithToken.updateUserMetadata(
@@ -143,7 +143,7 @@ export async function getToken(): Promise<string> {
 			grant_type: "client_credentials",
 			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
 			client_secret: process.env.AUTH0_CLIENT_SECRET!,
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com",
 			//audience: "https://api.demifinance.com",
 		}),
 	};
