@@ -46,7 +46,8 @@ export const updateUserMetadata = async (
 			clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 			clientSecret: process.env.AUTH0_CLIENT_SECRET!,
 			scope: "read:users update:users",
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			audience: "https://api.demifinance.com",
+			//audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			token: token,
 		});
 		const updatedUser = await auth0WithToken.updateUserMetadata(
@@ -142,14 +143,14 @@ export async function getToken(): Promise<string> {
 			grant_type: "client_credentials",
 			client_id: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
 			client_secret: process.env.AUTH0_CLIENT_SECRET!,
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			//audience: "https://api.demifinance.com",
+			//audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			audience: "https://api.demifinance.com",
 		}),
 	};
 
 	try {
 		const response = await axios.request(options);
-		console.log("[AUTH0 Response] - Token" + response.data.access_token);
+		console.log("[AUTH0 Response] - Token " + response.data.access_token);
 		
 		return response.data.access_token;
 	} catch (error) {
