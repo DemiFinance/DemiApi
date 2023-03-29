@@ -47,7 +47,7 @@ export const updateUserMetadata = async (
 			clientSecret: process.env.AUTH0_CLIENT_SECRET!,
 			scope: "read:users update:users",
 			//audience: "https://api.demifinance.com",
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			token: token,
 		});
 		const updatedUser = await auth0WithToken.updateUserMetadata(
@@ -98,15 +98,6 @@ export async function updateUserMeta(
 	metadata: {[key: string]: any}
 ): Promise<any> {
 	try {
-		// Define the headers to send with the API request
-		// const headers = {
-		// 	"Content-Type": "application/json",
-		// 	"authorization": `Bearer ${accessToken}`,
-		// };
-
-		// console.log(`[UPDATEUSERMETA] Headers: ${headers}`);
-
-		// Define the endpoint to update the user's metadata
 		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
 
 		// Send a PATCH request to the Auth0 Management API to update the user's metadata
@@ -143,18 +134,18 @@ export async function getToken(): Promise<string> {
 			grant_type: "client_credentials",
 			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
 			client_secret: process.env.AUTH0_CLIENT_SECRET!,
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			//audience: "https://api.demifinance.com",
 		}),
 	};
 
 	try {
 		const response = await axios.request(options);
-		console.log("[AUTH0 Response] - Token " + response.data.access_token);
+		console.log("[AUTH0 Response - Token] " + response.data.access_token);
 		
 		return response.data.access_token;
 	} catch (error) {
-		console.error("[Token Fetching Error]" + error);
+		console.error("[AUTH0 Response - Token Fetching Error] " + error);
 		return "";
 	}
 }
