@@ -8,6 +8,8 @@ import entityRoutes from "./routes/entity";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 
+import entityController from "./controllers/method/entity";
+
 const router: Express = express();
 
 router.use(express.urlencoded({extended: false}));
@@ -33,6 +35,8 @@ router.use((req, res, next) => {
 const path = require("path");
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
+
+router.post("/test", entityController.testWithMethod);
 
 router.use("/entity", entityRoutes);
 router.use("/auth", authRoutes);

@@ -46,13 +46,32 @@ const testPerson: Individual = {
  * 1.5 return entity info to app?
  */
 
+const testWithMethod = async (request: Request, response: Response) => {
+	try {
+		const ent = await method.entities.create({
+			type: "individual",
+			individual: {
+				first_name: "Connor",
+				last_name: "Testingname",
+				phone: "+19056162504",
+			},
+		});
+		console.log("[ENTITY] " + JSON.stringify(ent));
+
+		return response.status(200).json({
+			entity: ent,
+		});
+	} catch (error) {
+		console.log("[ENTITY ERROR] " + error);
+	}
+};
+
 const postEntity = async (request: Request, response: Response) => {
 	try {
 		console.log("Request body from new entity post request");
 		console.log(request.body);
 		console.log("Body end");
-		
-		
+
 		// Create a new entity
 		const newEntity = await method.entities.create({
 			type: "individual",
@@ -73,12 +92,12 @@ const postEntity = async (request: Request, response: Response) => {
 
 		const token = await getToken();
 
-		console.log(token);
+		console.log("[TOKEN RESPONSE]" + JSON.stringify(token));
 
 		updateUserMetadata(token, userId, metadata);
 
 		console.log("Method response from new entity post request");
-		console.log("[ENTITY]" + JSON.parse(newEntity.toString()));
+		console.log("newEntity" + JSON.stringify(newEntity));
 
 		return response.status(200).json({newEntity});
 	} catch (error) {
@@ -99,4 +118,4 @@ const getEntity = async (request: Request, response: Response) => {
 	});
 };
 
-export default {getEntity, postEntity};
+export default {getEntity, postEntity, testWithMethod};
