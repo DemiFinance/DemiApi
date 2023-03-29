@@ -137,18 +137,18 @@ export async function getToken(): Promise<string> {
 	const options = {
 		method: "POST",
 		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token",
-		headers: {"content-type": "application/x-www-form-urlencoded"},
-		data: new URLSearchParams({
-			grant_type: "client_credentials",
-			client_id: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-			client_secret: process.env.AUTH0_CLIENT_SECRET!,
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			//audience: "https://api.demifinance.com",
-		}),
+		headers: {"content-type": "application/json"},
+		body: `{
+		"client_id":"HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
+		"client_secret":"${process.env.AUTH0_CLIENT_SECRET}",
+		"audience":"https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+		"grant_type":"client_credentials"}`,
 	};
 
 	try {
 		const response = await axios.request(options);
+		console.log("[Token Fetching Success]" + JSON.stringify(response.data));
+
 		return response.data.access_token;
 	} catch (error) {
 		console.error("[Token Fetching Error]" + error);
