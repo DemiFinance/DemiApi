@@ -21,7 +21,7 @@ export const getAccessToken = async (): Promise<string> => {
 	console.log("Attempting Token Retrevial");
 	try {
 		const tokenResponse = await auth0Auth.clientCredentialsGrant({
-			audience: "https://api.demifinance.com",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			scope: "read:users update:users",
 		});
 

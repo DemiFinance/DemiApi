@@ -90,11 +90,14 @@ const postEntity = async (request: Request, response: Response) => {
 			entity_id: newEntity.id,
 		};
 
-		const token = await getToken();
+		const tokena = await getToken();
+		const tokenb = await getAccessToken();
 
-		console.log("[TOKEN RESPONSE]" + JSON.stringify(token));
+		console.log("[TOKEN A RESPONSE]" + JSON.stringify(tokena));
+		console.log("[TOKEN B RESPONSE]" + JSON.stringify(tokenb));
+		
 
-		updateUserMetadata(token, userId, metadata);
+		updateUserMetadata(tokena, userId, metadata);
 
 		console.log("Method response from new entity post request");
 		console.log("newEntity" + JSON.stringify(newEntity));
