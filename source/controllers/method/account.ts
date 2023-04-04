@@ -1,3 +1,4 @@
+import { log } from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
@@ -17,9 +18,7 @@ const method = new Method({
 const getAccountById = async (request: Request, response: Response) => {
 	const account: any = await method.accounts.get(request.params.id);
 
-	return response.status(200).json({
-		account: account,
-	});
+	return response.status(200).json({account});
 };
 
 //complete
@@ -30,11 +29,9 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 
 	const accountList: any = await method.accounts.list(opts)!;
 
-	console.log("Accounts" + accountList);
-
-	return response.status(200).json({
-		accounts: accountList,
-	});
+	console.log("Recieved GET - /accounts/list/"+ request.params.id);
+	
+	return response.status(200).json({accounts: accountList});
 };
 
 const createACHAccount = async (request: Request, response: Response) => {

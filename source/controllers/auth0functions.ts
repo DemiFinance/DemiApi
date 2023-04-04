@@ -142,7 +142,7 @@ export async function getToken(): Promise<string> {
 	try {
 		const response = await axios.request(options);
 		console.log("[AUTH0 Response - Token] " + response.data.access_token);
-		
+
 		return response.data.access_token;
 	} catch (error) {
 		console.error("[AUTH0 Response - Token Fetching Error] " + error);

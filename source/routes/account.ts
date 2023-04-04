@@ -11,7 +11,7 @@ const jwtCheck = auth({
 });
 
 router.get("/:id", jwtCheck, accountController.getAccountById);
-router.get("/:id", jwtCheck, accountController.listAccountsByHolder); // maybe move this to entity route?
+router.get("/list/:id", jwtCheck, accountController.listAccountsByHolder); // maybe move this to entity route?
 router.post("/", jwtCheck, accountController.createACHAccount);
 router.post(
 	"/verification/:account_id",

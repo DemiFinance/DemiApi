@@ -93,7 +93,7 @@ const postEntity = async (request: Request, response: Response) => {
 		const tokena = await getToken();
 
 		console.log("[TOKEN RESPONSE]" + JSON.stringify(tokena));
-		
+
 		try {
 			updateUserMeta(tokena, userId, metadata);
 		} catch (error) {
