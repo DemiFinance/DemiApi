@@ -10,10 +10,10 @@ const method = new Method({
 
 const sendPayment = async (request: Request, response: Response) => {
 	const payment = await method.payments.create({
-		amount: 10,
+		amount: request.body.amount,
 		source: request.body.sourceAccount,
 		destination: request.body.destinationAccount,
-		description: request.body.description,
+		description: "Demi Finance Payment",
 	});
 
 	return response.status(200).json({
