@@ -7,6 +7,7 @@ import express, {Express} from "express";
 import entityRoutes from "./routes/entity";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
+import paymentRoutes from "./routes/payment";
 
 import entityController from "./controllers/method/entity";
 
@@ -36,11 +37,12 @@ const path = require("path");
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
 
-router.post("/test", entityController.testWithMethod);
+//srouter.post("/test", entityController.testWithMethod);
 
 router.use("/entity", entityRoutes);
 router.use("/auth", authRoutes);
 router.use("/accounts", accountRoutes);
+router.use("/payments", paymentRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");

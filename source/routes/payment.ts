@@ -10,6 +10,6 @@ const jwtCheck = auth({
 	tokenSigningAlg: "RS256",
 });
 
-router.post("/payment", jwtCheck, paymentController.sendPayment);
+router.post("/", jwtCheck, paymentController.sendPayment);
 
 export = router;
