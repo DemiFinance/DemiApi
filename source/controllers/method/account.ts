@@ -97,7 +97,7 @@ const updateMicroDepositVerification = async (
 const getCreditScore = async (request: Request, response: Response) => {
 	try {
 		const creditScore: any = await method.entities.getCreditScore(
-			request.params.entity_id
+			request.body.entity_id
 		);
 
 		return response.status(200).json({
