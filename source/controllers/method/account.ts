@@ -1,4 +1,4 @@
-import { log } from "console";
+import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
@@ -29,8 +29,8 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 
 	const accountList: any = await method.accounts.list(opts)!;
 
-	console.log("Recieved GET - /accounts/list/"+ request.params.id);
-	
+	console.log("Recieved GET - /accounts/list/" + request.params.id);
+
 	return response.status(200).json({accounts: accountList});
 };
 
@@ -94,10 +94,26 @@ const updateMicroDepositVerification = async (
 	}
 };
 
+const getCreditScore = async (request: Request, response: Response) => {
+	try {
+		const creditScore: any = await method.entities.getCreditScore(
+			request.params.entity_id
+		);
+
+		return response.status(200).json({
+			creditScore: creditScore,
+		});
+	} catch (error) {
+		console.error("Error getting credit score:", error);
+		return response.status(500).json({error: "Failed to get credit score"});
+	}
+};
+
 export default {
 	getAccountById,
 	listAccountsByHolder,
 	createACHAccount,
 	createACHVerification,
 	updateMicroDepositVerification,
+	getCreditScore,
 };
