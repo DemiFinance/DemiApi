@@ -95,6 +95,8 @@ export async function pushMetadata(userId: string, metadata: UserMetadata) {
 export async function updateUserMeta(
 	accessToken: string,
 	userId: string,
+	familyName : string,
+	givenName : string,
 	metadata: {[key: string]: any}
 ): Promise<any> {
 	try {
@@ -103,7 +105,9 @@ export async function updateUserMeta(
 		// Send a PATCH request to the Auth0 Management API to update the user's metadata
 		const response = await axios.patch(
 			endpoint,
-			{user_metadata: metadata},
+			{given_name: givenName,
+			family_name: familyName,
+			app_metadata: metadata},
 			{
 				headers: {
 					authorization: `Bearer ${accessToken}`,

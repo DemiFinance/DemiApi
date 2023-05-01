@@ -84,6 +84,8 @@ const postEntity = async (request: Request, response: Response) => {
 
 		// Update the user's metadata in Auth0
 		const userId = request.body.auth0_id;
+		const firstName = request.body.first_name;
+		const lastName = request.body.last_name;
 		const metadata = {
 			first_name: request.body.first_name,
 			last_name: request.body.last_name,
@@ -95,7 +97,7 @@ const postEntity = async (request: Request, response: Response) => {
 		console.log("[TOKEN RESPONSE]" + JSON.stringify(tokena));
 
 		try {
-			updateUserMeta(tokena, userId, metadata);
+			updateUserMeta(tokena, userId, firstName, lastName, metadata);
 		} catch (error) {
 			console.log("[UPDATE METADATA ERROR]" + error);
 		}
