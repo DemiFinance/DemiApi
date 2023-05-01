@@ -88,7 +88,7 @@ const postEntity = async (request: Request, response: Response) => {
 		const lastName = request.body.last_name;
 		const metadata = {
 			first_name: request.body.first_name,
-			last_name: request.body.last_name,
+			//last_name: request.body.last_name,
 			entity_id: newEntity.id,
 		};
 
