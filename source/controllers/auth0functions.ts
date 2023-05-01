@@ -105,7 +105,7 @@ export async function updateUserMeta(
 		// Send a PATCH request to the Auth0 Management API to update the user's metadata
 		const response = await axios.patch(
 			endpoint,
-			{given_name: givenName, family_name: familyName, app_metadata: metadata},
+			{name: `${familyName} ${givenName}`, given_name: givenName, family_name: familyName, app_metadata: metadata},
 			{
 				headers: {
 					authorization: `Bearer ${accessToken}`,
