@@ -5,7 +5,7 @@ import {Method, Environments, IAccountListOpts} from "method-node";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
-	env: Environments.sandbox,
+	env: Environments.production,
 });
 
 const sendPayment = async (request: Request, response: Response) => {
