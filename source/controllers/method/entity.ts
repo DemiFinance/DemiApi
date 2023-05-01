@@ -8,13 +8,7 @@ import {Address} from "../../models/address";
 
 import {Method, Environments} from "method-node";
 
-import {
-	updateUserMeta,
-	updateUserMetadata,
-	getToken,
-	getAccessToken,
-	pushMetadata,
-} from "../auth0functions";
+import {updateUserMeta, getToken} from "../auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -87,8 +81,6 @@ const postEntity = async (request: Request, response: Response) => {
 		const firstName = request.body.first_name;
 		const lastName = request.body.last_name;
 		const metadata = {
-			first_name: request.body.first_name,
-			//last_name: request.body.last_name,
 			entity_id: newEntity.id,
 		};
 
