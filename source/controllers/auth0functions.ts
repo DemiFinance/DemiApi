@@ -45,8 +45,8 @@ export const getAccessToken = async (): Promise<string> => {
 export async function updateUserMeta(
 	accessToken: string,
 	userId: string,
-	familyName: string,
 	givenName: string,
+	familyName: string,
 	metadata: {[key: string]: any}
 ): Promise<any> {
 	try {
