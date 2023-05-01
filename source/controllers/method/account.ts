@@ -9,6 +9,8 @@ import {
 	IACHCreateOpts,
 } from "method-node";
 
+import {changeAccountName, getToken} from "../auth0functions";
+
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
 	env: Environments.sandbox,
@@ -109,6 +111,37 @@ const getCreditScore = async (request: Request, response: Response) => {
 	}
 };
 
+const updateAccountName = async (request: Request, response: Response) => {
+	const account_id = request.params.account_id;
+	const name = request.body.name;
+
+	try {
+		const userId = request.body.auth0_id;
+		const accountName = request.body.accountName;
+		const accountId = request.body.accountId;
+
+		const token = await getToken();
+		try {
+			changeAccountName(
+				token,
+				userId,
+				accountName,
+				accountId
+			);
+		} catch (error) {
+			console.log("[UPDATE METADATA ERROR]" + error);
+		}
+		const account: any = await method.accounts(account_id).update({});
+
+		return response.status(200).json({
+			account: account,
+		});
+	} catch (error) {
+		console.error("Error changing account name:", error);
+		return response.status(500).json({error: "Failed to change account name"});
+	}
+};
+
 export default {
 	getAccountById,
 	listAccountsByHolder,
@@ -116,4 +149,5 @@ export default {
 	createACHVerification,
 	updateMicroDepositVerification,
 	getCreditScore,
+	updateAccountName,
 };

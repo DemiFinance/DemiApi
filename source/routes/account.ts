@@ -24,5 +24,10 @@ router.post(
 	jwtCheck,
 	accountController.updateMicroDepositVerification
 );
+router.post(
+	"/updateAccountName/",
+	jwtCheck,
+	accountController.updateAccountName
+);
 
 export = router;

@@ -125,6 +125,38 @@ export async function updateUserMeta(
 	}
 }
 
+export async function changeAccountName(
+	accessToken: string,
+	userId: string,
+	accountName: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
+
+		// Send a PATCH request to the Auth0 Management API to update the user's metadata to rename a bank account
+		const response = await axios.patch(
+			endpoint,
+			{user_metadata: {account_name: accountName, account_id: accountId}},
+			{
+				headers: {
+					authorization: `Bearer ${accessToken}`,
+					"Content-Type": "application/json",
+				},
+			}
+		);
+
+		// Return the response data
+		return response.data;
+	} catch (error) {
+		console.error(
+			`Error updating user account name metadata for user with ID ${userId}:`,
+			error
+		);
+		throw new Error("Failed to update user account name metadata");
+	}
+}
+
 //returns a token, tested and working
 
 export async function getToken(): Promise<string> {
