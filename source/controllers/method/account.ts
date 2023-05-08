@@ -122,12 +122,7 @@ const updateAccountName = async (request: Request, response: Response) => {
 
 		const token = await getToken();
 		try {
-			changeAccountName(
-				token,
-				userId,
-				accountName,
-				accountId
-			);
+			changeAccountName(token, userId, accountName, accountId);
 		} catch (error) {
 			console.log("[UPDATE METADATA ERROR]" + error);
 		}

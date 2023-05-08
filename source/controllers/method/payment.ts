@@ -9,16 +9,24 @@ const method = new Method({
 });
 
 const sendPayment = async (request: Request, response: Response) => {
-	const payment = await method.payments.create({
-		amount: request.body.amount,
-		source: request.body.sourceAccount,
-		destination: request.body.destinationAccount,
-		description: "Demi Finance Payment",
-	});
+	try {
+		const payment = await method.payments.create({
+			amount: request.body.amount,
+			source: request.body.sourceAccount,
+			destination: request.body.destinationAccount,
+			description: "Demi Finance Payment",
+		});
 
-	return response.status(200).json({
-		payment,
-	});
+		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
+		return response.status(200).json({
+			payment,
+		});
+	} catch (error) {
+		console.log("[METHOD - New Payment ERROR]" + error);
+		return response.status(400).json({
+			error: error,
+		});
+	}
 };
 
 export default {sendPayment};
