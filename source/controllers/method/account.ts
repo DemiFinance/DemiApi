@@ -37,20 +37,22 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 };
 
 const createACHAccount = async (request: Request, response: Response) => {
-	const opts: IACHCreateOpts = {
-		holder_id: request.body.id,
-		ach: {
-			routing: request.body.routing_number,
-			number: request.body.account_number,
-			type: request.body.type,
-		},
-	};
-
-	const newAccount: any = await method.accounts.create(opts);
-
-	return response.status(200).json({
-		account: newAccount,
-	});
+	try {
+		const account: any = await method.accounts.create({
+			holder_id: request.body.id,
+			ach: {
+				routing: request.body.routing_number,
+				number: request.body.account_number,
+				type: request.body.type,
+			},
+		});
+		return response.status(200).json({
+			account: account,
+		});
+	} catch (error) {
+		console.error("Error creating new account:", error);
+		return response.status(500).json({error: "Failed to create new account"});
+	}
 };
 
 const createACHVerification = async (request: Request, response: Response) => {
