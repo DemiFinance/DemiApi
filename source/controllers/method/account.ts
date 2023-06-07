@@ -2,12 +2,7 @@ import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
-import {
-	Method,
-	Environments,
-	IAccountListOpts,
-	IACHCreateOpts,
-} from "method-node";
+import {Method, Environments, IAccountListOpts} from "method-node";
 
 import {changeAccountName, getToken} from "../auth0functions";
 
@@ -36,6 +31,31 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 	return response.status(200).json({accounts: accountList});
 };
 
+const syncAllAccounts = async (entityId: string) => {
+	const opts: IAccountListOpts = {
+		holder_id: entityId,
+	};
+
+	const accountList: any = await method.accounts.list(opts)!;
+
+	if (accountList) {
+		console.log("Accounts found. Syncing...");
+		accountList.forEach(async (account: any) => {
+			if (account.status == "active") {
+				const newSync = await method.accounts(account.id).syncs.create();
+				console.log("Synced account: " + account.id);
+				console.log("Sync response: " + JSON.stringify(newSync));
+			}
+		});
+	} else {
+		console.log("No accounts found.");
+	}
+
+	console.log("Recieved GET - /accounts/list/" + entityId);
+
+	return true;
+};
+
 const createACHAccount = async (request: Request, response: Response) => {
 	try {
 		const account: any = await method.accounts.create({
@@ -46,8 +66,17 @@ const createACHAccount = async (request: Request, response: Response) => {
 				type: request.body.type,
 			},
 		});
+
+		const verification: any = await method
+			.accounts(account.id)
+			.verification.create({
+				type: "micro_deposits",
+			});
+
+		// If you want to include the verification in the response, you can add it here
 		return response.status(200).json({
 			account: account,
+			verification: verification,
 		});
 	} catch (error) {
 		console.error("Error creating new account:", error);
@@ -139,6 +168,22 @@ const updateAccountName = async (request: Request, response: Response) => {
 	}
 };
 
+const getFakeAccount = async (request: Request, response: Response) => {
+	try {
+		const accountList = {
+			accounts: [],
+		};
+		return response.status(200).json({
+			account: accountList,
+		});
+	} catch (error) {
+		console.error("Error retrieving fake account:", error);
+		return response
+			.status(500)
+			.json({error: "Failed to retrieve fake account"});
+	}
+};
+
 export default {
 	getAccountById,
 	listAccountsByHolder,
@@ -147,4 +192,5 @@ export default {
 	updateMicroDepositVerification,
 	getCreditScore,
 	updateAccountName,
+	getFakeAccount,
 };
