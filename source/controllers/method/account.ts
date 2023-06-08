@@ -109,7 +109,7 @@ const updateMicroDepositVerification = async (
 ) => {
 	try {
 		const verification: any = await method
-			.accounts(request.params.account_id)
+			.accounts(request.params.account_id).verification
 			.update({
 				micro_deposits: {
 					amounts: [request.body.amount1, request.body.amount2],
