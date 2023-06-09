@@ -31,6 +31,19 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 	return response.status(200).json({accounts: accountList});
 };
 
+const syncNewConnection = async (request: Request, response: Response) => {
+	try {
+		for (const account of request.body.data.accounts) {
+			console.log("Syncing account: " + account.id);
+			const newSync = await method.accounts(account.id).syncs.create();
+			console.log("Sync response: " + JSON.stringify(newSync));
+		}
+		return response.status(200).json({success: true});
+	} catch (error) {
+		console.error("Error syncing new connection: " + error);
+		return response.status(500).json({error: "Failed to sync new connection"});
+	}
+};
 const syncAllAccounts = async (entityId: string) => {
 	const opts: IAccountListOpts = {
 		holder_id: entityId,
@@ -108,14 +121,18 @@ const updateMicroDepositVerification = async (
 	response: Response
 ) => {
 	try {
+		console.log(
+			"Verifying micro deposits for account: " + request.params.account_id
+		);
+
 		const verification: any = await method
-			.accounts(request.params.account_id).verification
-			.update({
+			.accounts(request.params.account_id)
+			.verification.update({
 				micro_deposits: {
 					amounts: [request.body.amount1, request.body.amount2],
 				},
 			});
-
+		console.log("Verification response: " + JSON.stringify(verification));
 		return response.status(200).json({
 			verification: verification,
 		});
