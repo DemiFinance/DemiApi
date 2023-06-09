@@ -1,3 +1,4 @@
+import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
@@ -9,7 +10,17 @@ const method = new Method({
 });
 
 const sendPayment = async (request: Request, response: Response) => {
+	console.log("Attempting Payment...");
 	try {
+		console.log(
+			"[PAYMENT] Amount: " +
+				request.body.amount +
+				" Source: " +
+				request.body.sourceAccount +
+				" Destination: " +
+				request.body.destinationAccount
+		);
+
 		const payment = await method.payments.create({
 			amount: request.body.amount,
 			source: request.body.sourceAccount,
