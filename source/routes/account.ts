@@ -29,5 +29,6 @@ router.post(
 	jwtCheck,
 	accountController.updateAccountName
 );
+router.post("/newConnection", jwtCheck, accountController.processNewConnection);
 
 export = router;

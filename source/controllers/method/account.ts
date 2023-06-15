@@ -31,42 +31,43 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 	return response.status(200).json({accounts: accountList});
 };
 
-const syncNewConnection = async (request: Request, response: Response) => {
+const syncNewAccount = async (account: string) => {
 	try {
-		for (const account of request.body.data.accounts) {
-			console.log("Syncing account: " + account.id);
-			const newSync = await method.accounts(account.id).syncs.create();
-			console.log("Sync response: " + JSON.stringify(newSync));
-		}
-		return response.status(200).json({success: true});
+		console.log("Syncing account: " + account);
+		const newSync = await method.accounts(account).syncs.create();
+		console.log("Sync response: " + JSON.stringify(newSync));
 	} catch (error) {
-		console.error("Error syncing new connection: " + error);
-		return response.status(500).json({error: "Failed to sync new connection"});
+		console.error(`Error while syncing account ${account}: ${error}`);
+		throw new Error(`Failed to sync account ${account}`);
 	}
 };
-const syncAllAccounts = async (entityId: string) => {
-	const opts: IAccountListOpts = {
-		holder_id: entityId,
-	};
 
-	const accountList: any = await method.accounts.list(opts)!;
+const processNewConnection = async (request: Request, response: Response) => {
+	try {
+		const reqBody = request.body;
+		if (
+			!reqBody ||
+			!reqBody.success ||
+			!reqBody.data ||
+			!reqBody.data.accounts ||
+			!Array.isArray(reqBody.data.accounts)
+		) {
+			throw new Error("Invalid request body");
+		}
 
-	if (accountList) {
-		console.log("Accounts found. Syncing...");
-		accountList.forEach(async (account: any) => {
-			if (account.status == "active") {
-				const newSync = await method.accounts(account.id).syncs.create();
-				console.log("Synced account: " + account.id);
-				console.log("Sync response: " + JSON.stringify(newSync));
+		for (const account of reqBody.data.accounts) {
+			if (typeof account !== "string") {
+				throw new Error("Invalid account ID");
 			}
-		});
-	} else {
-		console.log("No accounts found.");
+
+			await syncNewAccount(account);
+		}
+
+		return response.status(200).json({success: true});
+	} catch (error) {
+		console.error(`Error while processing request: ${error}`);
+		return response.status(500).json({error: "Failed to sync new connection"});
 	}
-
-	console.log("Recieved GET - /accounts/list/" + entityId);
-
-	return true;
 };
 
 const createACHAccount = async (request: Request, response: Response) => {
@@ -210,4 +211,5 @@ export default {
 	getCreditScore,
 	updateAccountName,
 	getFakeAccount,
+	processNewConnection,
 };
