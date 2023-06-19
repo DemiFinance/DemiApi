@@ -25,7 +25,7 @@ const sendPayment = async (request: Request, response: Response) => {
 			amount: request.body.amount,
 			source: request.body.sourceAccount,
 			destination: request.body.destinationAccount,
-			description: "Demi Pay",
+			description: "DEMI PYMNT",
 		});
 
 		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
