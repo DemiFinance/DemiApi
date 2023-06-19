@@ -43,6 +43,7 @@ const syncNewAccount = async (account: string) => {
 };
 
 const processNewConnection = async (request: Request, response: Response) => {
+	log("Processing new connection " + JSON.stringify(request.body));
 	try {
 		const reqBody = request.body;
 		if (

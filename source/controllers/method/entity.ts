@@ -9,6 +9,7 @@ import {Address} from "../../models/address";
 import {Method, Environments} from "method-node";
 
 import {updateUserMeta, getToken} from "../auth0functions";
+import {log} from "console";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -61,40 +62,32 @@ const testWithMethod = async (request: Request, response: Response) => {
 };
 
 const postEntity = async (request: Request, response: Response) => {
+	log("Attempting to create new entity... " + JSON.stringify(request.body));
 	try {
-		console.log("Request body from new entity post request");
-		console.log(request.body);
-		console.log("Body end");
+		const {auth0_id, first_name, last_name, phone} = request.body;
+
+		// Validate request body
+		if (!auth0_id || !first_name || !last_name || !phone) {
+			return response.status(400).json({error: "Invalid request body"});
+		}
 
 		// Create a new entity
 		const newEntity = await method.entities.create({
 			type: "individual",
 			individual: {
-				first_name: request.body.first_name,
-				last_name: request.body.last_name,
-				phone: request.body.phone,
+				first_name,
+				last_name,
+				phone,
 			},
 		});
 
 		// Update the user's metadata in Auth0
-		const userId = request.body.auth0_id;
-		const firstName = request.body.first_name;
-		const lastName = request.body.last_name;
 		const metadata = {
 			entity_id: newEntity.id,
 		};
 
 		const tokena = await getToken();
-
-		console.log("[TOKEN RESPONSE]" + JSON.stringify(tokena));
-
-		try {
-			updateUserMeta(tokena, userId, firstName, lastName, metadata);
-		} catch (error) {
-			console.log("[UPDATE METADATA ERROR]" + error);
-		}
-
-		console.log("[METHOD - New Entity]" + JSON.stringify(newEntity));
+		await updateUserMeta(tokena, auth0_id, first_name, last_name, metadata);
 
 		return response.status(200).json({newEntity});
 	} catch (error) {
