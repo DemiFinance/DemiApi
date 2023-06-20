@@ -43,28 +43,29 @@ const syncNewAccount = async (account: string) => {
 };
 
 const processNewConnection = async (request: Request, response: Response) => {
-	log("Processing new connection " + JSON.stringify(request.body));
 	try {
-		const reqBody = request.body;
+		const {connectionId} = request.body;
+		log("Processing new connection " + JSON.stringify(request.body));
+
+		response.status(200).json({success: true});
+
+		const currentConnection = await method.connections.get(connectionId);
+
 		if (
-			!reqBody ||
-			!reqBody.success ||
-			!reqBody.data ||
-			!reqBody.data.accounts ||
-			!Array.isArray(reqBody.data.accounts)
+			!currentConnection ||
+			!currentConnection.accounts ||
+			!Array.isArray(currentConnection.accounts)
 		) {
-			throw new Error("Invalid request body");
+			throw new Error("Invalid connection or missing accounts");
 		}
 
-		for (const account of reqBody.data.accounts) {
+		for (const account of currentConnection.accounts) {
 			if (typeof account !== "string") {
 				throw new Error("Invalid account ID");
 			}
 
 			await syncNewAccount(account);
 		}
-
-		return response.status(200).json({success: true});
 	} catch (error) {
 		console.error(`Error while processing request: ${error}`);
 		return response.status(500).json({error: "Failed to sync new connection"});
