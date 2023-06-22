@@ -30,7 +30,7 @@ const sendPayment = async (request: Request, response: Response) => {
 
 		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
-			payment,
+			payment: payment,
 		});
 	} catch (error) {
 		console.log("[METHOD - New Payment ERROR]" + error);
