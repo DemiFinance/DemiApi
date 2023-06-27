@@ -36,6 +36,28 @@ const getPaymentsBySourceHolder = async (
 	}
 };
 
+const getPaymentsByDestination = async (
+	request: Request,
+	response: Response
+) => {
+	try {
+		const paymentOpts: IPaymentListOpts = {
+			destination: request.body.destination_holder_id,
+		};
+
+		const payment = await method.payments.list(paymentOpts);
+		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
+		return response.status(200).json({
+			payment: payment,
+		});
+	} catch (error) {
+		console.log("[METHOD - Get Payment ERROR]" + error);
+		return response.status(400).json({
+			error: error,
+		});
+	}
+};
+
 const sendPayment = async (request: Request, response: Response) => {
 	console.log("Attempting Payment...");
 	try {
