@@ -2,12 +2,39 @@ import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
-import {Method, Environments, IAccountListOpts} from "method-node";
+import {
+	Method,
+	Environments,
+	IAccountListOpts,
+	IPaymentListOpts,
+} from "method-node";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
 	env: Environments.production,
 });
+
+const getPaymentsBySourceHolder = async (
+	request: Request,
+	response: Response
+) => {
+	try {
+		const paymentOpts: IPaymentListOpts = {
+			source_holder_id: request.body.source_holder_id,
+		};
+
+		const payment = await method.payments.list(paymentOpts);
+		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
+		return response.status(200).json({
+			payment: payment,
+		});
+	} catch (error) {
+		console.log("[METHOD - Get Payment ERROR]" + error);
+		return response.status(400).json({
+			error: error,
+		});
+	}
+};
 
 const sendPayment = async (request: Request, response: Response) => {
 	console.log("Attempting Payment...");
