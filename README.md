@@ -1,5 +1,6 @@
 
 
+
 # Nimbus API
 ![example workflow](https://github.com/DemiFinance/DemiApi/actions/workflows/node.js.yml/badge.svg)
 
@@ -12,3 +13,9 @@ Before you begin, ensure you have npm installed on your machine.
 Clone the repository by running `git clone https://github.com/DemiFinance/DemiApi.git` in your terminal.
 
 Navigate to the project directory and run `npm install` to install the necessary dependencies.
+
+## Running the Project
+
+Start the server by running `npm start` in your terminal.
+
+Ensure the `DB_CONNECTION_STRING` environment variable is set to your database connection string.
