@@ -89,4 +89,4 @@ const sendPayment = async (request: Request, response: Response) => {
 	}
 };
 
-export default {sendPayment};
+export default {sendPayment, getPaymentsByDestination, getPaymentsBySourceHolder};
