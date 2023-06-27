@@ -11,7 +11,15 @@ const jwtCheck = auth({
 });
 
 router.post("/", jwtCheck, paymentController.sendPayment);
-router.get("/byDestination/:id", jwtCheck, paymentController.getPaymentsByDestination);
-router.get("/bySourceHolder/:id", jwtCheck, paymentController.getPaymentsBySourceHolder);
+router.get(
+	"/byDestination/:id",
+	jwtCheck,
+	paymentController.getPaymentsByDestination
+);
+router.get(
+	"/bySourceHolder/:id",
+	jwtCheck,
+	paymentController.getPaymentsBySourceHolder
+);
 
 export = router;
