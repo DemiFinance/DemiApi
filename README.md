@@ -3,6 +3,7 @@
 
 
 
+
 # Nimbus API
 ![example workflow](https://github.com/DemiFinance/DemiApi/actions/workflows/node.js.yml/badge.svg)
 
@@ -35,3 +36,7 @@ Create a new branch on your forked repository. This can be done by running `git 
 Make your changes to the code. Be sure to commit your changes regularly.
 
 Once you have made your changes, push your branch to your forked repository and create a pull request.
+
+## Contact
+
+For further information or assistance, please contact John Doe (john.doe@example.com) or Jane Smith (jane.smith@example.com).
