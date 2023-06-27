@@ -2,6 +2,7 @@
 
 
 
+
 # Nimbus API
 ![example workflow](https://github.com/DemiFinance/DemiApi/actions/workflows/node.js.yml/badge.svg)
 
@@ -24,3 +25,13 @@ Ensure the `DB_CONNECTION_STRING` environment variable is set to your database c
 ## Dependencies
 
 The project depends on the following packages: express, mongoose, dotenv, etc.
+
+## Contributing
+
+Fork the repository by clicking the 'Fork' button at the top right of this page.
+
+Create a new branch on your forked repository. This can be done by running `git checkout -b your-branch-name` in your terminal.
+
+Make your changes to the code. Be sure to commit your changes regularly.
+
+Once you have made your changes, push your branch to your forked repository and create a pull request.
