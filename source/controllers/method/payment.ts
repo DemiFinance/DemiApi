@@ -1,19 +1,17 @@
-import {log} from "console";
+import { log } from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
-import {Request, Response} from "express";
+import { Request, Response } from "express";
 import {
 	Method,
 	Environments,
 	IAccountListOpts,
 	IPaymentListOpts,
 } from "method-node";
-
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
 	env: Environments.production,
 });
-
 const getPaymentsBySourceHolder = async (
 	request: Request,
 	response: Response
@@ -22,11 +20,10 @@ const getPaymentsBySourceHolder = async (
 		const paymentOpts: IPaymentListOpts = {
 			source_holder_id: request.body.source_holder_id,
 		};
-
 		const payment = await method.payments.list(paymentOpts);
 		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
-			payment: payment,
+			payments: payment,
 		});
 	} catch (error) {
 		console.log("[METHOD - Get Payment ERROR]" + error);
@@ -35,7 +32,6 @@ const getPaymentsBySourceHolder = async (
 		});
 	}
 };
-
 const getPaymentsByDestination = async (
 	request: Request,
 	response: Response
@@ -44,7 +40,6 @@ const getPaymentsByDestination = async (
 		const paymentOpts: IPaymentListOpts = {
 			destination: request.body.destination_holder_id,
 		};
-
 		const payment = await method.payments.list(paymentOpts);
 		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
@@ -57,7 +52,6 @@ const getPaymentsByDestination = async (
 		});
 	}
 };
-
 const sendPayment = async (request: Request, response: Response) => {
 	console.log("Attempting Payment...");
 	try {
@@ -69,14 +63,12 @@ const sendPayment = async (request: Request, response: Response) => {
 				" Destination: " +
 				request.body.destinationAccount
 		);
-
 		const payment = await method.payments.create({
 			amount: request.body.amount,
 			source: request.body.sourceAccount,
 			destination: request.body.destinationAccount,
 			description: "DEMI PYMNT",
 		});
-
 		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: payment,
@@ -88,7 +80,6 @@ const sendPayment = async (request: Request, response: Response) => {
 		});
 	}
 };
-
 export default {
 	sendPayment,
 	getPaymentsByDestination,
