@@ -20,6 +20,8 @@
 		"linebreak-style": ["error", "unix"],
 		"quotes": ["error", "double"],
 		"semi": ["error", "always"],
-		"@typescript-eslint/no-var-requires": 0
+		"no-empty": 1,
+		"@typescript-eslint/no-var-requires": 0,
+		"@typescript-eslint/no-explicit-any": "off"
 	}
 }
