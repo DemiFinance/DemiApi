@@ -18,7 +18,7 @@ const getPaymentsBySourceHolder = async (
 	request: Request,
 	response: Response
 ) => {
-	try {console.log("Attempting to get payments by sourceId: "+ request.params.id);
+	try {console.log("Attempting to get payments by sourceHolderId: "+ request.params.id);
 		const paymentOpts: IPaymentListOpts = {
 			source_holder_id: request.params.id,
 		};
