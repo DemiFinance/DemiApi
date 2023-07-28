@@ -1,15 +1,7 @@
 import axios, {AxiosRequestConfig} from "axios";
-import {Request, response, Response} from "express";
+import {Request, Response} from "express";
 
-import {ManagementClient, AuthenticationClient, UserMetadata} from "auth0";
-
-const auth0 = new ManagementClient({
-	domain: "dev-0u7isllacvzlfhww.auth0.com",
-	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
-	scope: "read:users update:users",
-	audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-});
+import {ManagementClient, AuthenticationClient} from "auth0";
 
 const auth0Auth = new AuthenticationClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
