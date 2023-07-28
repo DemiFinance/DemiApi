@@ -138,3 +138,49 @@ export async function getToken(): Promise<string> {
 		return "";
 	}
 }
+
+export const addNotificationTokenToMetadata = async (
+	request: Request,
+	response: Response
+) => {
+	// Extract userId and tokenString from request
+	const {userId, tokenString} = request.body;
+
+	try {
+		// Define the endpoint URL
+		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
+
+		// Prepare the payload for the PATCH request
+		const requestPayload = {
+			app_metadata: {
+				notificationToken: tokenString,
+			},
+		};
+
+		// Get the accessToken
+		const accessToken = await getToken();
+
+		// Prepare the headers for the PATCH request
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		// Send the PATCH request to the Auth0 Management API to update the user's metadata
+		const axiosResponse = await axios.patch(endpoint, requestPayload, {
+			headers: requestHeaders,
+		});
+
+		// Send the response data
+		response.json(axiosResponse.data);
+	} catch (error) {
+		// Log and re-throw the error with a descriptive message
+		console.error(
+			`Error updating user notification token for user with ID ${request.body.userId}:`,
+			error
+		);
+		response.status(500).json({
+			message: `Failed to update user notification token: ${error}`,
+		});
+	}
+};
