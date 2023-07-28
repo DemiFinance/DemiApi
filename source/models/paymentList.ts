@@ -1,4 +1,4 @@
-import { Payment } from './payment';
-export interface PaymentList extends Array<Payment> {}
-
-
+import { Payment } from "./payment";
+export interface PaymentList extends Array<Payment> {
+  length: number;
+}
