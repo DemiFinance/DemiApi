@@ -1,4 +1,3 @@
-import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import { PaymentList } from '../../models/paymentList';
@@ -6,11 +5,10 @@ import {Request, Response} from "express";
 import {
 	Method,
 	Environments,
-	IAccountListOpts,
 	IPaymentListOpts,
 } from "method-node";
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY ? process.env.METHOD_API_KEY : undefined,
 	env: Environments.production,
 });
 const getPaymentsBySourceHolder = async (
