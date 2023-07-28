@@ -1,4 +1,4 @@
-import {log} from "console";
+// No import from "console" needed
 import * as dotenv from "dotenv";
 dotenv.config();
 import {
