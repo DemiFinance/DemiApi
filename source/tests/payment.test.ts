@@ -20,4 +20,4 @@ describe("Payment model", () => {
   });
     // Add more tests as needed
   });
-});
+// Removed extra closing parenthesis
