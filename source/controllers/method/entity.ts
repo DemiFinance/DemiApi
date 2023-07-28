@@ -1,18 +1,13 @@
 // import * as dotenv from 'dotenv';
 // dotenv.config();
-import {Request, response, Response} from "express";
-import axios, {AxiosResponse} from "axios";
-
-import {Entity, Individual} from "../../models/entity";
-import {Address} from "../../models/address";
+import {Request, Response} from "express";
 
 import {Method, Environments} from "method-node";
-
 import {updateUserMeta, getToken} from "../auth0functions";
 import {log} from "console";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY ? process.env.METHOD_API_KEY : undefined,
 	env: Environments.production,
 });
 
