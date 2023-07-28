@@ -1,16 +1,14 @@
 import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
-import {Request, Response} from "express";
 import {
 	Method,
 	Environments,
-	IAccountListOpts,
 	IPaymentListOpts,
 } from "method-node";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY ? process.env.METHOD_API_KEY : "",
 	env: Environments.production,
 });
 
