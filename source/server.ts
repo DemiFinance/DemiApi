@@ -10,7 +10,6 @@ import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
 
-import entityController from "./controllers/method/entity";
 
 const router: Express = express();
 
