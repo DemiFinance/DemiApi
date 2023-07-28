@@ -4,7 +4,6 @@ dotenv.config();
 import http from "http";
 import express, {Express} from "express";
 
-import entityRoutes from "./routes/entity";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
@@ -54,7 +53,7 @@ router.use((req, res, next) => {
 
 const startAPI = async function () {
 	const httpServer = http.createServer(router);
-	const PORT: any = process.env.PORT!;
+ const PORT: any = process.env.PORT ? process.env.PORT : undefined;
 
 	httpServer.listen(PORT, () =>
 		console.log(`Nimbus API is running on port ${PORT}`)
