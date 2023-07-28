@@ -16,21 +16,6 @@ const method = new Method({
 	env: Environments.production,
 });
 
-const tempAddy: Address = {
-	line1: "485 Sandmere Place",
-	city: "Oakvbille",
-	state: "TX",
-	zip: "90210",
-};
-
-const testPerson: Individual = {
-	first_name: "John",
-	last_name: "Smith",
-	phone: "19056162504",
-	email: null,
-	dob: null,
-};
-
 //TODO - Needs
 /**
  * 1. create new entity

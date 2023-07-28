@@ -18,8 +18,11 @@ const getPaymentsBySourceHolder = async (
 	response: Response
 ): Promise<PaymentList> => {
 	try {
+		console.log(
+			"Attempting to get payments by sourceHolderId: " + request.params.id
+		);
 		const paymentOpts: IPaymentListOpts = {
-			source_holder_id: request.body.source_holder_id,
+			source_holder_id: request.params.id,
 		};
 		const payment: PaymentList = await method.payments.list(paymentOpts);
 		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
@@ -38,8 +41,11 @@ const getPaymentsByDestination = async (
 	response: Response
 ): Promise<PaymentList> => {
 	try {
+		console.log(
+			"Attempting to get payments by destinationid: " + request.params.id
+		);
 		const paymentOpts: IPaymentListOpts = {
-			destination: request.body.destination_holder_id,
+			destination: request.params.id,
 		};
 		const payment: PaymentList = await method.payments.list(paymentOpts);
 		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
@@ -72,7 +78,7 @@ const sendPayment = async (request: Request, response: Response) => {
 		});
 		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
-			payment: payment,
+			payment: [payment],
 		});
 	} catch (error) {
 		console.log("[METHOD - New Payment ERROR]" + error);
