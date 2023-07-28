@@ -18,7 +18,10 @@ const getPaymentsBySourceHolder = async (
 	request: Request,
 	response: Response
 ) => {
-	try {console.log("Attempting to get payments by sourceHolderId: "+ request.params.id);
+	try {
+		console.log(
+			"Attempting to get payments by sourceHolderId: " + request.params.id
+		);
 		const paymentOpts: IPaymentListOpts = {
 			source_holder_id: request.params.id,
 		};
@@ -41,9 +44,11 @@ const getPaymentsByDestination = async (
 	response: Response
 ) => {
 	try {
-		console.log("Attempting to get payments by destinationid: "+ request.params.id);
+		console.log(
+			"Attempting to get payments by destinationid: " + request.params.id
+		);
 		const paymentOpts: IPaymentListOpts = {
-			destination: request.params.id
+			destination: request.params.id,
 		};
 
 		const payment = await method.payments.list(paymentOpts);
