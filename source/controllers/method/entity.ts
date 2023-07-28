@@ -1,10 +1,6 @@
 // import * as dotenv from 'dotenv';
 // dotenv.config();
-import {Request, response, Response} from "express";
-import axios, {AxiosResponse} from "axios";
-
-import {Entity, Individual} from "../../models/entity";
-import {Address} from "../../models/address";
+import {Request, Response} from "express";
 
 import {Method, Environments} from "method-node";
 
@@ -16,20 +12,6 @@ const method = new Method({
 	env: Environments.production,
 });
 
-const tempAddy: Address = {
-	line1: "485 Sandmere Place",
-	city: "Oakvbille",
-	state: "TX",
-	zip: "90210",
-};
-
-const testPerson: Individual = {
-	first_name: "John",
-	last_name: "Smith",
-	phone: "19056162504",
-	email: null,
-	dob: null,
-};
 
 //TODO - Needs
 /**
