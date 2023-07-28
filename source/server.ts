@@ -15,7 +15,7 @@ router.use(express.urlencoded({extended: false}));
 
 router.use(express.json());
 
-router.use((req, res, next) => {
+router.use((req, res) => {
 	// set the CORS policy
 	res.header("Access-Control-Allow-Origin", "*");
 	// set the CORS headers
@@ -51,7 +51,7 @@ router.use((req, res, next) => {
 
 const startAPI = async function () {
 	const httpServer = http.createServer(router);
- const PORT: any = process.env.PORT || 3000;
+	const PORT: any = process.env.PORT || 3000;
 
 	httpServer.listen(PORT, () =>
 		console.log(`Nimbus API is running on port ${PORT}`)
