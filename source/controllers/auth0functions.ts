@@ -1,4 +1,5 @@
-import axios from "axios";
+import axios, {AxiosRequestConfig} from "axios";
+import {Request, response, Response} from "express";
 
 import {ManagementClient, AuthenticationClient, UserMetadata} from "auth0";
 
