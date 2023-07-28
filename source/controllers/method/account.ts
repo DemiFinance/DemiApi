@@ -2,7 +2,7 @@ import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
-import {Method, Environments, IAccountListOpts} from "method-node";
+import {Method, Environments} from "method-node";
 
 import {changeAccountName, getToken} from "../auth0functions";
 
@@ -164,7 +164,6 @@ const getCreditScore = async (request: Request, response: Response) => {
 
 const updateAccountName = async (request: Request, response: Response) => {
 	const account_id = request.params.account_id;
-	const name = request.body.name;
 
 	try {
 		const userId = request.body.auth0_id;
