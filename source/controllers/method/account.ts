@@ -7,7 +7,7 @@ import {Method, Environments} from "method-node";
 import {changeAccountName, getToken} from "../auth0functions";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY ? process.env.METHOD_API_KEY : "",
+	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 
