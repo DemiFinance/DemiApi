@@ -5,9 +5,7 @@
 //   const paymentList = Convert.toPaymentList(json);
 
 export interface PaymentList {
-	success: boolean;
 	data: Payment[];
-	message: null;
 }
 
 export interface Payment {

@@ -56,7 +56,7 @@ export async function updateUserMeta(
 		const response = await axios.patch(
 			endpoint,
 			{
-				name: `${familyName} ${givenName}`,
+				name: `${givenName} ${familyName}`,
 				given_name: givenName,
 				family_name: familyName,
 				app_metadata: metadata,
