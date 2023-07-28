@@ -7,7 +7,7 @@ import {Method, Environments, IAccountListOpts} from "method-node";
 import {changeAccountName, getToken} from "../auth0functions";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY ? process.env.METHOD_API_KEY : undefined,
 	env: Environments.production,
 });
 
@@ -164,7 +164,6 @@ const getCreditScore = async (request: Request, response: Response) => {
 
 const updateAccountName = async (request: Request, response: Response) => {
 	const account_id = request.params.account_id;
-	const name = request.body.name;
 
 	try {
 		const userId = request.body.auth0_id;
