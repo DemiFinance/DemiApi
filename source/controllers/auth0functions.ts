@@ -131,6 +131,7 @@ export async function getToken(): Promise<string> {
 		return "";
 	}
 }
+}
 
 export const addNotificationTokenToMetadata = async (
 	request: Request,
