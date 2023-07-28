@@ -82,7 +82,7 @@ const postEntity = async (request: Request, response: Response) => {
 //this works
 const getEntity = async (request: Request, response: Response) => {
 	const id: string = request.params.id;
- const requestedEntity: any = await method.entities.get(id) || {};
+	const requestedEntity: any = await method.entities.get(id) || {};
 
 	console.log("requested entity" + requestedEntity);
 
