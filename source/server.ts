@@ -9,9 +9,7 @@ import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
 
-import entityController from "./controllers/method/entity";
-
-const router: Express = express();
+const PORT: any = process.env.PORT ? process.env.PORT : 3000;
 
 router.use(express.urlencoded({extended: false}));
 
