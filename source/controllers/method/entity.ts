@@ -9,7 +9,7 @@ import {Address} from "../../models/address";
 import {Method, Environments} from "method-node";
 
 import {updateUserMeta, getToken} from "../auth0functions";
-import {log} from "console";
+import { log } from "console";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY!,
@@ -64,7 +64,7 @@ const testWithMethod = async (request: Request, response: Response) => {
 const postEntity = async (request: Request, response: Response) => {
 	log("Attempting to create new entity... " + JSON.stringify(request.body));
 	try {
-		const {auth0_id, first_name, last_name, phone} = request.body;
+		const { auth0_id, first_name, last_name, phone } = request.body;
 
 		// Validate request body
 		if (!auth0_id || !first_name || !last_name || !phone) {
@@ -95,6 +95,7 @@ const postEntity = async (request: Request, response: Response) => {
 		return response.status(500).json({error: "Failed to create new entity"});
 	}
 };
+
 
 //this works
 const getEntity = async (request: Request, response: Response) => {
