@@ -119,8 +119,7 @@ export async function getToken(): Promise<string> {
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 		}),
 	};
-}
-	};
+};
 
 	try {
 		const response = await axios.request(options);
