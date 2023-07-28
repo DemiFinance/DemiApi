@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { PaymentList } from '../../models/paymentList';
+import { PaymentList } from "../../models/paymentList";
 import {Request, Response} from "express";
 import {
 	Method,
