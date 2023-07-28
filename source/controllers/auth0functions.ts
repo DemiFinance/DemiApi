@@ -114,7 +114,7 @@ export async function getToken(): Promise<string> {
 		data: new URLSearchParams({
 			grant_type: "client_credentials",
 			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
-   client_secret: process.env.AUTH0_CLIENT_SECRET || "",
+	client_secret: process.env.AUTH0_CLIENT_SECRET || "",
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			//audience: "https://api.demifinance.com",
 		}),
