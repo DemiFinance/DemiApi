@@ -184,3 +184,36 @@ export const addNotificationTokenToMetadata = async (
 		});
 	}
 };
+
+export const getNotificationTokenByEntyityId = async (
+	request: Request,
+	response: Response
+) => {
+	try {
+		const entityId: string = request.params.id;
+
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: "https://{yourDomain}/api/v2/users",
+			params: {
+				q: `app_metadata.notificationToken:"${entityId}"`,
+				search_engine: "v3",
+			},
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		console.log("requested entity", data);
+
+		// Assuming the first user in the returned array is the relevant user
+		const appMetadata = data[0]?.app_metadata.notificationToken;
+
+		return response.status(200).json({
+			entity: appMetadata,
+		});
+	} catch (error) {
+		console.error(error);
+		return response.status(500).json({error: "Internal server error"});
+	}
+};
