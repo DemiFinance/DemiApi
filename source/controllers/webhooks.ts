@@ -16,6 +16,13 @@ async function updatePayment(id: string) {
 	console.log(`Payment with id: ${id} has updated`);
 	// Add your logic here
 	// If something goes wrong, throw an error
+
+    //check who owns the payment
+
+    //check if owner opts in to notifications
+
+    //begin notification process
+    //if shit hits the fan
 	// throw new Error('Failed to update payment');
 }
 
@@ -51,7 +58,7 @@ async function processWebhookObject(webhookObject: WebhookObject) {
 	}
 }
 
-export const mainHandler = async (request: Request, response: Response) => {
+export const webhookHandler = async (request: Request, response: Response) => {
 	console.log("webhook received" + JSON.stringify(request.body));
 	try {
 		const webhook: WebhookObject = {
