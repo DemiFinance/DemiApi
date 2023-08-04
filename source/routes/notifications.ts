@@ -1,5 +1,8 @@
 import express from "express";
-import {addNotificationTokenToMetadata, getNotificationTokenByEntyityId} from "../controllers/auth0functions";
+import {
+	addNotificationTokenToMetadata,
+	getNotificationTokenByEntyityId,
+} from "../controllers/auth0functions";
 
 const router = express.Router();
 const {auth} = require("express-oauth2-jwt-bearer");
