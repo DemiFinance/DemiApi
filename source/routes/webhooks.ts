@@ -11,6 +11,6 @@ const pong = async (request: express.Request, response: express.Response) => {
 };
 
 router.get("/ping", validateApiKey, pong);
-router.post("/", validateApiKey, pong)
+router.post("/", validateApiKey, pong);
 
 export = router;

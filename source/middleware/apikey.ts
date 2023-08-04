@@ -13,7 +13,7 @@ export const validateApiKey = (
 		return;
 	}
 
-	const apiKey = authHeader;//.split(" ")[1]; // Assuming 'Bearer YOUR_API_KEY' format
+	const apiKey = authHeader; //.split(" ")[1]; // Assuming 'Bearer YOUR_API_KEY' format
 
 	// Get all environment variables that start with API_KEY_
 	const envApiKeys: string[] = [];
