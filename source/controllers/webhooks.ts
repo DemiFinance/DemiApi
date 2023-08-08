@@ -41,59 +41,59 @@ async function updateEntity(id: string) {
 }
 
 async function createAccount(id: string) {
-    console.log(`Created account with id: ${id}`)
+	console.log(`Created account with id: ${id}`);
 	// Add your logic here
 	// If something goes wrong, throw an error
 	// throw new Error('Failed to create account');
 }
 
 async function updateAccount(id: string) {
-    console.log(`Updated account with id: ${id}`)
+	console.log(`Updated account with id: ${id}`);
 	// Add your logic here
 	// If something goes wrong, throw an error
 	// throw new Error('Failed to update account');
 }
 
 async function createAccountVerification(id: string) {
-    console.log(`Created account verification with id: ${id}`)
+	console.log(`Created account verification with id: ${id}`);
 	// Add your logic here
 	// If something goes wrong, throw an error
 	// throw new Error('Failed to create account verification');
 }
 
 async function updateAccountVerification(id: string) {
-    console.log(`Updated account verification with id: ${id}`)
-    // Add your logic here
-    // If something goes wrong, throw an error
-    // throw new Error('Failed to update account verification');
+	console.log(`Updated account verification with id: ${id}`);
+	// Add your logic here
+	// If something goes wrong, throw an error
+	// throw new Error('Failed to update account verification');
 }
 
 async function createConnection(id: string) {
-    console.log(`Created connection with id: ${id}`)
-    // Add your logic here
-    // If something goes wrong, throw an error
-    // throw new Error('Failed to create connection');
+	console.log(`Created connection with id: ${id}`);
+	// Add your logic here
+	// If something goes wrong, throw an error
+	// throw new Error('Failed to create connection');
 }
 
 async function updateConnection(id: string) {
-    console.log(`Updated connection with id: ${id}`)
-    // Add your logic here
-    // If something goes wrong, throw an error
-    // throw new Error('Failed to update connection');
+	console.log(`Updated connection with id: ${id}`);
+	// Add your logic here
+	// If something goes wrong, throw an error
+	// throw new Error('Failed to update connection');
 }
 
 async function createPaymentReversal(id: string) {
-    console.log(`Created payment reversal with id: ${id}`)
-    // Add your logic here
-    // If something goes wrong, throw an error
-    // throw new Error('Failed to create payment reversal');
+	console.log(`Created payment reversal with id: ${id}`);
+	// Add your logic here
+	// If something goes wrong, throw an error
+	// throw new Error('Failed to create payment reversal');
 }
 
 async function updatePaymentReversal(id: string) {
-    console.log(`Updated payment reversal with id: ${id}`)
-    // Add your logic here
-    // If something goes wrong, throw an error
-    // throw new Error('Failed to update payment reversal');
+	console.log(`Updated payment reversal with id: ${id}`);
+	// Add your logic here
+	// If something goes wrong, throw an error
+	// throw new Error('Failed to update payment reversal');
 }
 
 // Map operations to functions
@@ -102,14 +102,14 @@ const operationHandlers: {[key: string]: (id: string) => Promise<void>} = {
 	"payment.update": updatePayment,
 	"entity.create": createEntity,
 	"entity.update": updateEntity,
-    "account.create": createAccount,
-    "account.update": updateAccount,
-    "account_verification.create": createAccountVerification,
-    "account_verification.update": updateAccountVerification,
-    "connection.create": createConnection,
-    "connection.update": updateConnection,
-    "payment_reversal.create": createPaymentReversal,
-    "payment_reversal.update": updatePaymentReversal,
+	"account.create": createAccount,
+	"account.update": updateAccount,
+	"account_verification.create": createAccountVerification,
+	"account_verification.update": updateAccountVerification,
+	"connection.create": createConnection,
+	"connection.update": updateConnection,
+	"payment_reversal.create": createPaymentReversal,
+	"payment_reversal.update": updatePaymentReversal,
 };
 
 async function processWebhookObject(webhookObject: WebhookObject) {
