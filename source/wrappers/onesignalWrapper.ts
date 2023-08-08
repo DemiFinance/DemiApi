@@ -28,13 +28,7 @@ export const sendNotification = (
 
 	notification.external_id = ""; //get externalid based on who owns the notification trigger
 
-	return client
-		.createNotification(notification)
-		.then((response) => response.data)
-		.catch((e) => {
-			console.error(e);
-			throw e;
-		});
+	return client.createNotification(notification);
 };
 
 // You can export more functions here if needed
