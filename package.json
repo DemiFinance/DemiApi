@@ -22,6 +22,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@onesignal/node-onesignal": "^2.0.1-beta2",
 		"auth0": "^3.3.0",
 		"axios": "^0.27.2",
 		"cassandra-driver": "^4.6.4",

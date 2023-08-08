@@ -1,7 +1,7 @@
 import express from "express";
 
 import {validateApiKey} from "../middleware/apikey";
-import { webhookHandler } from "../controllers/webhooks";
+import {webhookHandler} from "../controllers/webhooks";
 
 const router = express.Router();
 

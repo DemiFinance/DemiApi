@@ -17,12 +17,12 @@ async function updatePayment(id: string) {
 	// Add your logic here
 	// If something goes wrong, throw an error
 
-    //check who owns the payment
+	//check who owns the payment
 
-    //check if owner opts in to notifications
+	//check if owner opts in to notifications
 
-    //begin notification process
-    //if shit hits the fan
+	//begin notification process
+	//if shit hits the fan
 	// throw new Error('Failed to update payment');
 }
 
