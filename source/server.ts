@@ -9,8 +9,7 @@ import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
-
-import entityController from "./controllers/method/entity";
+import webhookRoutes from "./routes/webhooks";
 
 const router: Express = express();
 
@@ -45,6 +44,7 @@ router.use("/auth", authRoutes);
 router.use("/accounts", accountRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/webhook", webhookRoutes);
 
 router.use((req, res, next) => {
 	const error = new Error("404 - Error not found!");
