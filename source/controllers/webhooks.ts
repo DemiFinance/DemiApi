@@ -4,27 +4,7 @@ import axios, {AxiosResponse} from "axios";
 import {updateUserMeta, getToken} from "./auth0functions";
 import {log} from "console";
 import {WebhookObject} from "../models/webhook";
-
-async function createPayment(id: string) {
-	console.log(`Payment with id: ${id} has created`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create payment');
-}
-
-async function updatePayment(id: string) {
-	console.log(`Payment with id: ${id} has updated`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-
-	//check who owns the payment
-
-	//check if owner opts in to notifications
-
-	//begin notification process
-	//if shit hits the fan
-	// throw new Error('Failed to update payment');
-}
+import {createPayment, updatePayment} from "./webhooks/payments";
 
 async function createEntity(id: string) {
 	console.log(`Created entity with id: ${id}`);
