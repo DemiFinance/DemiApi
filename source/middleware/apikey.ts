@@ -25,7 +25,7 @@ export const validateApiKey = (
 
 	// Check if provided API key is in the list of environment variables
 	if (!envApiKeys.includes(apiKey)) {
-		console.log("Invalid Api Key")
+		console.log("Invalid Api Key");
 		res.status(403).json({error: "Invalid API key"});
 		return;
 	}
