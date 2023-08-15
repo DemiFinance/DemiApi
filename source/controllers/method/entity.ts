@@ -12,7 +12,7 @@ import {updateUserMeta, getToken} from "../auth0functions";
 import {log} from "console";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 
@@ -84,7 +84,7 @@ const postEntity = async (request: Request, response: Response) => {
 //this works
 const getEntity = async (request: Request, response: Response) => {
 	const id: string = request.params.id;
-	const requestedEntity: any = await method.entities.get(id)!;
+	const requestedEntity: any = (await method.entities.get(id)) || null;
 
 	console.log("requested entity" + requestedEntity);
 

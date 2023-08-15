@@ -5,7 +5,7 @@ const configParams: ConfigurationParameters = {
 	authMethods: {
 		// Fill in the properties for AuthMethodsConfiguration
 	},
-	appKey: process.env.ONESIGNAL_API_KEY!,
+	appKey: process.env.ONESIGNAL_API_KEY || "",
 	userKey: "your-user-key",
 };
 

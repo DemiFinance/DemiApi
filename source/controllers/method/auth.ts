@@ -10,7 +10,7 @@ import {Method, Environments} from "method-node";
 import {log} from "console";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 

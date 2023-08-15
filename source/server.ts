@@ -55,7 +55,7 @@ router.use((req, res, next) => {
 
 const startAPI = async function () {
 	const httpServer = http.createServer(router);
-	const PORT: any = process.env.PORT!;
+	const PORT: any = process.env.PORT || "8080";
 
 	httpServer.listen(PORT, () =>
 		console.log(`Nimbus API is running on port ${PORT}`)
