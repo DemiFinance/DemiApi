@@ -1,8 +1,4 @@
-import {Request, response, Response} from "express";
-import axios, {AxiosResponse} from "axios";
-
-import {updateUserMeta, getToken} from "./auth0functions";
-import {log} from "console";
+import {Request, Response} from "express";
 import {WebhookObject} from "../models/webhook";
 
 async function createPayment(id: string) {

@@ -7,7 +7,7 @@ import {Method, Environments, IAccountListOpts} from "method-node";
 import {changeAccountName, getToken} from "../auth0functions";
 
 const method = new Method({
-	apiKey: process.env.METHOD_API_KEY!,
+	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 
@@ -24,7 +24,7 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 		holder_id: request.params.id,
 	};
 
-	const accountList: any = await method.accounts.list(opts)!;
+	const accountList: any = (await method.accounts.list(opts)) || null;
 
 	console.log("Recieved GET - /accounts/list/" + request.params.id);
 
@@ -164,7 +164,6 @@ const getCreditScore = async (request: Request, response: Response) => {
 
 const updateAccountName = async (request: Request, response: Response) => {
 	const account_id = request.params.account_id;
-	const name = request.body.name;
 
 	try {
 		const userId = request.body.auth0_id;
