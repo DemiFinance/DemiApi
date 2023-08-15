@@ -109,7 +109,7 @@ const operationHandlers: {[key: string]: (id: string) => Promise<void>} = {
 };
 
 async function processWebhookObject(webhookObject: WebhookObject) {
-	const handler = operationHandlers[webhookObject.op];
+	const handler = operationHandlers[webhookObject.type];
 	if (handler) {
 		await handler(webhookObject.id);
 	} else {
