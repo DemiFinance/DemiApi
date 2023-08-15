@@ -46,7 +46,7 @@ router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/webhook", webhookRoutes);
 
-router.use((req, res, next) => {
+router.use((_, res) => {
 	const error = new Error("404 - Error not found!");
 	return res.status(404).json({
 		message: error.message,
@@ -55,7 +55,7 @@ router.use((req, res, next) => {
 
 const startAPI = async function () {
 	const httpServer = http.createServer(router);
-	const PORT: any = process.env.PORT!;
+	const PORT: any = process.env.PORT || "8080";
 
 	httpServer.listen(PORT, () =>
 		console.log(`Nimbus API is running on port ${PORT}`)
