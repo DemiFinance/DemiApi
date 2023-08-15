@@ -164,7 +164,6 @@ const getCreditScore = async (request: Request, response: Response) => {
 
 const updateAccountName = async (request: Request, response: Response) => {
 	const account_id = request.params.account_id;
-	const name = request.body.name;
 
 	try {
 		const userId = request.body.auth0_id;

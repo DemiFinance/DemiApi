@@ -46,7 +46,7 @@ router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/webhook", webhookRoutes);
 
-router.use((req, res, next) => {
+router.use((_, res) => {
 	const error = new Error("404 - Error not found!");
 	return res.status(404).json({
 		message: error.message,

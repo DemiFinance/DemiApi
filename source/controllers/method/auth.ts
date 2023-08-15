@@ -1,13 +1,8 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import {json, Request, response, Response} from "express";
-import axios, {AxiosResponse} from "axios";
-
-import {Entity, Individual} from "../../models/entity";
-import {Address} from "../../models/address";
+import {Request, Response} from "express";
 
 import {Method, Environments} from "method-node";
-import {log} from "console";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",

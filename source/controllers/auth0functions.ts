@@ -1,7 +1,7 @@
 import axios, {AxiosRequestConfig} from "axios";
-import {Request, response, Response} from "express";
+import {Request, Response} from "express";
 
-import {ManagementClient, AuthenticationClient, UserMetadata} from "auth0";
+import {ManagementClient, AuthenticationClient} from "auth0";
 
 const auth0 = new ManagementClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
