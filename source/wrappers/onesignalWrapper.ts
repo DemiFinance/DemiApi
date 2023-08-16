@@ -5,7 +5,7 @@ const configParams: ConfigurationParameters = {
 	authMethods: {
 		// Fill in the properties for AuthMethodsConfiguration
 	},
-	appKey: process.env.ONESIGNAL_API_KEY!,
+	appKey: process.env.ONESIGNAL_API_KEY || "",
 	userKey: "your-user-key",
 };
 
@@ -28,13 +28,7 @@ export const sendNotification = (
 
 	notification.external_id = ""; //get externalid based on who owns the notification trigger
 
-	return client
-		.createNotification(notification)
-		.then((response) => response.data)
-		.catch((e) => {
-			console.error(e);
-			throw e;
-		});
+	return client.createNotification(notification);
 };
 
 // You can export more functions here if needed

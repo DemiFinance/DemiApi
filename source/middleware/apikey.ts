@@ -13,7 +13,16 @@ export const validateApiKey = (
 		return;
 	}
 
-	const apiKey = authHeader; //.split(" ")[1]; // Assuming 'Bearer YOUR_API_KEY' format
+	const apiKey = authHeader; // Assuming the API key is directly passed without 'Bearer' prefix
+
+	// Decode the apiKey if it's in Base64 format
+	let decodedApiKey;
+	try {
+		decodedApiKey = Buffer.from(apiKey, "base64").toString("utf-8");
+	} catch (err) {
+		// If decoding fails, it's probably not Base64, so we'll use the original apiKey
+		decodedApiKey = apiKey;
+	}
 
 	// Get all environment variables that start with API_KEY_
 	const envApiKeys: string[] = [];
@@ -23,8 +32,14 @@ export const validateApiKey = (
 		}
 	}
 
-	// Check if provided API key is in the list of environment variables
-	if (!envApiKeys.includes(apiKey)) {
+	// Check if provided API key (or its decoded version) is in the list of environment variables
+	if (!envApiKeys.includes(apiKey) && !envApiKeys.includes(decodedApiKey)) {
+		console.log(
+			"Invalid Api Key" +
+				JSON.stringify(req.headers) +
+				req.originalUrl +
+				JSON.stringify(req.body)
+		);
 		res.status(403).json({error: "Invalid API key"});
 		return;
 	}

@@ -19,3 +19,7 @@ run:
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:METHOD_API_KEY::"
     - name: AUTH0_CLIENT_SECRET
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:AUTH0_CLIENT_SECRET::"
+    - name: API_KEY_METHODWEBHOOKS
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:API_KEY_METHODWEBHOOKS::"
+    - name: ONESIGNAL_API_KEY
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:ONESIGNAL_API_KEY::"

@@ -1,12 +1,12 @@
 import axios, {AxiosRequestConfig} from "axios";
-import {Request, response, Response} from "express";
+import {Request, Response} from "express";
 
-import {ManagementClient, AuthenticationClient, UserMetadata} from "auth0";
+import {ManagementClient, AuthenticationClient} from "auth0";
 
 const auth0 = new ManagementClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
 	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+	clientSecret: process.env.AUTH0_CLIENT_SECRET || "",
 	scope: "read:users update:users",
 	audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 });
@@ -14,7 +14,7 @@ const auth0 = new ManagementClient({
 const auth0Auth = new AuthenticationClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
 	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-	clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+	clientSecret: process.env.AUTH0_CLIENT_SECRET || "",
 });
 
 // Example function to obtain an access token with the necessary scopes
@@ -123,7 +123,7 @@ export async function getToken(): Promise<string> {
 		data: new URLSearchParams({
 			grant_type: "client_credentials",
 			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
-			client_secret: process.env.AUTH0_CLIENT_SECRET!,
+			client_secret: process.env.AUTH0_CLIENT_SECRET || "",
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
 			//audience: "https://api.demifinance.com",
 		}),
