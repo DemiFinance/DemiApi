@@ -46,8 +46,9 @@ router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/webhook", webhookRoutes);
 
-router.use((_, res) => {
+router.use((req, res) => {
 	const error = new Error("404 - Error not found!");
+	console.log("API Gateway - 404 " + req.originalUrl);
 	return res.status(404).json({
 		message: error.message,
 	});
