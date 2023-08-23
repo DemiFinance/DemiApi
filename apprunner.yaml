@@ -23,3 +23,12 @@ run:
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:API_KEY_METHODWEBHOOKS::"
     - name: ONESIGNAL_API_KEY
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:ONESIGNAL_API_KEY::"
+    - name: PGHOST
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGHOST::"
+    - name: PGUSER
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGUSER::"
+    - name: PGPASSWORD
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGPASSWORD::"
+    - name: PGDATABASE
+      value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGDATABASE::"
+      
