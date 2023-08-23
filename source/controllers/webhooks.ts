@@ -173,9 +173,40 @@ async function updateAccount(id: string) {
 
 			const result3 = await db.query(creditCardData);
 
-			console.log("database ops complte: " + result1 + result2 + result3);
+			const insertStatementSQL = {
+				text: `
+					WITH latest_update AS (
+						SELECT EXTRACT(MONTH FROM captured_at) AS month, 
+							   EXTRACT(YEAR FROM captured_at) AS year
+						FROM AccountStatementHistory
+						WHERE account_id = $1
+						ORDER BY captured_at DESC
+						LIMIT 1
+					)
+					INSERT INTO AccountStatementHistory (account_id, statement_balance, statement_due_date, minimum_payment)
+					SELECT $1, $2, $3, $4
+					WHERE NOT EXISTS (
+						SELECT 1
+						FROM latest_update
+						WHERE month = EXTRACT(MONTH FROM CURRENT_DATE)
+						AND year = EXTRACT(YEAR FROM CURRENT_DATE)
+					);
+				`,
+				values: [
+					account.id,
+					account.liability.credit_card?.last_statement_balance,
+					account.liability.credit_card?.next_payment_due_date,
+					account.liability.credit_card?.last_statement_balance,
+				],
+			};
+
+			const result4 = await db.query(insertStatementSQL);
+
+			console.log("database ops complte: " + result1 + result2 + result3 + result4);
 
 			//grab info then push to db
+
+			//do the comparison thing
 		}
 	}
 	// Add your logic here
