@@ -1,6 +1,14 @@
 import {Request, Response} from "express";
 import {WebhookObject} from "../models/webhook";
 
+import {Method, Environments} from "method-node";
+import * as db from "../database/index.js";
+
+const method = new Method({
+	apiKey: process.env.METHOD_API_KEY || "",
+	env: Environments.production,
+});
+
 async function createPayment(id: string) {
 	console.log(`Payment with id: ${id} has created`);
 	// Add your logic here
@@ -45,6 +53,131 @@ async function createAccount(id: string) {
 
 async function updateAccount(id: string) {
 	console.log(`Updated account with id: ${id}`);
+
+	/**
+	 * 1. check database for exisiting account reccord
+	 * 2. update the row with current information
+	 * 3. pull from statement history table to see if there is a new due date.
+	 * 4. push off to account service to handle the update
+	 *
+	 *  const result = await db.query('SELECT * FROM users WHERE id = $1', [req.params.id])
+	 *
+	 */
+
+	const account = await method.accounts.get(id);
+
+	if (account.type == "liability") {
+		if (account.liability?.type == "credit_card") {
+			const accountData = {
+				text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metaaccount, created_at, updated_at)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+				ON CONFLICT (id)
+				DO UPDATE SET
+					holder_id = EXCLUDED.holder_id,
+					status = EXCLUDED.status,
+					type = EXCLUDED.type,
+					clearing = EXCLUDED.clearing,
+					capabilities = EXCLUDED.capabilities,
+					available_capabilities = EXCLUDED.available_capabilities,
+					error = EXCLUDED.error,
+					metadata = EXCLUDED.metadata,
+					created_at = EXCLUDED.created_at,
+					updated_at = EXCLUDED.updated_at;
+				`,
+				values: [
+					account.id,
+					account.holder_id,
+					account.status,
+					account.type,
+					account.clearing,
+					account.capabilities,
+					account.available_capabilities,
+					account.error,
+					account.metadata,
+					account.created_at,
+					account.updated_at,
+				],
+			};
+
+			const result1 = await db.query(accountData);
+
+			const liabilityData = {
+				text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+				ON CONFLICT (id)
+				DO UPDATE SET
+					mch_id = EXCLUDED.mch_id,
+					mask = EXCLUDED.mask,
+					type = EXCLUDED.type,
+					payment_status = EXCLUDED.payment_status,
+					data_status = EXCLUDED.data_status,
+					data_sync_type = EXCLUDED.data_sync_type,
+					data_last_successful_sync = EXCLUDED.data_last_successful_sync,
+					data_source = EXCLUDED.data_source,
+					data_updated_at = EXCLUDED.data_updated_at,
+					ownership = EXCLUDED.ownership,
+					data_status_error = EXCLUDED.data_status_error,
+					hash = EXCLUDED.hash;`,
+				values: [
+					account.id,
+					account.liability.mch_id,
+					account.liability.mask,
+					account.liability.type,
+					account.liability.payment_status,
+					account.liability.data_status,
+					account.liability.data_sync_type,
+					account.liability.data_last_successful_sync,
+					account.liability.data_source,
+					account.liability.data_updated_at,
+					account.liability.ownership,
+					account.liability.data_status_error,
+					account.liability.hash,
+				],
+			};
+
+			const result2 = await db.query(liabilityData);
+
+			const creditCardData = {
+				text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+				ON CONFLICT (id)
+				DO UPDATE SET
+					mch_id = EXCLUDED.mch_id,
+					mask = EXCLUDED.mask,
+					type = EXCLUDED.type,
+					payment_status = EXCLUDED.payment_status,
+					data_status = EXCLUDED.data_status,
+					data_sync_type = EXCLUDED.data_sync_type,
+					data_last_successful_sync = EXCLUDED.data_last_successful_sync,
+					data_source = EXCLUDED.data_source,
+					data_updated_at = EXCLUDED.data_updated_at,
+					ownership = EXCLUDED.ownership,
+					data_status_error = EXCLUDED.data_status_error,
+					hash = EXCLUDED.hash;`,
+				values: [
+					account.id,
+					account.liability.mch_id,
+					account.liability.mask,
+					account.liability.type,
+					account.liability.payment_status,
+					account.liability.data_status,
+					account.liability.data_sync_type,
+					account.liability.data_last_successful_sync,
+					account.liability.data_source,
+					account.liability.data_updated_at,
+					account.liability.ownership,
+					account.liability.data_status_error,
+					account.liability.hash,
+				],
+			};
+
+			const result3 = await db.query(creditCardData);
+
+			console.log("database ops complte: " + result1 + result2 + result3);
+
+			//grab info then push to db
+		}
+	}
 	// Add your logic here
 	// If something goes wrong, throw an error
 	// throw new Error('Failed to update account');
