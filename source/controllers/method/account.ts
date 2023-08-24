@@ -220,11 +220,14 @@ const pushAccountstoDB = async (request: Request, response: Response) => {
 `;
 
 	const insertOrUpdateCreditCard = `
-    INSERT INTO CreditCard (id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date, delinquent_status, delinquent_amount, delinquent_period, delinquent_action, delinquent_start_date, delinquent_major_start_date, delinquent_status_updated_at) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+    INSERT INTO CreditCard (id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
     ON CONFLICT (id)
     DO UPDATE SET balance = EXCLUDED.balance;
 `;
+	//, delinquent_status, delinquent_amount, delinquent_period, delinquent_action, delinquent_start_date, delinquent_major_start_date, delinquent_status_updated_at
+	//, $29, $30, $31, $32, $33, $34, $35
+
 	try {
 		const accounts = await method.accounts.list();
 
