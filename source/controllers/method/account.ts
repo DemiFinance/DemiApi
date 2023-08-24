@@ -5,6 +5,7 @@ import {Request, Response} from "express";
 import {Method, Environments, IAccountListOpts} from "method-node";
 
 import {changeAccountName, getToken} from "../auth0functions";
+import * as db from "../../database/index.js";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -203,6 +204,125 @@ const getFakeAccount = async (request: Request, response: Response) => {
 	}
 };
 
+const pushAccountstoDB = async (request: Request, response: Response) => {
+	const insertOrUpdateAccount = `
+    INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ON CONFLICT (id)
+    DO UPDATE SET updated_at = EXCLUDED.updated_at;
+`;
+
+	const insertOrUpdateLiability = `
+    INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    ON CONFLICT (id)
+    DO UPDATE SET data_updated_at = EXCLUDED.data_updated_at;
+`;
+
+	const insertOrUpdateCreditCard = `
+    INSERT INTO CreditCard (id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date, delinquent_status, delinquent_amount, delinquent_period, delinquent_action, delinquent_start_date, delinquent_major_start_date, delinquent_status_updated_at) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+    ON CONFLICT (id)
+    DO UPDATE SET balance = EXCLUDED.balance;
+`;
+	try {
+		const accounts = await method.accounts.list();
+
+		accounts.forEach(async (account) => {
+			const accountTable = {
+				text: insertOrUpdateAccount,
+				values: [
+					account.id,
+					account.holder_id,
+					account.status,
+					account.type,
+					account.clearing,
+					account.capabilities,
+					account.available_capabilities,
+					account.error,
+					account.metadata,
+					account.created_at,
+					account.updated_at,
+				],
+			};
+			await db.query(accountTable);
+
+			const liabilityTable = {
+				text: insertOrUpdateLiability,
+				values: [
+					account.id,
+					account.liability?.mch_id,
+					account.liability?.mask,
+					account.liability?.type,
+					account.liability?.payment_status,
+					account.liability?.data_status,
+					account.liability?.data_sync_type,
+					account.liability?.data_last_successful_sync,
+					account.liability?.data_source,
+					account.liability?.data_updated_at,
+					account.liability?.ownership,
+					account.liability?.data_status_error,
+					account.liability?.hash,
+				],
+			};
+
+			await db.query(liabilityTable);
+			const cc = account.liability?.credit_card;
+			const creditCardTable = {
+				text: insertOrUpdateCreditCard,
+				values: [
+					account.id,
+					cc?.name,
+					cc?.balance,
+					cc?.opened_at,
+					cc?.last_payment_date,
+					cc?.last_payment_amount,
+					cc?.next_payment_due_date,
+					cc?.next_payment_minimum_amount,
+					cc?.last_statement_balance,
+					cc?.remaining_statement_balance,
+					cc?.available_credit,
+					cc?.interest_rate_percentage,
+					cc?.interest_rate_type,
+					cc?.interest_rate_source,
+					cc?.past_due_status,
+					cc?.past_due_balance,
+					cc?.past_due_date,
+					cc?.auto_pay_status,
+					cc?.auto_pay_amount,
+					cc?.auto_pay_date,
+					cc?.sub_type,
+					cc?.term_length,
+					cc?.closed_at,
+					cc?.credit_limit,
+					cc?.pending_purchase_authorization_amount,
+					cc?.pending_credit_authorization_amount,
+					cc?.interest_saving_balance,
+					cc?.next_statement_date,
+					// cc?.delinquent_status,
+					// cc?.delinquent_amount,
+					// cc?.delinquent_period,
+					// cc?.delinquent_action,
+					// cc?.delinquent_start_date,
+					// cc?.delinquent_major_start_date,
+					// cc?.delinquent_status_updated_at,
+				],
+			};
+
+			// For CreditCard table
+
+			await db.query(creditCardTable);
+
+			db.getClient().then((client) => {
+				client.release();
+			});
+		});
+	} catch (error) {
+		console.error("Error pushing accounts to db:", error);
+		return response.status(500).json({error: "Failed to push accounts to db"});
+	}
+};
+
 export default {
 	getAccountById,
 	listAccountsByHolder,
@@ -213,4 +333,5 @@ export default {
 	updateAccountName,
 	getFakeAccount,
 	processNewConnection,
+	pushAccountstoDB,
 };

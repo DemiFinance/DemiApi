@@ -136,7 +136,7 @@ async function updateAccount(id: string) {
 			};
 
 			const result2 = await db.query(liabilityData);
-
+			const cc = account.liability?.credit_card;
 			const creditCardData = {
 				text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
 				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -156,18 +156,40 @@ async function updateAccount(id: string) {
 					hash = EXCLUDED.hash;`,
 				values: [
 					account.id,
-					account.liability.mch_id,
-					account.liability.mask,
-					account.liability.type,
-					account.liability.payment_status,
-					account.liability.data_status,
-					account.liability.data_sync_type,
-					account.liability.data_last_successful_sync,
-					account.liability.data_source,
-					account.liability.data_updated_at,
-					account.liability.ownership,
-					account.liability.data_status_error,
-					account.liability.hash,
+					cc?.name,
+					cc?.balance,
+					cc?.opened_at,
+					cc?.last_payment_date,
+					cc?.last_payment_amount,
+					cc?.next_payment_due_date,
+					cc?.next_payment_minimum_amount,
+					cc?.last_statement_balance,
+					cc?.remaining_statement_balance,
+					cc?.available_credit,
+					cc?.interest_rate_percentage,
+					cc?.interest_rate_type,
+					cc?.interest_rate_source,
+					cc?.past_due_status,
+					cc?.past_due_balance,
+					cc?.past_due_date,
+					cc?.auto_pay_status,
+					cc?.auto_pay_amount,
+					cc?.auto_pay_date,
+					cc?.sub_type,
+					cc?.term_length,
+					cc?.closed_at,
+					cc?.credit_limit,
+					cc?.pending_purchase_authorization_amount,
+					cc?.pending_credit_authorization_amount,
+					cc?.interest_saving_balance,
+					cc?.next_statement_date,
+					// cc?.delinquent_status,
+					// cc?.delinquent_amount,
+					// cc?.delinquent_period,
+					// cc?.delinquent_action,
+					// cc?.delinquent_start_date,
+					// cc?.delinquent_major_start_date,
+					// cc?.delinquent_status_updated_at,
 				],
 			};
 
@@ -202,7 +224,13 @@ async function updateAccount(id: string) {
 
 			const result4 = await db.query(insertStatementSQL);
 
-			console.log("database ops complte: " + result1 + result2 + result3 + result4);
+			db.getClient().then((client) => {
+				client.release();
+			});
+
+			console.log(
+				"database ops complte: " + result1 + result2 + result3 + result4
+			);
 
 			//grab info then push to db
 
