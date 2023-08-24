@@ -1,6 +1,8 @@
 import express from "express";
 import accountController from "../controllers/method/account";
 
+import {validateApiKey} from "../middleware/apikey";
+
 const router = express.Router();
 const {auth} = require("express-oauth2-jwt-bearer");
 
@@ -30,5 +32,11 @@ router.post(
 	accountController.updateAccountName
 );
 router.post("/newConnection", jwtCheck, accountController.processNewConnection);
+
+router.post(
+	"/forceMigration",
+	validateApiKey,
+	accountController.pushAccountstoDB
+);
 
 export = router;
