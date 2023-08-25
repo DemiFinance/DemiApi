@@ -137,23 +137,41 @@ async function updateAccount(id: string) {
 
 			const result2 = await db.query(liabilityData);
 			const cc = account.liability?.credit_card;
+
 			const creditCardData = {
-				text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+				text: `INSERT INTO CreditCard 
+				(id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date) 
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
 				ON CONFLICT (id)
-				DO UPDATE SET
-					mch_id = EXCLUDED.mch_id,
-					mask = EXCLUDED.mask,
-					type = EXCLUDED.type,
-					payment_status = EXCLUDED.payment_status,
-					data_status = EXCLUDED.data_status,
-					data_sync_type = EXCLUDED.data_sync_type,
-					data_last_successful_sync = EXCLUDED.data_last_successful_sync,
-					data_source = EXCLUDED.data_source,
-					data_updated_at = EXCLUDED.data_updated_at,
-					ownership = EXCLUDED.ownership,
-					data_status_error = EXCLUDED.data_status_error,
-					hash = EXCLUDED.hash;`,
+				DO UPDATE SET 
+					name = EXCLUDED.name,
+					balance = EXCLUDED.balance,
+					opened_at = EXCLUDED.opened_at,
+					last_payment_date = EXCLUDED.last_payment_date,
+					last_payment_amount = EXCLUDED.last_payment_amount,
+					next_payment_due_date = EXCLUDED.next_payment_due_date,
+					next_payment_minimum_amount = EXCLUDED.next_payment_minimum_amount,
+					last_statement_balance = EXCLUDED.last_statement_balance,
+					remaining_statement_balance = EXCLUDED.remaining_statement_balance,
+					available_credit = EXCLUDED.available_credit,
+					interest_rate_percentage = EXCLUDED.interest_rate_percentage,
+					interest_rate_type = EXCLUDED.interest_rate_type,
+					interest_rate_source = EXCLUDED.interest_rate_source,
+					past_due_status = EXCLUDED.past_due_status,
+					past_due_balance = EXCLUDED.past_due_balance,
+					past_due_date = EXCLUDED.past_due_date,
+					auto_pay_status = EXCLUDED.auto_pay_status,
+					auto_pay_amount = EXCLUDED.auto_pay_amount,
+					auto_pay_date = EXCLUDED.auto_pay_date,
+					sub_type = EXCLUDED.sub_type,
+					term_length = EXCLUDED.term_length,
+					closed_at = EXCLUDED.closed_at,
+					credit_limit = EXCLUDED.credit_limit,
+					pending_purchase_authorization_amount = EXCLUDED.pending_purchase_authorization_amount,
+					pending_credit_authorization_amount = EXCLUDED.pending_credit_authorization_amount,
+					interest_saving_balance = EXCLUDED.interest_saving_balance,
+					next_statement_date = EXCLUDED.next_statement_date;
+				`,
 				values: [
 					account.id,
 					cc?.name,
