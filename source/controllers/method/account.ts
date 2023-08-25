@@ -236,69 +236,78 @@ const pushAccountstoDB = async (request: Request, response: Response) => {
 
 		for (const account of accounts) {
 			// Insert or update account
-			await db.query({text: insertOrUpdateAccount, values:[
-				account.id,
-				account.holder_id,
-				account.status,
-				account.type,
-				account.clearing,
-				account.capabilities,
-				account.available_capabilities,
-				account.error,
-				account.metadata,
-				account.created_at,
-				account.updated_at,
-			]});
+			await db.query({
+				text: insertOrUpdateAccount,
+				values: [
+					account.id,
+					account.holder_id,
+					account.status,
+					account.type,
+					account.clearing,
+					account.capabilities,
+					account.available_capabilities,
+					account.error,
+					account.metadata,
+					account.created_at,
+					account.updated_at,
+				],
+			});
 
 			// Insert or update liability
-			await db.query({text: insertOrUpdateLiability, values:[
-				account.id,
-				account.liability?.mch_id,
-				account.liability?.mask,
-				account.liability?.type,
-				account.liability?.payment_status,
-				account.liability?.data_status,
-				account.liability?.data_sync_type,
-				account.liability?.data_last_successful_sync,
-				account.liability?.data_source,
-				account.liability?.data_updated_at,
-				account.liability?.ownership,
-				account.liability?.data_status_error,
-				account.liability?.hash,
-			]});
+			await db.query({
+				text: insertOrUpdateLiability,
+				values: [
+					account.id,
+					account.liability?.mch_id,
+					account.liability?.mask,
+					account.liability?.type,
+					account.liability?.payment_status,
+					account.liability?.data_status,
+					account.liability?.data_sync_type,
+					account.liability?.data_last_successful_sync,
+					account.liability?.data_source,
+					account.liability?.data_updated_at,
+					account.liability?.ownership,
+					account.liability?.data_status_error,
+					account.liability?.hash,
+				],
+			});
 
 			// Insert or update credit card
 			const cc = account.liability?.credit_card;
-			await db.query({text: insertOrUpdateCreditCard, values:[
-				account.id,
-				cc?.name,
-				cc?.balance,
-				cc?.opened_at,
-				cc?.last_payment_date,
-				cc?.last_payment_amount,
-				cc?.next_payment_due_date,
-				cc?.next_payment_minimum_amount,
-				cc?.last_statement_balance,
-				cc?.remaining_statement_balance,
-				cc?.available_credit,
-				cc?.interest_rate_percentage,
-				cc?.interest_rate_type,
-				cc?.interest_rate_source,
-				cc?.past_due_status,
-				cc?.past_due_balance,
-				cc?.past_due_date,
-				cc?.auto_pay_status,
-				cc?.auto_pay_amount,
-				cc?.auto_pay_date,
-				cc?.sub_type,
-				cc?.term_length,
-				cc?.closed_at,
-				cc?.credit_limit,
-				cc?.pending_purchase_authorization_amount,
-				cc?.pending_credit_authorization_amount,
-				cc?.interest_saving_balance,
-				cc?.next_statement_date,
-			]});
+			await db.query({
+				text: insertOrUpdateCreditCard,
+				values: [
+					account.id,
+					cc?.name,
+					cc?.balance,
+					cc?.opened_at,
+					cc?.last_payment_date,
+					cc?.last_payment_amount,
+					cc?.next_payment_due_date,
+					cc?.next_payment_minimum_amount,
+					cc?.last_statement_balance,
+					cc?.remaining_statement_balance,
+					cc?.available_credit,
+					cc?.interest_rate_percentage,
+					cc?.interest_rate_type,
+					cc?.interest_rate_source,
+					cc?.past_due_status,
+					cc?.past_due_balance,
+					cc?.past_due_date,
+					cc?.auto_pay_status,
+					cc?.auto_pay_amount,
+					cc?.auto_pay_date,
+					cc?.sub_type,
+					cc?.term_length,
+					cc?.closed_at,
+					cc?.credit_limit,
+					cc?.pending_purchase_authorization_amount,
+					cc?.pending_credit_authorization_amount,
+					cc?.interest_saving_balance,
+					cc?.next_statement_date,
+				],
+			});
 		}
 
 		// Commit the transaction
