@@ -69,7 +69,7 @@ async function updateAccount(id: string) {
 	if (account.type == "liability") {
 		if (account.liability?.type == "credit_card") {
 			const accountData = {
-				text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metaaccount, created_at, updated_at)
+				text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at)
 				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 				ON CONFLICT (id)
 				DO UPDATE SET
