@@ -246,9 +246,7 @@ async function updateAccount(id: string) {
 				client.release();
 			});
 
-			console.log(
-				"database ops complte: " + result1 + result2 + result3 + result4
-			);
+			console.log("Updated account info in DB");
 
 			//grab info then push to db
 

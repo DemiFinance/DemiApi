@@ -11,7 +11,7 @@ export const query = async ({text, values}: QueryParams) => {
 	const start = Date.now();
 	const res = values ? await pool.query(text, values) : await pool.query(text);
 	const duration = Date.now() - start;
-	console.log("executed query", {text, duration, rows: res.rowCount});
+	console.log("executed query", {duration, rows: res.rowCount});
 
 	return res;
 };
