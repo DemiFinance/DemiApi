@@ -115,9 +115,12 @@ const getUpcomingByHolder = async (request: Request, response: Response) => {
 			values: [holderId],
 		};
 		const accounts = await db.query(queryString);
+		const accountIds = accounts.rows.map((account: any) => account.account_id);
+
+		console.log(accountIds);
 
 		return response.status(200).json({
-			accounts,
+			accounts:accountIds
 		});
 	} catch (error) {
 		console.log("[Get Upcoming Payments ERROR]" + error);
