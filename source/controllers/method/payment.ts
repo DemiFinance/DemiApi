@@ -120,7 +120,7 @@ const getUpcomingByHolder = async (request: Request, response: Response) => {
 		console.log(accountIds);
 
 		return response.status(200).json({
-			accounts:accountIds
+			accountIds
 		});
 	} catch (error) {
 		console.log("[Get Upcoming Payments ERROR]" + error);
