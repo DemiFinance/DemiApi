@@ -21,5 +21,10 @@ router.get(
 	jwtCheck,
 	paymentController.getPaymentsBySourceHolder
 );
+router.get(
+	"/upcomingbyholder/",
+	jwtCheck,
+	paymentController.getUpcomingByHolder
+);
 
 export = router;
