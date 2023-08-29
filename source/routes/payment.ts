@@ -22,7 +22,7 @@ router.get(
 	paymentController.getPaymentsBySourceHolder
 );
 router.get(
-	"/upcomingbyholder/",
+	"/upcomingbyholder/:id",
 	jwtCheck,
 	paymentController.getUpcomingByHolder
 );
