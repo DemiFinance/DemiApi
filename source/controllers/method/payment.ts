@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
 import {Method, Environments, IPaymentListOpts} from "method-node";
+import * as db from "../../database/index.js";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -89,8 +90,46 @@ const sendPayment = async (request: Request, response: Response) => {
 	}
 };
 
+const getUpcomingByHolder = async (request: Request, response: Response) => {
+	try {
+		console.log(
+			"Attempting to get upcoming payments by holderId: " + request.params.id
+		);
+		const holderId = request.params.id;
+		const queryString = {
+			text: `SELECT a.id AS account_id 
+			FROM Account a 
+			WHERE a.holder_id = $1 
+			AND EXISTS (
+				SELECT 1 
+				FROM AccountStatementHistory ash 
+				WHERE a.id = ash.account_id 
+				AND ash.statement_due_date > CURRENT_DATE
+			) 
+			ORDER BY (SELECT MIN(ash.statement_due_date) 
+			FROM AccountStatementHistory ash 
+				WHERE a.id = ash.account_id 
+				AND ash.statement_due_date > CURRENT_DATE
+			) ASC;
+    `,
+			values: [holderId],
+		};
+		const accounts = await db.query(queryString);
+
+		return response.status(200).json({
+			accounts,
+		});
+	} catch (error) {
+		console.log("[Get Upcoming Payments ERROR]" + error);
+		return response.status(400).json({
+			error: error,
+		});
+	}
+};
+
 export default {
 	sendPayment,
 	getPaymentsByDestination,
 	getPaymentsBySourceHolder,
+	getUpcomingByHolder,
 };
