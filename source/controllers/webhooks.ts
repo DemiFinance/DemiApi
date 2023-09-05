@@ -69,7 +69,10 @@ async function updateAccount(id: string) {
 
 			// Check if we need a notification
 			if (await doesNeedNotify(account)) {
+				console.log("Needs notification");
 				await sendNotificationToUser(account);
+			}else{
+				console.log("No notification needed");
 			}
 
 			console.log("Updated account info in DB");
@@ -117,14 +120,12 @@ async function sendNotificationToUser(account: any) {
 	const message = "You have a payment due soon!";
 	const heading = "testing notification delivery";
 
+	console.log("Sending notification to user");
 	await OneSignalUtil.sendNotificationByExternalId(
 		externalId,
 		message,
 		heading
 	);
-
-	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
-	return await db.query(sqlData);
 }
 
 async function createAccountVerification(id: string) {
