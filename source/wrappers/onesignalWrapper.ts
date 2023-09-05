@@ -1,4 +1,4 @@
-import OneSignal from "@onesignal/node-onesignal";
+import * as OneSignal from "@onesignal/node-onesignal";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -88,6 +88,11 @@ class OneSignalUtil {
 }
 
 // Initialize the client upon importing the module.
-OneSignalUtil.initialize();
+
+try {
+	OneSignalUtil.initialize();
+} catch (error) {
+	console.error("Error initializing OneSignalUtil:", error);
+}
 
 export default OneSignalUtil;
