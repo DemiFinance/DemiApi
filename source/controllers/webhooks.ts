@@ -3,6 +3,9 @@ import {WebhookObject} from "../models/webhook";
 
 import {Method, Environments} from "method-node";
 import * as db from "../database/index.js";
+import * as dbHelpers from "../database/helpers";
+import OneSignalUtil from "../wrappers/onesignalWrapper";
+import {head} from "../routes/entity";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -52,210 +55,73 @@ async function createAccount(id: string) {
 }
 
 async function updateAccount(id: string) {
-	console.log(`Updated account with id: ${id}`);
+	try {
+		console.log(`Updating account with id: ${id}`);
+		const account = await method.accounts.get(id);
 
-	/**
-	 * 1. check database for exisiting account reccord
-	 * 2. update the row with current information
-	 * 3. pull from statement history table to see if there is a new due date.
-	 * 4. push off to account service to handle the update
-	 *
-	 *  const result = await db.query('SELECT * FROM users WHERE id = $1', [req.params.id])
-	 *
-	 */
+		if (
+			account.type == "liability" &&
+			account.liability?.type == "credit_card"
+		) {
+			await updateAccountInfo(account);
+			await updateLiabilityInfo(account);
+			await updateCreditCardInfo(account);
+			await updateAccountStatementHistory(account);
 
-	const account = await method.accounts.get(id);
-
-	if (account.type == "liability") {
-		if (account.liability?.type == "credit_card") {
-			const accountData = {
-				text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-				ON CONFLICT (id)
-				DO UPDATE SET
-					holder_id = EXCLUDED.holder_id,
-					status = EXCLUDED.status,
-					type = EXCLUDED.type,
-					clearing = EXCLUDED.clearing,
-					capabilities = EXCLUDED.capabilities,
-					available_capabilities = EXCLUDED.available_capabilities,
-					error = EXCLUDED.error,
-					metadata = EXCLUDED.metadata,
-					created_at = EXCLUDED.created_at,
-					updated_at = EXCLUDED.updated_at;
-				`,
-				values: [
-					account.id,
-					account.holder_id,
-					account.status,
-					account.type,
-					account.clearing,
-					account.capabilities,
-					account.available_capabilities,
-					account.error,
-					account.metadata,
-					account.created_at,
-					account.updated_at,
-				],
-			};
-
-			const result1 = await db.query(accountData);
-
-			const liabilityData = {
-				text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-				ON CONFLICT (id)
-				DO UPDATE SET
-					mch_id = EXCLUDED.mch_id,
-					mask = EXCLUDED.mask,
-					type = EXCLUDED.type,
-					payment_status = EXCLUDED.payment_status,
-					data_status = EXCLUDED.data_status,
-					data_sync_type = EXCLUDED.data_sync_type,
-					data_last_successful_sync = EXCLUDED.data_last_successful_sync,
-					data_source = EXCLUDED.data_source,
-					data_updated_at = EXCLUDED.data_updated_at,
-					ownership = EXCLUDED.ownership,
-					data_status_error = EXCLUDED.data_status_error,
-					hash = EXCLUDED.hash;`,
-				values: [
-					account.id,
-					account.liability.mch_id,
-					account.liability.mask,
-					account.liability.type,
-					account.liability.payment_status,
-					account.liability.data_status,
-					account.liability.data_sync_type,
-					account.liability.data_last_successful_sync,
-					account.liability.data_source,
-					account.liability.data_updated_at,
-					account.liability.ownership,
-					account.liability.data_status_error,
-					account.liability.hash,
-				],
-			};
-
-			const result2 = await db.query(liabilityData);
-			const cc = account.liability?.credit_card;
-
-			const creditCardData = {
-				text: `INSERT INTO CreditCard 
-				(id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date) 
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
-				ON CONFLICT (id)
-				DO UPDATE SET 
-					name = EXCLUDED.name,
-					balance = EXCLUDED.balance,
-					opened_at = EXCLUDED.opened_at,
-					last_payment_date = EXCLUDED.last_payment_date,
-					last_payment_amount = EXCLUDED.last_payment_amount,
-					next_payment_due_date = EXCLUDED.next_payment_due_date,
-					next_payment_minimum_amount = EXCLUDED.next_payment_minimum_amount,
-					last_statement_balance = EXCLUDED.last_statement_balance,
-					remaining_statement_balance = EXCLUDED.remaining_statement_balance,
-					available_credit = EXCLUDED.available_credit,
-					interest_rate_percentage = EXCLUDED.interest_rate_percentage,
-					interest_rate_type = EXCLUDED.interest_rate_type,
-					interest_rate_source = EXCLUDED.interest_rate_source,
-					past_due_status = EXCLUDED.past_due_status,
-					past_due_balance = EXCLUDED.past_due_balance,
-					past_due_date = EXCLUDED.past_due_date,
-					auto_pay_status = EXCLUDED.auto_pay_status,
-					auto_pay_amount = EXCLUDED.auto_pay_amount,
-					auto_pay_date = EXCLUDED.auto_pay_date,
-					sub_type = EXCLUDED.sub_type,
-					term_length = EXCLUDED.term_length,
-					closed_at = EXCLUDED.closed_at,
-					credit_limit = EXCLUDED.credit_limit,
-					pending_purchase_authorization_amount = EXCLUDED.pending_purchase_authorization_amount,
-					pending_credit_authorization_amount = EXCLUDED.pending_credit_authorization_amount,
-					interest_saving_balance = EXCLUDED.interest_saving_balance,
-					next_statement_date = EXCLUDED.next_statement_date;
-				`,
-				values: [
-					account.id,
-					cc?.name,
-					cc?.balance,
-					cc?.opened_at,
-					cc?.last_payment_date,
-					cc?.last_payment_amount,
-					cc?.next_payment_due_date,
-					cc?.next_payment_minimum_amount,
-					cc?.last_statement_balance,
-					cc?.remaining_statement_balance,
-					cc?.available_credit,
-					cc?.interest_rate_percentage,
-					cc?.interest_rate_type,
-					cc?.interest_rate_source,
-					cc?.past_due_status,
-					cc?.past_due_balance,
-					cc?.past_due_date,
-					cc?.auto_pay_status,
-					cc?.auto_pay_amount,
-					cc?.auto_pay_date,
-					cc?.sub_type,
-					cc?.term_length,
-					cc?.closed_at,
-					cc?.credit_limit,
-					cc?.pending_purchase_authorization_amount,
-					cc?.pending_credit_authorization_amount,
-					cc?.interest_saving_balance,
-					cc?.next_statement_date,
-					// cc?.delinquent_status,
-					// cc?.delinquent_amount,
-					// cc?.delinquent_period,
-					// cc?.delinquent_action,
-					// cc?.delinquent_start_date,
-					// cc?.delinquent_major_start_date,
-					// cc?.delinquent_status_updated_at,
-				],
-			};
-
-			const result3 = await db.query(creditCardData);
-
-			const insertStatementSQL = {
-				text: `
-					WITH latest_update AS (
-						SELECT EXTRACT(MONTH FROM captured_at) AS month, 
-							   EXTRACT(YEAR FROM captured_at) AS year
-						FROM AccountStatementHistory
-						WHERE account_id = $1
-						ORDER BY captured_at DESC
-						LIMIT 1
-					)
-					INSERT INTO AccountStatementHistory (account_id, statement_balance, statement_due_date, minimum_payment)
-					SELECT $1, $2, $3, $4
-					WHERE NOT EXISTS (
-						SELECT 1
-						FROM latest_update
-						WHERE month = EXTRACT(MONTH FROM CURRENT_DATE)
-						AND year = EXTRACT(YEAR FROM CURRENT_DATE)
-					);
-				`,
-				values: [
-					account.id,
-					account.liability.credit_card?.last_statement_balance,
-					account.liability.credit_card?.next_payment_due_date,
-					account.liability.credit_card?.last_statement_balance,
-				],
-			};
-
-			const result4 = await db.query(insertStatementSQL);
-
-			db.getClient().then((client) => {
-				client.release();
-			});
+			// Check if we need a notification
+			if (await doesNeedNotify(account)) {
+				await sendNotificationToUser(account);
+			}
 
 			console.log("Updated account info in DB");
-
-			//grab info then push to db
-
-			//do the comparison thing
 		}
+	} catch (error) {
+		console.error("Failed to update account:", error);
+		throw new Error("Failed to update account");
 	}
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update account');
+}
+
+async function updateAccountInfo(account: any) {
+	const sqlData = dbHelpers.generateAccountSQL(account);
+	return await db.query(sqlData);
+}
+
+async function updateLiabilityInfo(account: any) {
+	const sqlData = dbHelpers.generateLiabilitySQL(account);
+	return await db.query(sqlData);
+}
+
+async function updateCreditCardInfo(account: any) {
+	const sqlData = dbHelpers.generateCreditCardSQL(account);
+	return await db.query(sqlData);
+}
+
+async function updateAccountStatementHistory(account: any) {
+	const sqlData = dbHelpers.generateStatementSQL(account);
+	return await db.query(sqlData);
+}
+
+async function doesNeedNotify(account: any): Promise<boolean> {
+	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
+	const result = await db.query(sqlData);
+	// If there's no result, you can decide how you want to handle it. Here, we'll return false.
+	if (result.rows.length === 0) {
+		return false;
+	}
+
+	// Assuming you want to notify when payment_notified is false.
+	return !result.rows[0].payment_notified;
+}
+
+async function sendNotificationToUser(account: any) {
+	const externalId = "ent_ip9e3nE4DLfHi";
+	const message = "You have a payment due soon!";
+	const heading = "testing notification delivery";
+
+	OneSignalUtil.sendNotificationByExternalId(externalId, message, heading);
+
+	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
+	return await db.query(sqlData);
 }
 
 async function createAccountVerification(id: string) {
