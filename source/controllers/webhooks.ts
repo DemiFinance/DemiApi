@@ -68,7 +68,7 @@ async function updateAccount(id: string) {
 			await updateAccountStatementHistory(account);
 
 			// Check if we need a notification
-			if (await !doesNeedNotify(account)) {
+			if (await doesNeedNotify(account)) {
 				console.log("Needs notification");
 				await sendNotificationToUser(account);
 			}else{
