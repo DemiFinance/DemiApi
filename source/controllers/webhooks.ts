@@ -5,7 +5,6 @@ import {Method, Environments} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import OneSignalUtil from "../wrappers/onesignalWrapper";
-import {head} from "../routes/entity";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -118,7 +117,11 @@ async function sendNotificationToUser(account: any) {
 	const message = "You have a payment due soon!";
 	const heading = "testing notification delivery";
 
-	OneSignalUtil.sendNotificationByExternalId(externalId, message, heading);
+	await OneSignalUtil.sendNotificationByExternalId(
+		externalId,
+		message,
+		heading
+	);
 
 	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
 	return await db.query(sqlData);
