@@ -68,7 +68,7 @@ async function updateAccount(id: string) {
 			await updateAccountStatementHistory(account);
 
 			// Check if we need a notification
-			if (await doesNeedNotify(account)) {
+			if (await !doesNeedNotify(account)) {
 				console.log("Needs notification");
 				await sendNotificationToUser(account);
 			}else{
@@ -108,6 +108,7 @@ async function doesNeedNotify(account: any): Promise<boolean> {
 	const result = await db.query(sqlData);
 	// If there's no result, you can decide how you want to handle it. Here, we'll return false.
 	if (result.rows.length === 0) {
+		console.log("No result found");
 		return false;
 	}
 
