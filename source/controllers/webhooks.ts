@@ -4,6 +4,8 @@ import {WebhookObject} from "../models/webhook";
 import {Method, Environments} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
+import OneSignalUtil from "../wrappers/onesignalWrapper";
+import {head} from "../routes/entity";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -65,6 +67,12 @@ async function updateAccount(id: string) {
 			await updateLiabilityInfo(account);
 			await updateCreditCardInfo(account);
 			await updateAccountStatementHistory(account);
+
+			// Check if we need a notification
+			if (await doesNeedNotify(account)) {
+				await sendNotificationToUser(account);
+			}
+
 			console.log("Updated account info in DB");
 		}
 	} catch (error) {
@@ -90,6 +98,29 @@ async function updateCreditCardInfo(account: any) {
 
 async function updateAccountStatementHistory(account: any) {
 	const sqlData = dbHelpers.generateStatementSQL(account);
+	return await db.query(sqlData);
+}
+
+async function doesNeedNotify(account: any): Promise<boolean> {
+	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
+	const result = await db.query(sqlData);
+	// If there's no result, you can decide how you want to handle it. Here, we'll return false.
+	if (result.rows.length === 0) {
+		return false;
+	}
+
+	// Assuming you want to notify when payment_notified is false.
+	return !result.rows[0].payment_notified;
+}
+
+async function sendNotificationToUser(account: any) {
+	const externalId = "ent_ip9e3nE4DLfHi";
+	const message = "You have a payment due soon!";
+	const heading = "testing notification delivery";
+
+	OneSignalUtil.sendNotificationByExternalId(externalId, message, heading);
+
+	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
 	return await db.query(sqlData);
 }
 
