@@ -21,19 +21,19 @@ interface DelayedNotificationPayload extends NotificationPayload {
 
 class OneSignalUtility {
 	private static get APP_ID(): string {
-		if (!process.env.ONESIGNAL_APP_ID) {
+		if (!process.env.ONESIGNAL_DEMI_APP_KEY) {
 			throw new Error("ONESIGNAL_APP_ID environment variable is not set.");
 		}
-		return process.env.ONESIGNAL_APP_ID;
+		return process.env.ONESIGNAL_DEMI_APP_KEY;
 	}
 
 	private static get authorization(): string {
-		if (!process.env.ONESIGNAL_REST_API_KEY) {
+		if (!process.env.ONESIGNAL_API_KEY) {
 			throw new Error(
 				"ONESIGNAL_REST_API_KEY environment variable is not set."
 			);
 		}
-		return `Basic ${process.env.ONESIGNAL_REST_API_KEY}`;
+		return `Basic ${process.env.ONESIGNAL_API_KEY}`;
 	}
 
 	public static async sendNotificationToUser(
