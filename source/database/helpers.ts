@@ -167,7 +167,7 @@ export function generateStatementSQL(account: any): QueryParams {
 	};
 }
 
-export function generatePaymentNotifiedSQL(accountId: string): QueryParams {
+export function generatePaymentNotifiedSQL(account: any): QueryParams {
 	return {
 		text: `
             SELECT 
@@ -186,6 +186,6 @@ export function generatePaymentNotifiedSQL(accountId: string): QueryParams {
                         account_id = $1
                 );
         `,
-		values: [accountId],
+		values: [account.id],
 	};
 }

@@ -71,7 +71,7 @@ async function updateAccount(id: string) {
 			if (await doesNeedNotify(account)) {
 				console.log("Needs notification");
 				await sendNotificationToUser(account);
-			}else{
+			} else {
 				console.log("No notification needed");
 			}
 
@@ -106,13 +106,10 @@ async function updateAccountStatementHistory(account: any) {
 async function doesNeedNotify(account: any): Promise<boolean> {
 	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
 	const result = await db.query(sqlData);
-	// If there's no result, you can decide how you want to handle it. Here, we'll return false.
 	if (result.rows.length === 0) {
 		console.log("No result found");
 		return false;
 	}
-
-	// Assuming you want to notify when payment_notified is false.
 	return !result.rows[0].payment_notified;
 }
 
