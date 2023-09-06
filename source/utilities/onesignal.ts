@@ -25,11 +25,6 @@ export async function sendNotificationByExternalId(
 		const notification = new NotificationByDeviceBuilder()
 			.setIncludeExternalUserIds([externalId])
 			.notification()
-			.setDelivery({
-				send_after: new Date(
-					Date.now() + 1000 * 60 * 60 * 24 * 7
-				).toISOString(),
-			})
 			.setContents({en: message})
 			.build();
 
