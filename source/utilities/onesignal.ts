@@ -1,5 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
 const sdk = require("api")("@onesignal/v11.0#4bvilly88qam");
-
 interface NotificationPayload {
 	app_id: string;
 	included_segments?: string[];
@@ -22,7 +23,9 @@ interface DelayedNotificationPayload extends NotificationPayload {
 class OneSignalUtility {
 	private static get APP_ID(): string {
 		if (!process.env.ONESIGNAL_DEMI_APP_KEY) {
-			throw new Error("ONESIGNAL_APP_ID environment variable is not set.");
+			throw new Error(
+				"ONESIGNAL_DEMI_APP_KEY environment variable is not set."
+			);
 		}
 		return process.env.ONESIGNAL_DEMI_APP_KEY;
 	}
