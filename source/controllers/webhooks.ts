@@ -5,7 +5,7 @@ import {Method, Environments} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import OneSignalUtil from "../wrappers/onesignalWrapper";
-import OneSignalUtility from "../utilities/onesignal";
+import {sendNotificationByExternalId} from "../utilities/onesignal";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -120,7 +120,8 @@ async function sendNotificationToUser(account: any) {
 	const heading = "testing notification delivery";
 
 	console.log("Sending notification to user");
-	await OneSignalUtility.sendNotificationToUser(message, externalId);
+
+	sendNotificationByExternalId(externalId, message);
 }
 
 async function createAccountVerification(id: string) {
