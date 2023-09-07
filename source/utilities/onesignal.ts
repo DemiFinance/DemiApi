@@ -8,7 +8,7 @@ import {
 dotenv.config();
 
 const client = new OneSignalAppClient(
-	process.env.ONESIGNAL_APP_ID || "",
+	process.env.ONESIGNAL_APP_ID || "4676c484-01e0-41b1-9a9e-ba58c97c4918",
 	process.env.ONESIGNAL_API_KEY || ""
 );
 
