@@ -1,10 +1,9 @@
 import {Request, Response} from "express";
 import {WebhookObject} from "../models/webhook";
 
-import {Method, Environments} from "method-node";
+import {Method, Environments, IAccount} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
-import OneSignalUtil from "../wrappers/onesignalWrapper";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
 
 const method = new Method({
@@ -71,7 +70,7 @@ async function updateAccount(id: string) {
 			// Check if we need a notification
 			if (await doesNeedNotify(account)) {
 				console.log("Needs notification");
-				await sendNotificationToUser(account);
+				await sendNotificationToUser("account");
 			} else {
 				console.log("No notification needed");
 			}
@@ -84,27 +83,27 @@ async function updateAccount(id: string) {
 	}
 }
 
-async function updateAccountInfo(account: any) {
+async function updateAccountInfo(account: IAccount) {
 	const sqlData = dbHelpers.generateAccountSQL(account);
 	return await db.query(sqlData);
 }
 
-async function updateLiabilityInfo(account: any) {
+async function updateLiabilityInfo(account: IAccount) {
 	const sqlData = dbHelpers.generateLiabilitySQL(account);
 	return await db.query(sqlData);
 }
 
-async function updateCreditCardInfo(account: any) {
+async function updateCreditCardInfo(account: IAccount) {
 	const sqlData = dbHelpers.generateCreditCardSQL(account);
 	return await db.query(sqlData);
 }
 
-async function updateAccountStatementHistory(account: any) {
+async function updateAccountStatementHistory(account: IAccount) {
 	const sqlData = dbHelpers.generateStatementSQL(account);
 	return await db.query(sqlData);
 }
 
-async function doesNeedNotify(account: any): Promise<boolean> {
+async function doesNeedNotify(account: IAccount): Promise<boolean> {
 	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
 	const result = await db.query(sqlData);
 	if (result.rows.length === 0) {
@@ -114,14 +113,14 @@ async function doesNeedNotify(account: any): Promise<boolean> {
 	return !result.rows[0].payment_notified;
 }
 
-async function sendNotificationToUser(account: any) {
+export async function sendNotificationToUser(account: string) {
 	const externalId = "ent_ip9e3nE4DLfHi";
-	const message = "You have a payment due soon!";
-	const heading = "testing notification delivery";
+	const message = "Amazon Rewards Visa Signature Credit Card due in 3 days (soon as in september 15th)";
+	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");
 
-	sendNotificationByExternalId(externalId, message);
+	sendNotificationByExternalId(externalId, heading, message);
 }
 
 async function createAccountVerification(id: string) {

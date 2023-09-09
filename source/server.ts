@@ -10,6 +10,7 @@ import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
 import webhookRoutes from "./routes/webhooks";
+import {sendNotificationToUser} from "./controllers/webhooks";
 
 const router: Express = express();
 
@@ -33,6 +34,11 @@ router.use((req, res, next) => {
 	next();
 });
 
+router.get("/ping", (req, res) => {
+	return res.status(200).json({
+		message: "pong",
+	});
+});
 const path = require("path");
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
@@ -45,6 +51,13 @@ router.use("/accounts", accountRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/webhook", webhookRoutes);
+router.get("/test", async (req, res) => {
+	await sendNotificationToUser("lol");
+
+	return res.status(200).json({
+		message: "test",
+	});
+});
 
 router.use((req, res) => {
 	const error = new Error("404 - Error not found!");
