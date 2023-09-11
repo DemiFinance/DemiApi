@@ -1,7 +1,13 @@
 import {IAccount} from "method-node";
 import {QueryParams} from "../models/queryParams";
 
-export function generateAccountSQL(account: any): QueryParams {
+
+/**
+ * Generates SQL query parameters for inserting or updating an account.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function generateAccountSQL(account: IAccount): QueryParams {
 	return {
 		text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at)
@@ -35,7 +41,12 @@ export function generateAccountSQL(account: IAccount): QueryParams {
 	};
 }
 
-export function generateLiabilitySQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters for inserting or updating a liability.
+ * 
+ * @param {IAccount} account - The account data containing liability information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function generateLiabilitySQL(account: IAccount): QueryParams {
 	return {
 		text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
@@ -72,7 +83,12 @@ export function generateLiabilitySQL(account: IAccount): QueryParams {
 	};
 }
 
-export function generateCreditCardSQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters for inserting or updating a credit card.
+ * 
+ * @param {IAccount} account - The account data containing credit card information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function generateCreditCardSQL(account: IAccount): QueryParams {
 	const cc = account.liability?.credit_card;
 	return {
@@ -142,7 +158,13 @@ export function generateCreditCardSQL(account: IAccount): QueryParams {
 	};
 }
 
-export function generateStatementSQL(account: any): QueryParams {
+
+/**
+ * Generates SQL query parameters for inserting a statement if not already present for the current month.
+ * 
+ * @param {IAccount} account - The account data containing statement information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function generateStatementSQL(account: IAccount): QueryParams {
 	const cc = account.liability?.credit_card;
 	return {
@@ -173,7 +195,12 @@ export function generateStatementSQL(account: IAccount): QueryParams {
 	};
 }
 
-export function generatePaymentNotifiedSQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters to fetch the payment notification status for the latest statement.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function generatePaymentNotifiedSQL(account: IAccount): QueryParams {
 	return {
 		text: `
@@ -197,7 +224,12 @@ export function generatePaymentNotifiedSQL(account: IAccount): QueryParams {
 	};
 }
 
-export function updateHasSentNotificationStatus(account: any): QueryParams {
+/**
+ * Generates SQL query parameters to update the payment notification status for the latest statement.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
 export function updateHasSentNotificationStatus(
 	account: IAccount
 ): QueryParams {
