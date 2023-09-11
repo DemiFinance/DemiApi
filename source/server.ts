@@ -10,7 +10,7 @@ import accountRoutes from "./routes/account";
 import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
 import webhookRoutes from "./routes/webhooks";
-import {sendNotificationToUser} from "./controllers/webhooks";
+
 
 const router: Express = express();
 
