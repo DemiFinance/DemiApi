@@ -1,10 +1,9 @@
 import {IAccount} from "method-node";
 import {QueryParams} from "../models/queryParams";
 
-
 /**
  * Generates SQL query parameters for inserting or updating an account.
- * 
+ *
  * @param {IAccount} account - The account data.
  * @returns {QueryParams} - The SQL query text and values.
  */
@@ -43,7 +42,7 @@ export function generateAccountSQL(account: IAccount): QueryParams {
 
 /**
  * Generates SQL query parameters for inserting or updating a liability.
- * 
+ *
  * @param {IAccount} account - The account data containing liability information.
  * @returns {QueryParams} - The SQL query text and values.
  */
@@ -85,7 +84,7 @@ export function generateLiabilitySQL(account: IAccount): QueryParams {
 
 /**
  * Generates SQL query parameters for inserting or updating a credit card.
- * 
+ *
  * @param {IAccount} account - The account data containing credit card information.
  * @returns {QueryParams} - The SQL query text and values.
  */
@@ -158,10 +157,9 @@ export function generateCreditCardSQL(account: IAccount): QueryParams {
 	};
 }
 
-
 /**
  * Generates SQL query parameters for inserting a statement if not already present for the current month.
- * 
+ *
  * @param {IAccount} account - The account data containing statement information.
  * @returns {QueryParams} - The SQL query text and values.
  */
@@ -197,7 +195,7 @@ export function generateStatementSQL(account: IAccount): QueryParams {
 
 /**
  * Generates SQL query parameters to fetch the payment notification status for the latest statement.
- * 
+ *
  * @param {IAccount} account - The account data.
  * @returns {QueryParams} - The SQL query text and values.
  */
@@ -226,7 +224,7 @@ export function generatePaymentNotifiedSQL(account: IAccount): QueryParams {
 
 /**
  * Generates SQL query parameters to update the payment notification status for the latest statement.
- * 
+ *
  * @param {IAccount} account - The account data.
  * @returns {QueryParams} - The SQL query text and values.
  */
