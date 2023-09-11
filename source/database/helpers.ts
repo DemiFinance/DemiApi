@@ -1,6 +1,14 @@
+import {IAccount} from "method-node";
 import {QueryParams} from "../models/queryParams";
 
-export function generateAccountSQL(account: any): QueryParams {
+
+/**
+ * Generates SQL query parameters for inserting or updating an account.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function generateAccountSQL(account: IAccount): QueryParams {
 	return {
 		text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -33,7 +41,13 @@ export function generateAccountSQL(account: any): QueryParams {
 	};
 }
 
-export function generateLiabilitySQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters for inserting or updating a liability.
+ * 
+ * @param {IAccount} account - The account data containing liability information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function generateLiabilitySQL(account: IAccount): QueryParams {
 	return {
 		text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -53,23 +67,29 @@ export function generateLiabilitySQL(account: any): QueryParams {
             hash = EXCLUDED.hash;`,
 		values: [
 			account.id,
-			account.liability.mch_id,
-			account.liability.mask,
-			account.liability.type,
-			account.liability.payment_status,
-			account.liability.data_status,
-			account.liability.data_sync_type,
-			account.liability.data_last_successful_sync,
-			account.liability.data_source,
-			account.liability.data_updated_at,
-			account.liability.ownership,
-			account.liability.data_status_error,
-			account.liability.hash,
+			account.liability?.mch_id,
+			account.liability?.mask,
+			account.liability?.type,
+			account.liability?.payment_status,
+			account.liability?.data_status,
+			account.liability?.data_sync_type,
+			account.liability?.data_last_successful_sync,
+			account.liability?.data_source,
+			account.liability?.data_updated_at,
+			account.liability?.ownership,
+			account.liability?.data_status_error,
+			account.liability?.hash,
 		],
 	};
 }
 
-export function generateCreditCardSQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters for inserting or updating a credit card.
+ * 
+ * @param {IAccount} account - The account data containing credit card information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function generateCreditCardSQL(account: IAccount): QueryParams {
 	const cc = account.liability?.credit_card;
 	return {
 		text: `INSERT INTO CreditCard 
@@ -138,7 +158,15 @@ export function generateCreditCardSQL(account: any): QueryParams {
 	};
 }
 
-export function generateStatementSQL(account: any): QueryParams {
+
+/**
+ * Generates SQL query parameters for inserting a statement if not already present for the current month.
+ * 
+ * @param {IAccount} account - The account data containing statement information.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function generateStatementSQL(account: IAccount): QueryParams {
+	const cc = account.liability?.credit_card;
 	return {
 		text: `
         WITH latest_update AS (
@@ -160,14 +188,20 @@ export function generateStatementSQL(account: any): QueryParams {
     `,
 		values: [
 			account.id,
-			account.liability.credit_card?.last_statement_balance,
-			account.liability.credit_card?.next_payment_due_date,
-			account.liability.credit_card?.last_statement_balance,
+			cc?.last_statement_balance,
+			cc?.next_payment_due_date,
+			cc?.last_statement_balance,
 		],
 	};
 }
 
-export function generatePaymentNotifiedSQL(account: any): QueryParams {
+/**
+ * Generates SQL query parameters to fetch the payment notification status for the latest statement.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function generatePaymentNotifiedSQL(account: IAccount): QueryParams {
 	return {
 		text: `
             SELECT 
@@ -190,7 +224,15 @@ export function generatePaymentNotifiedSQL(account: any): QueryParams {
 	};
 }
 
-export function updateHasSentNotificationStatus(account: any): QueryParams {
+/**
+ * Generates SQL query parameters to update the payment notification status for the latest statement.
+ * 
+ * @param {IAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function updateHasSentNotificationStatus(
+	account: IAccount
+): QueryParams {
 	return {
 		text: `
             UPDATE 
