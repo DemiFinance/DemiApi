@@ -156,6 +156,11 @@ export async function sendNotificationToUser(account: IAccount) {
 			cardName = account.liability.credit_card.name;
 		}
 
+		if (account.liability.credit_card.next_payment_due_date === null) {
+			console.log("No statement available yet for this account.");
+			return; // Exit the function early if there's no statement date
+		}
+
 		if (
 			typeof account.liability.credit_card.next_payment_due_date === "string"
 		) {
@@ -175,7 +180,13 @@ export async function sendNotificationToUser(account: IAccount) {
 
 	// Ensure cardName and daysUntilDueDate have values
 	if (!cardName || daysUntilDueDate === undefined) {
-		throw new Error("Account is probably not a credit card.");
+		if (!cardName) {
+			console.log("Account does not have a valid card name.");
+		}
+		if (daysUntilDueDate === undefined) {
+			console.log("There's no due date available for this account.");
+		}
+		return;
 	}
 
 	// Hardcoded for testing
@@ -283,7 +294,7 @@ export const webhookHandler = async (request: Request, response: Response) => {
 
 		await processWebhookObject(webhook);
 	} catch (error) {
-		console.log("error in webhook" + error);
+		console.log("Webhook Error:", error);
 		return response.status(500).json({
 			message: "Error processing webhook",
 			error: error,
