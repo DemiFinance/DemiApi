@@ -70,7 +70,16 @@ async function updateAccount(id: string) {
 			// Check if we need a notification
 			if (await doesNeedNotify(account)) {
 				console.log("Needs notification");
-				await sendNotificationToUser("account");
+				await sendNotificationToUser(account)
+					.then(() => {
+						updateHasSentNotificationStatus(account);
+						console.log("Notification sent");
+						//update table to reflect notification sent
+					})
+					.catch((error) => {
+						console.error("Notification failed to send:", error);
+						throw new Error("Failed to send notification");
+					});
 			} else {
 				console.log("No notification needed");
 			}
@@ -113,14 +122,34 @@ async function doesNeedNotify(account: IAccount): Promise<boolean> {
 	return !result.rows[0].payment_notified;
 }
 
-export async function sendNotificationToUser(account: string) {
-	const externalId = "ent_ip9e3nE4DLfHi";
-	const message = "Amazon Rewards Visa Signature Credit Card due in 3 days (soon as in september 15th)";
+async function updateHasSentNotificationStatus(account: IAccount) {
+	const sqlData = dbHelpers.updateHasSentNotificationStatus(account);
+	return await db.query(sqlData);
+}
+
+export async function sendNotificationToUser(account: IAccount) {
+	let cardName;
+	let dueDate;
+
+	if (account?.liability?.credit_card) {
+		cardName = account.liability.credit_card.name;
+		dueDate = account.liability.credit_card.next_payment_due_date;
+	}
+
+	// Ensure cardName and dueDate have values
+	if (!cardName || !dueDate) {
+		throw new Error("Account is probably not a credit card.");
+	}
+
+	// Hardcoded for testing
+	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
+
+	const message = `${cardName} payment due on ${dueDate}`;
 	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");
 
-	sendNotificationByExternalId(externalId, heading, message);
+	return sendNotificationByExternalId(externalId, heading, message);
 }
 
 async function createAccountVerification(id: string) {

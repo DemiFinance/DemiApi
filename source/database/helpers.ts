@@ -189,3 +189,26 @@ export function generatePaymentNotifiedSQL(account: any): QueryParams {
 		values: [account.id],
 	};
 }
+
+export function updateHasSentNotificationStatus(account: any): QueryParams {
+	return {
+		text: `
+            UPDATE 
+                AccountStatementHistory
+            SET 
+                payment_notified = true
+            WHERE 
+                account_id = $1
+            AND 
+                captured_at = (
+                    SELECT 
+                        MAX(captured_at) 
+                    FROM 
+                        AccountStatementHistory 
+                    WHERE 
+                        account_id = $1
+                );
+        `,
+		values: [account.id],
+	};
+}
