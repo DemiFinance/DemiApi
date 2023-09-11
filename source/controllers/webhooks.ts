@@ -102,7 +102,6 @@ async function updateAccount(id: string) {
 		}
 	} catch (error) {
 		console.error("Failed to update account:", error);
-		throw new Error("Failed to update account");
 	}
 }
 
