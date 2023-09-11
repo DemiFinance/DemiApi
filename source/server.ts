@@ -51,13 +51,13 @@ router.use("/accounts", accountRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/webhook", webhookRoutes);
-router.get("/test", async (req, res) => {
-	await sendNotificationToUser("lol");
+// router.get("/test", async (req, res) => {
+// 	await sendNotificationToUser("lol");
 
-	return res.status(200).json({
-		message: "test",
-	});
-});
+// 	return res.status(200).json({
+// 		message: "test",
+// 	});
+// });
 
 router.use((req, res) => {
 	const error = new Error("404 - Error not found!");
