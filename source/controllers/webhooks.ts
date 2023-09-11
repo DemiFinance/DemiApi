@@ -70,7 +70,16 @@ async function updateAccount(id: string) {
 			// Check if we need a notification
 			if (await doesNeedNotify(account)) {
 				console.log("Needs notification");
-				await sendNotificationToUser("account");
+				await sendNotificationToUser(account)
+					.then(() => {
+						updateHasSentNotificationStatus(account);
+						console.log("Notification sent");
+						//update table to reflect notification sent
+					})
+					.catch((error) => {
+						console.error("Notification failed to send:", error);
+						throw new Error("Failed to send notification");
+					});
 			} else {
 				console.log("No notification needed");
 			}
@@ -113,9 +122,11 @@ async function doesNeedNotify(account: IAccount): Promise<boolean> {
 	return !result.rows[0].payment_notified;
 }
 
-export async function sendNotificationToUser(account: string) {
-	const externalId = "ent_ip9e3nE4DLfHi";
-	const message = "Amazon Rewards Visa Signature Credit Card due in 3 days (soon as in september 15th)";
+async function updateHasSentNotificationStatus(account: IAccount) {
+	const sqlData = dbHelpers.updateHasSentNotificationStatus(account);
+	return await db.query(sqlData);
+}
+
 export async function sendNotificationToUser(account: IAccount) {
 	let cardName;
 	let dueDate;
