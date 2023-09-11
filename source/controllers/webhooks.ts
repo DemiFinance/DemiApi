@@ -116,11 +116,29 @@ async function doesNeedNotify(account: IAccount): Promise<boolean> {
 export async function sendNotificationToUser(account: string) {
 	const externalId = "ent_ip9e3nE4DLfHi";
 	const message = "Amazon Rewards Visa Signature Credit Card due in 3 days (soon as in september 15th)";
+export async function sendNotificationToUser(account: IAccount) {
+	let cardName;
+	let dueDate;
+
+	if (account?.liability?.credit_card) {
+		cardName = account.liability.credit_card.name;
+		dueDate = account.liability.credit_card.next_payment_due_date;
+	}
+
+	// Ensure cardName and dueDate have values
+	if (!cardName || !dueDate) {
+		throw new Error("Account is probably not a credit card.");
+	}
+
+	// Hardcoded for testing
+	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
+
+	const message = `${cardName} payment due on ${dueDate}`;
 	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");
 
-	sendNotificationByExternalId(externalId, heading, message);
+	return sendNotificationByExternalId(externalId, heading, message);
 }
 
 async function createAccountVerification(id: string) {
