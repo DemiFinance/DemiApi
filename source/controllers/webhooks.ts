@@ -13,44 +13,22 @@ const method = new Method({
 
 async function createPayment(id: string) {
 	console.log(`Payment with id: ${id} has created`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create payment');
 }
 
 async function updatePayment(id: string) {
 	console.log(`Payment with id: ${id} has updated`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-
-	//check who owns the payment
-
-	//check if owner opts in to notifications
-
-	//begin notification process
-	//if shit hits the fan
-	// throw new Error('Failed to update payment');
 }
 
 async function createEntity(id: string) {
 	console.log(`Created entity with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create entity');
 }
 
 async function updateEntity(id: string) {
 	console.log(`Updated entity with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update entity');
 }
 
 async function createAccount(id: string) {
 	console.log(`Created account with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create account');
 }
 
 /**
@@ -202,44 +180,26 @@ export async function sendNotificationToUser(account: IAccount) {
 
 async function createAccountVerification(id: string) {
 	console.log(`Created account verification with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create account verification');
 }
 
 async function updateAccountVerification(id: string) {
 	console.log(`Updated account verification with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update account verification');
 }
 
 async function createConnection(id: string) {
 	console.log(`Created connection with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create connection');
 }
 
 async function updateConnection(id: string) {
 	console.log(`Updated connection with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update connection');
 }
 
 async function createPaymentReversal(id: string) {
 	console.log(`Created payment reversal with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create payment reversal');
 }
 
 async function updatePaymentReversal(id: string) {
 	console.log(`Updated payment reversal with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update payment reversal');
 }
 
 /**
