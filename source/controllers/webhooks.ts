@@ -13,46 +13,52 @@ const method = new Method({
 
 async function createPayment(id: string) {
 	console.log(`Payment with id: ${id} has created`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create payment');
 }
 
 async function updatePayment(id: string) {
 	console.log(`Payment with id: ${id} has updated`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-
-	//check who owns the payment
-
-	//check if owner opts in to notifications
-
-	//begin notification process
-	//if shit hits the fan
-	// throw new Error('Failed to update payment');
 }
 
 async function createEntity(id: string) {
 	console.log(`Created entity with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create entity');
 }
 
 async function updateEntity(id: string) {
 	console.log(`Updated entity with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update entity');
 }
 
 async function createAccount(id: string) {
 	console.log(`Created account with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create account');
 }
 
+/**
+ * Sends a notification to the user if needed.
+ * @param {IAccount} account - The account information.
+ * @returns {Promise<void>}
+ */
+async function handleNotification(account: IAccount) {
+	if (await doesNeedNotify(account)) {
+		console.log("Needs notification");
+		try {
+			await sendNotificationToUser(account);
+			await updateHasSentNotificationStatus(account);
+			console.log("Notification sent");
+			// Update table to reflect notification sent
+		} catch (error) {
+			console.error("Notification failed to send:", error);
+			throw new Error("Failed to send notification");
+		}
+	} else {
+		console.log("No notification needed");
+	}
+}
+
+/**
+ * Updates the account information.
+ * @param {string} id - The account ID.
+ * @returns {Promise<void>}
+ * @throws Will throw an error if the account update fails or if the notification fails to send.
+ */
 async function updateAccount(id: string) {
 	try {
 		console.log(`Updating account with id: ${id}`);
@@ -67,28 +73,13 @@ async function updateAccount(id: string) {
 			await updateCreditCardInfo(account);
 			await updateAccountStatementHistory(account);
 
-			// Check if we need a notification
-			if (await doesNeedNotify(account)) {
-				console.log("Needs notification");
-				await sendNotificationToUser(account)
-					.then(() => {
-						updateHasSentNotificationStatus(account);
-						console.log("Notification sent");
-						//update table to reflect notification sent
-					})
-					.catch((error) => {
-						console.error("Notification failed to send:", error);
-						throw new Error("Failed to send notification");
-					});
-			} else {
-				console.log("No notification needed");
-			}
+			// Handle notifications
+			await handleNotification(account);
 
 			console.log("Updated account info in DB");
 		}
 	} catch (error) {
 		console.error("Failed to update account:", error);
-		throw new Error("Failed to update account");
 	}
 }
 
@@ -127,24 +118,59 @@ async function updateHasSentNotificationStatus(account: IAccount) {
 	return await db.query(sqlData);
 }
 
+/**
+ * Sends a notification to the user about their upcoming credit card payment.
+ * @param {IAccount} account - The account information.
+ * @returns {Promise<void>}
+ * @throws Will throw an error if the account is not a credit card or if the notification fails to send.
+ */
 export async function sendNotificationToUser(account: IAccount) {
-	let cardName;
-	let dueDate;
+	let cardName: string | undefined;
+	let daysUntilDueDate: number | undefined;
 
 	if (account?.liability?.credit_card) {
-		cardName = account.liability.credit_card.name;
-		dueDate = account.liability.credit_card.next_payment_due_date;
+		if (typeof account.liability.credit_card.name === "string") {
+			cardName = account.liability.credit_card.name;
+		}
+
+		if (account.liability.credit_card.next_payment_due_date === null) {
+			console.log("No statement available yet for this account.");
+			return; // Exit the function early if there's no statement date
+		}
+
+		if (
+			typeof account.liability.credit_card.next_payment_due_date === "string"
+		) {
+			const nextPaymentDueDate = new Date(
+				account.liability.credit_card.next_payment_due_date
+			);
+			const currentDate = new Date();
+
+			// Calculate the difference in days
+			const differenceInMilliseconds =
+				nextPaymentDueDate.getTime() - currentDate.getTime();
+			daysUntilDueDate = Math.ceil(
+				differenceInMilliseconds / (1000 * 60 * 60 * 24)
+			);
+		}
 	}
 
-	// Ensure cardName and dueDate have values
-	if (!cardName || !dueDate) {
-		throw new Error("Account is probably not a credit card.");
+	// Ensure cardName and daysUntilDueDate have values
+	if (!cardName || daysUntilDueDate === undefined) {
+		if (!cardName) {
+			console.log("Account does not have a valid card name.");
+		}
+		if (daysUntilDueDate === undefined) {
+			console.log("There's no due date available for this account.");
+		}
+		return;
 	}
 
 	// Hardcoded for testing
 	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
 
-	const message = `${cardName} payment due on ${dueDate}`;
+	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
+	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
 	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");
@@ -154,47 +180,32 @@ export async function sendNotificationToUser(account: IAccount) {
 
 async function createAccountVerification(id: string) {
 	console.log(`Created account verification with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create account verification');
 }
 
 async function updateAccountVerification(id: string) {
 	console.log(`Updated account verification with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update account verification');
 }
 
 async function createConnection(id: string) {
 	console.log(`Created connection with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create connection');
 }
 
 async function updateConnection(id: string) {
 	console.log(`Updated connection with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update connection');
 }
 
 async function createPaymentReversal(id: string) {
 	console.log(`Created payment reversal with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to create payment reversal');
 }
 
 async function updatePaymentReversal(id: string) {
 	console.log(`Updated payment reversal with id: ${id}`);
-	// Add your logic here
-	// If something goes wrong, throw an error
-	// throw new Error('Failed to update payment reversal');
 }
 
-// Map operations to functions
+/**
+ * Maps operation types to their respective handler functions.
+ * @type {Object.<string, function(string): Promise<void>>}
+ */
 const operationHandlers: {[key: string]: (id: string) => Promise<void>} = {
 	"payment.create": createPayment,
 	"payment.update": updatePayment,
@@ -210,6 +221,12 @@ const operationHandlers: {[key: string]: (id: string) => Promise<void>} = {
 	"payment_reversal.update": updatePaymentReversal,
 };
 
+/**
+ * Processes a given webhook object and calls the appropriate handler based on its type.
+ * @param {WebhookObject} webhookObject - The webhook object to process.
+ * @returns {Promise<void>}
+ * @throws Will throw an error if no handler is found for the given operation.
+ */
 async function processWebhookObject(webhookObject: WebhookObject) {
 	const handler = operationHandlers[webhookObject.type];
 	if (handler) {
@@ -219,6 +236,12 @@ async function processWebhookObject(webhookObject: WebhookObject) {
 	}
 }
 
+/**
+ * Express middleware to handle incoming webhooks.
+ * @param {Request} request - The Express request object.
+ * @param {Response} response - The Express response object.
+ * @returns {Response} - Returns a response with a status of 200 if successful, or 500 if an error occurs.
+ */
 export const webhookHandler = async (request: Request, response: Response) => {
 	console.log("webhook received" + JSON.stringify(request.body));
 	try {
@@ -230,7 +253,7 @@ export const webhookHandler = async (request: Request, response: Response) => {
 
 		await processWebhookObject(webhook);
 	} catch (error) {
-		console.log("error in webhook" + error);
+		console.log("Webhook Error:", error);
 		return response.status(500).json({
 			message: "Error processing webhook",
 			error: error,

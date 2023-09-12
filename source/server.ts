@@ -11,7 +11,6 @@ import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
 import webhookRoutes from "./routes/webhooks";
 
-
 const router: Express = express();
 
 router.use(express.urlencoded({extended: false}));
