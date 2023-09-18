@@ -156,12 +156,17 @@ export async function sendNotificationToUser(account: IAccount) {
 	}
 
 	// Ensure cardName and daysUntilDueDate have values
-	if (!cardName || daysUntilDueDate === undefined) {
+	if (!cardName || daysUntilDueDate === undefined || daysUntilDueDate <= 0) {
 		if (!cardName) {
 			console.log("Account does not have a valid card name.");
 		}
 		if (daysUntilDueDate === undefined) {
 			console.log("There's no due date available for this account.");
+		}
+		if (daysUntilDueDate !== undefined && daysUntilDueDate <= 0) {
+			console.log(
+				"The payment due date is in the past or today. No notification will be sent."
+			);
 		}
 		return;
 	}
