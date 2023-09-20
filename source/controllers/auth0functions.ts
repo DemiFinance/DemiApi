@@ -236,7 +236,7 @@ export const addDaysInAdvanceToMetadata = async (
 		// Prepare the payload for the PATCH request
 		const requestPayload = {
 			app_metadata: {
-				daysInAdvanceForUpcomingPayments: daysInAdvance,
+				daysInAdvance,
 			},
 		};
 
@@ -289,7 +289,7 @@ export const getDaysInAdvanceByEntityId = async (
 			method: "GET",
 			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
 			params: {
-				q: `app_metadata.daysInAdvanceForUpcomingPayments:"${entityId}"`,
+				q: `app_metadata.daysInAdvance:"${entityId}"`,
 				search_engine: "v3",
 			},
 			headers: {authorization: `Bearer ${token}`},
