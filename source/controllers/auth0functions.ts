@@ -188,7 +188,7 @@ export const getNotificationTokenByEntyityId = async (
 		const token = await getToken();
 		const options: AxiosRequestConfig = {
 			method: "GET",
-			url: "https://{yourDomain}/api/v2/users",
+			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
 			params: {
 				q: `app_metadata.notificationToken:"${entityId}"`,
 				search_engine: "v3",
@@ -201,6 +201,105 @@ export const getNotificationTokenByEntyityId = async (
 
 		// Assuming the first user in the returned array is the relevant user
 		const appMetadata = data[0]?.app_metadata.notificationToken;
+
+		return response.status(200).json({
+			entity: appMetadata,
+		});
+	} catch (error) {
+		console.error(error);
+		return response.status(500).json({error: "Internal server error"});
+	}
+};
+
+/**
+ * Adds or updates the `daysInAdvanceForUpcomingPayments` value in the user's metadata.
+ *
+ * @async
+ * @function
+ * @param {Request} request - Express request object containing the user ID and days in advance value.
+ * @param {Response} response - Express response object used to send the response.
+ * @throws Will throw an error if the Auth0 Management API request fails.
+ * @returns {Promise<void>}
+ */
+export const addDaysInAdvanceToMetadata = async (
+	request: Request,
+	response: Response
+) => {
+	// Extract userId and daysInAdvance from request
+	const userId = request.params.id;
+	const daysInAdvance = request.body;
+
+	try {
+		// Define the endpoint URL
+		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
+
+		// Prepare the payload for the PATCH request
+		const requestPayload = {
+			app_metadata: {
+				daysInAdvanceForUpcomingPayments: daysInAdvance,
+			},
+		};
+
+		// Get the accessToken
+		const accessToken = await getToken();
+
+		// Prepare the headers for the PATCH request
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		// Send the PATCH request to the Auth0 Management API to update the user's metadata
+		const axiosResponse = await axios.patch(endpoint, requestPayload, {
+			headers: requestHeaders,
+		});
+
+		// Send the response data
+		response.json(axiosResponse.data);
+	} catch (error) {
+		console.error(
+			`Error updating days in advance for upcoming payments for user with ID ${request.body.userId}:`,
+			error
+		);
+		response.status(500).json({
+			message: `Failed to update days in advance for upcoming payments: ${error}`,
+		});
+	}
+};
+
+/**
+ * Retrieves the `daysInAdvanceForUpcomingPayments` value from the user's metadata based on the provided entity ID.
+ *
+ * @async
+ * @function
+ * @param {Request} request - Express request object containing the entity ID in the params.
+ * @param {Response} response - Express response object used to send the response.
+ * @throws Will throw an error if the Auth0 Management API request fails or if the user is not found.
+ * @returns {Promise<void>}
+ */
+export const getDaysInAdvanceByEntityId = async (
+	request: Request,
+	response: Response
+) => {
+	try {
+		const entityId: string = request.params.id;
+
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
+			params: {
+				q: `app_metadata.daysInAdvanceForUpcomingPayments:"${entityId}"`,
+				search_engine: "v3",
+			},
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		console.log("requested entity", data);
+
+		// Assuming the first user in the returned array is the relevant user
+		const appMetadata = data[0]?.app_metadata.daysInAdvanceForUpcomingPayments;
 
 		return response.status(200).json({
 			entity: appMetadata,
