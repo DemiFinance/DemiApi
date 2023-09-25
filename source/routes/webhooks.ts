@@ -21,7 +21,7 @@ router.post("/graphqltest", validateApiKey, async (request: express.Request, res
 		const result = await client.query({ query: schema });
 		return response.status(200).json(result);
 	} catch (error) {
-		return response.status(500).json({ error: error.toString() });
+		return response.status(500).json({ error: error });
 	}
 });
 
