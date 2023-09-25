@@ -22,7 +22,7 @@ router.post("/graphqltest", validateApiKey, async (request: express.Request, res
 		return response.status(200).json(result);
 	} catch (error) {
 		return response.status(500).json({ error: error.toString() });
-  }
+	}
 });
 
 export = router;
