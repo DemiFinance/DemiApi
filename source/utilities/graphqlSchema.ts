@@ -14,11 +14,11 @@ const schema = gql`
     content: String!
     author: User!
   }
-
+    
   type Query {
     users: [User]
     posts: [Post]
-  }
+    }
 `;
 
 export default schema;
