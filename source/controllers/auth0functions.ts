@@ -299,7 +299,7 @@ export const getDaysInAdvanceByEntityId = async (
 		console.log("requested entity", data);
 
 		// Assuming the first user in the returned array is the relevant user
-		const appMetadata = data[0]?.app_metadata.daysInAdvanceForUpcomingPayments;
+		const appMetadata = data[0]?.app_metadata.daysInAdvance;
 
 		return response.status(200).json({
 			entity: appMetadata,
