@@ -16,13 +16,17 @@ const pong = async (request: express.Request, response: express.Response) => {
 router.get("/ping", validateApiKey, pong);
 router.post("/", validateApiKey, webhookHandler);
 
-router.post("/graphqltest", validateApiKey, async (request: express.Request, response: express.Response) => {
-	try {
-		const result = await client.query({ query: schema });
-		return response.status(200).json(result);
-	} catch (error) {
-		return response.status(500).json({ error: error });
+router.post(
+	"/graphqltest",
+	validateApiKey,
+	async (request: express.Request, response: express.Response) => {
+		try {
+			const result = await client.query({query: schema});
+			return response.status(200).json(result);
+		} catch (error) {
+			return response.status(500).json({error: error});
+		}
 	}
-});
+);
 
 export = router;

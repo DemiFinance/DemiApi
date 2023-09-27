@@ -4,10 +4,8 @@ build:
   commands:
     pre-build:
       - npm ci
-      - npm run build-ts
     build:
-        - npm ci
-        - npm run build
+        - npm run build:aws
 
 
 run:
