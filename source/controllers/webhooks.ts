@@ -5,6 +5,7 @@ import {Method, Environments, IAccount} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
+import {fetchDaysInAdvanceByEntityId} from "../controllers/auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -125,62 +126,67 @@ async function updateHasSentNotificationStatus(account: IAccount) {
  * @throws Will throw an error if the account is not a credit card or if the notification fails to send.
  */
 export async function sendNotificationToUser(account: IAccount) {
-	let cardName: string | undefined;
-	let daysUntilDueDate: number | undefined;
+	const creditCard = account?.liability?.credit_card;
 
-	if (account?.liability?.credit_card) {
-		if (typeof account.liability.credit_card.name === "string") {
-			cardName = account.liability.credit_card.name;
-		}
-
-		if (account.liability.credit_card.next_payment_due_date === null) {
-			console.log("No statement available yet for this account.");
-			return; // Exit the function early if there's no statement date
-		}
-
-		if (
-			typeof account.liability.credit_card.next_payment_due_date === "string"
-		) {
-			const nextPaymentDueDate = new Date(
-				account.liability.credit_card.next_payment_due_date
-			);
-			const currentDate = new Date();
-
-			// Calculate the difference in days
-			const differenceInMilliseconds =
-				nextPaymentDueDate.getTime() - currentDate.getTime();
-			daysUntilDueDate = Math.ceil(
-				differenceInMilliseconds / (1000 * 60 * 60 * 24)
-			);
-		}
-	}
-
-	// Ensure cardName and daysUntilDueDate have values
-	if (!cardName || daysUntilDueDate === undefined || daysUntilDueDate <= 0) {
-		if (!cardName) {
-			console.log("Account does not have a valid card name.");
-		}
-		if (daysUntilDueDate === undefined) {
-			console.log("There's no due date available for this account.");
-		}
-		if (daysUntilDueDate !== undefined && daysUntilDueDate <= 0) {
-			console.log(
-				"The payment due date is in the past or today. No notification will be sent."
-			);
-		}
+	if (!creditCard) {
+		console.log("No credit card information available for this account.");
 		return;
 	}
 
-	// Hardcoded for testing
-	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
+	const cardName =
+		typeof creditCard.name === "string" ? creditCard.name : undefined;
+	const nextPaymentDueDate =
+		typeof creditCard.next_payment_due_date === "string"
+			? new Date(creditCard.next_payment_due_date)
+			: undefined;
 
+	if (!cardName) {
+		console.log("Account does not have a valid card name.");
+		return;
+	}
+
+	if (!nextPaymentDueDate) {
+		console.log("No statement available yet for this account.");
+		return;
+	}
+
+	const currentDate = new Date();
+	const differenceInMilliseconds =
+		nextPaymentDueDate.getTime() - currentDate.getTime();
+	const daysUntilDueDate = Math.ceil(
+		differenceInMilliseconds / (1000 * 60 * 60 * 24)
+	);
+
+	if (daysUntilDueDate <= 0) {
+		console.log(
+			"The payment due date is in the past or today. No notification will be sent."
+		);
+		return;
+	}
+
+	let daysInAdvance = await fetchDaysInAdvanceByEntityId(account.holder_id);
+	if (daysInAdvance === null) {
+		console.warn(
+			"Failed to fetch days in advance for the user. Defaulting to 3 days."
+		); // Using console.warn for minor issues
+		daysInAdvance = 3;
+	}
+
+	const deliveryDate = new Date(nextPaymentDueDate);
+	deliveryDate.setDate(deliveryDate.getDate() - daysInAdvance - 1); // Subtracting 1 more day for the initial day before the due date
+
+	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
 	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
 	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
 	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");
-
-	return sendNotificationByExternalId(externalId, heading, message);
+	return sendNotificationByExternalId(
+		externalId,
+		heading,
+		message,
+		deliveryDate.toISOString().split("T")[0]
+	);
 }
 
 async function createAccountVerification(id: string) {

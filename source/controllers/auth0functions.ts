@@ -268,22 +268,18 @@ export const addDaysInAdvanceToMetadata = async (
 };
 
 /**
- * Retrieves the `daysInAdvanceForUpcomingPayments` value from the user's metadata based on the provided entity ID.
+ * Fetches the number of days in advance a user has selected for their notification based on the entity ID.
  *
  * @async
- * @function
- * @param {Request} request - Express request object containing the entity ID in the params.
- * @param {Response} response - Express response object used to send the response.
- * @throws Will throw an error if the Auth0 Management API request fails or if the user is not found.
- * @returns {Promise<void>}
+ * @function fetchDaysInAdvanceByEntityId
+ * @param {string} entityId - The entity ID associated with the user.
+ * @returns {Promise<number|null>} The number of days in advance or null if there's an error or if the data is not available.
+ * @throws {Error} Throws an error if there's a failure in fetching the data.
  */
-export const getDaysInAdvanceByEntityId = async (
-	request: Request,
-	response: Response
-) => {
+export const fetchDaysInAdvanceByEntityId = async (
+	entityId: string
+): Promise<number | null> => {
 	try {
-		const entityId: string = request.params.id;
-
 		const token = await getToken();
 		const options: AxiosRequestConfig = {
 			method: "GET",
@@ -299,10 +295,31 @@ export const getDaysInAdvanceByEntityId = async (
 		console.log("requested entity", data);
 
 		// Assuming the first user in the returned array is the relevant user
-		const appMetadata = data[0]?.app_metadata.daysInAdvance;
+		return data[0]?.app_metadata.daysInAdvance || null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+};
 
+/**
+ * Express route handler to get the number of days in advance for a user based on the entity ID.
+ *
+ * @async
+ * @function getDaysInAdvanceByEntityId
+ * @param {Request} request - The Express request object.
+ * @param {Response} response - The Express response object.
+ * @returns {Response} Returns a response with the number of days in advance or an error message.
+ */
+export const getDaysInAdvanceByEntityId = async (
+	request: Request,
+	response: Response
+) => {
+	try {
+		const entityId: string = request.params.id;
+		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
 		return response.status(200).json({
-			entity: appMetadata,
+			entity: daysInAdvance,
 		});
 	} catch (error) {
 		console.error(error);

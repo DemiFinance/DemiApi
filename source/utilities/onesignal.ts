@@ -12,10 +12,23 @@ const client = new OneSignalAppClient(
 	process.env.ONESIGNAL_API_KEY || ""
 );
 
+/**
+ * Sends a notification to a user identified by an external ID.
+ *
+ * @async
+ * @function sendNotificationByExternalId
+ * @param {string} externalId - The external ID of the user to whom the notification should be sent.
+ * @param {string} heading - The heading of the notification.
+ * @param {string} message - The main content/message of the notification.
+ * @param {string} deliveryDateString - The date on which the notification should be delivered, in "YYYY-MM-DD" format. The notification will be sent at midnight in the local time zone on this date.
+ * @throws {Error} Throws an error if there's a failure in sending the notification or if the result contains errors.
+ * @returns {Promise<void>} A promise that resolves when the notification is sent successfully.
+ */
 export async function sendNotificationByExternalId(
 	externalId: string,
 	heading: string,
-	message: string
+	message: string,
+	deliveryDateString: string
 ) {
 	try {
 		// Log that the function is starting
@@ -23,11 +36,16 @@ export async function sendNotificationByExternalId(
 			`Attempting to send notification to externalId: ${externalId} with message: ${message}`
 		);
 
+		const deliveryDate = new Date(deliveryDateString);
+
 		const notification = new NotificationByDeviceBuilder()
 			.setIncludeExternalUserIds([externalId])
 			.notification()
 			.setHeadings({en: heading})
 			.setContents({en: message})
+			.setDelivery({
+				send_after: deliveryDate.toISOString(),
+			})
 			.build();
 
 		const result = await client.createNotification(notification);
