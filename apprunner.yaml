@@ -5,8 +5,7 @@ build:
     pre-build:
       - npm ci
     build:
-        - npx tsc -p .
-        - npm run build-cp
+        - npm run build:aws
 
 
 run:

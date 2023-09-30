@@ -23,6 +23,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"typescript": "^5.2.2",
 		"@apollo/client": "^3.8.4",
 		"@apollo/server": "^4.9.3",
 		"@onesignal/node-onesignal": "^2.0.1-beta2",
@@ -50,7 +51,6 @@
 		"@typescript-eslint/parser": "^5.53.0",
 		"eslint": "^8.34.0",
 		"eslint-config-prettier": "^8.6.0",
-		"prettier": "^2.8.4",
-		"typescript": "^5.2.2"
+		"prettier": "^2.8.4"
 	}
 }
