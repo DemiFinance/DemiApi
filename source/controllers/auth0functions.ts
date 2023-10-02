@@ -318,9 +318,7 @@ export const getDaysInAdvanceByEntityId = async (
 	try {
 		const entityId: string = request.params.id;
 		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
-		return response.status(200).json({
-			entity: daysInAdvance,
-		});
+		return response.status(200).json({daysInAdvance});
 	} catch (error) {
 		console.error(error);
 		return response.status(500).json({error: "Internal server error"});
