@@ -16,4 +16,4 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
     apt-get -y install doppler
 
 
-CMD [ "node", "build/app.js" ]
+CMD [ "doppler", "run", "--", "node", "build/app.js" ]
