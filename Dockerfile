@@ -6,6 +6,7 @@ RUN npm install
 COPY . .
 
 RUN npm run build
+EXPOSE 8080
 
 # Install Doppler CLI
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg && \
@@ -15,4 +16,4 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
     apt-get -y install doppler
 
 
-CMD [ "npm", "start" ]
+CMD [ "node", "build/app.js" ]

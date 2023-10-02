@@ -2,6 +2,7 @@ import express from "express";
 import {
 	addNotificationTokenToMetadata,
 	getNotificationTokenByEntyityId,
+	getDaysInAdvanceByEntityId,
 } from "../controllers/auth0functions";
 
 const router = express.Router();
@@ -15,5 +16,6 @@ const jwtCheck = auth({
 
 router.post("/addToken", jwtCheck, addNotificationTokenToMetadata);
 router.get("/:id", jwtCheck, getNotificationTokenByEntyityId);
+router.get("/getDaysInAdvance", jwtCheck, getDaysInAdvanceByEntityId);
 
 export = router;
