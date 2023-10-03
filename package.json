@@ -22,7 +22,6 @@
 		"docker:build": "docker build -t demiapi .",
 		"docker:tag:latest": "docker tag demiapi:latest 792017225318.dkr.ecr.us-east-1.amazonaws.com/demiapi:latest",
 		"docker:push:latest": "docker push 792017225318.dkr.ecr.us-east-1.amazonaws.com/demiapi:latest"
-		
 	},
 	"keywords": [],
 	"author": "",

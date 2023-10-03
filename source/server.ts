@@ -18,14 +18,11 @@ router.use(express.urlencoded({extended: false}));
 router.use(express.json());
 
 router.use((req, res, next) => {
-	// set the CORS policy
 	res.header("Access-Control-Allow-Origin", "*");
-	// set the CORS headers
 	res.header(
 		"Access-Control-Allow-Headers",
 		"origin, X-Requested-With,Content-Type,Accept, Authorization"
 	);
-	// set the CORS method headers
 	if (req.method === "OPTIONS") {
 		res.header("Access-Control-Allow-Methods", "GET PATCH DELETE POST");
 		return res.status(200).json({});
@@ -41,8 +38,6 @@ router.get("/ping", (req, res) => {
 const path = require("path");
 
 router.use("/assets", express.static(path.join(__dirname, "/public")));
-
-//srouter.post("/test", entityController.testWithMethod);
 
 router.use("/entity", entityRoutes);
 router.use("/auth", authRoutes);
