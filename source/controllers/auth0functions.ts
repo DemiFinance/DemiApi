@@ -227,7 +227,7 @@ export const addDaysInAdvanceToMetadata = async (
 ) => {
 	// Extract userId and daysInAdvance from request
 	const userId = request.params.id;
-	const daysInAdvance = request.body;
+	const daysInAdvance = request.body.daysInAdvance;
 
 	try {
 		// Define the endpoint URL
@@ -303,6 +303,40 @@ export const fetchDaysInAdvanceByEntityId = async (
 };
 
 /**
+ * Fetches the `daysInAdvance` value from the `app_metadata` of a specified user in Auth0 using their `userId`.
+ *
+ * @async
+ * @param {string} userId - The identifier of the user in Auth0.
+ * @returns {Promise<number|null>} - A Promise that resolves to the `daysInAdvance` value as a number,
+ *                                   or null if the value is not found or an error occurs.
+ * @throws Will throw an error if unable to retrieve the token or make the API request.
+ *
+ * @example
+ * const daysInAdvance = await fetchDaysInAdvanceByUserId('user123');
+ */
+export const fetchDaysInAdvanceByUserId = async (
+	userId: string
+): Promise<number | null> => {
+	try {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		console.log("requested user", data);
+
+		// Assuming the data object is the relevant user
+		return data?.app_metadata.daysInAdvance || null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+};
+
+/**
  * Express route handler to get the number of days in advance for a user based on the entity ID.
  *
  * @async
@@ -317,7 +351,7 @@ export const getDaysInAdvanceByEntityId = async (
 ) => {
 	try {
 		const entityId: string = request.params.id;
-		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
+		const daysInAdvance = await fetchDaysInAdvanceByUserId(entityId);
 		return response.status(200).json({daysInAdvance});
 	} catch (error) {
 		console.error(error);
