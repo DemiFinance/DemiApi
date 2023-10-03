@@ -5,14 +5,9 @@ import {
 	getDaysInAdvanceByEntityId,
 } from "../controllers/auth0functions";
 
-const router = express.Router();
-const {auth} = require("express-oauth2-jwt-bearer");
+import jwtCheck from "../middleware/auth0";
 
-const jwtCheck = auth({
-	audience: "https://api.demifinance.com",
-	issuerBaseURL: "https://dev-0u7isllacvzlfhww.us.auth0.com/",
-	tokenSigningAlg: "RS256",
-});
+const router = express.Router();
 
 router.post("/addToken", jwtCheck, addNotificationTokenToMetadata);
 router.get("/:id", jwtCheck, getNotificationTokenByEntyityId);
