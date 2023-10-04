@@ -168,8 +168,8 @@ export function generateStatementSQL(account: IAccount): QueryParams {
 	return {
 		text: `
         WITH latest_update AS (
-            SELECT EXTRACT(MONTH FROM statement_due_date) AS month,
-                   EXTRACT(YEAR FROM statement_due_date) AS year
+            SELECT EXTRACT(MONTH FROM statement_due_date::date) AS month,
+                   EXTRACT(YEAR FROM statement_due_date::date) AS year
             FROM AccountStatementHistory
             WHERE account_id = $1
             ORDER BY statement_due_date DESC
@@ -180,8 +180,8 @@ export function generateStatementSQL(account: IAccount): QueryParams {
         WHERE NOT EXISTS (
             SELECT 1
             FROM latest_update
-            WHERE month = EXTRACT(MONTH FROM $3)
-              AND year = EXTRACT(YEAR FROM $3)
+            WHERE month = EXTRACT(MONTH FROM $3::date)
+              AND year = EXTRACT(YEAR FROM $3::date)
         );        
     `,
 		values: [
