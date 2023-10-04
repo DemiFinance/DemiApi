@@ -42,8 +42,9 @@ class OneSignalUtil {
 		}
 
 		try {
-			const response =
-				await OneSignalUtil.client.createNotification(notification);
+			const response = await OneSignalUtil.client.createNotification(
+				notification
+			);
 			console.log("Notification sent", response);
 		} catch (e) {
 			console.error("Error sending notification", e);
@@ -76,8 +77,9 @@ class OneSignalUtil {
 		}
 
 		try {
-			const response =
-				await OneSignalUtil.client.createNotification(notification);
+			const response = await OneSignalUtil.client.createNotification(
+				notification
+			);
 			console.log("Scheduled notification sent", response);
 		} catch (e) {
 			console.error("Error sending scheduled notification", e);
