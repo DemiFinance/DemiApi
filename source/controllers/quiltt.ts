@@ -12,19 +12,20 @@ import axios from "axios";
  * @throws Will throw an error if the axios POST request fails.
  * @returns {Promise<string>} The session token.
  */
-async function generateToken(
-	email: string,
-	password: string,
-	authToken: string
-): Promise<string> {
+async function generateToken(): Promise<string> {
+	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url: string = "https://api.quiltt.io/v1/users/sessions";
-	const data = {email, password};
+	const data = {};
 	const config = {
 		headers: {
 			Authorization: `Bearer ${authToken}`,
 		},
 	};
 
+	if (!authToken) {
+		console.error("QUILTT_TOKEN environment variable is not set or is blank");
+		throw new Error("Internal Server Error");
+	}
 	try {
 		const response = await axios.post(url, data, config);
 		return response.data.sessionToken;
@@ -58,21 +59,11 @@ export async function handleGenerateSessionToken(
 	res: Response
 ): Promise<void> {
 	const {email, password} = req.body;
-	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 
 	// Check if the QUILTT_TOKEN environment variable is set
-	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		res.status(500).json({error: "Internal Server Error"});
-		return;
-	}
 
 	try {
-		const sessionToken: string = await generateToken(
-			email,
-			password,
-			authToken
-		);
+		const sessionToken: string = await generateToken();
 		res.status(200).json({sessionToken});
 	} catch (error: any) {
 		console.error(error.message);
