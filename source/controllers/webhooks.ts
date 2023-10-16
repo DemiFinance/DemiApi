@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-import {WebhookObject} from "../models/webhook";
+import {MethodWebhookObject} from "../models/webhook";
 
 import {Method, Environments, IAccount} from "method-node";
 import * as db from "../database/index.js";
@@ -238,7 +238,7 @@ const operationHandlers: {[key: string]: (id: string) => Promise<void>} = {
  * @returns {Promise<void>}
  * @throws Will throw an error if no handler is found for the given operation.
  */
-async function processWebhookObject(webhookObject: WebhookObject) {
+async function processWebhookObject(webhookObject: MethodWebhookObject) {
 	const handler = operationHandlers[webhookObject.type];
 	if (handler) {
 		await handler(webhookObject.id);
@@ -256,7 +256,7 @@ async function processWebhookObject(webhookObject: WebhookObject) {
 export const webhookHandler = async (request: Request, response: Response) => {
 	console.log("webhook received" + JSON.stringify(request.body));
 	try {
-		const webhook: WebhookObject = {
+		const webhook: MethodWebhookObject = {
 			id: request.body.id,
 			type: request.body.type,
 			op: request.body.op,

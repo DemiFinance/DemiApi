@@ -358,3 +358,25 @@ export const getDaysInAdvanceByEntityId = async (
 		return response.status(500).json({error: "Internal server error"});
 	}
 };
+
+export const getPhoneNumberById = async (userId: string): Promise<string> => {
+	try {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		console.log("requested phone number", data);
+
+		// Extract the phone number from the response data
+		const phoneNumber = data.phone_number;
+
+		return phoneNumber;
+	} catch (error) {
+		console.error(error);
+		return "No number found";
+	}
+};

@@ -29,4 +29,3 @@ run:
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGPASSWORD::"
     - name: PGDATABASE
       value-from: "arn:aws:secretsmanager:us-east-1:792017225318:secret:doppler-q8uhG9:PGDATABASE::"
-      
