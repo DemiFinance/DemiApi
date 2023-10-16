@@ -177,7 +177,7 @@ export async function sendNotificationToUser(account: IAccount) {
 
 	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
 	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
-	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
+	const message = `${cardName} payment due in ${daysInAdvance} ${dayWord}`;
 	const heading = "Upcoming Payment Reminder";
 
 	console.log("Sending notification to user");

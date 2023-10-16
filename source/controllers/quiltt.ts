@@ -12,10 +12,13 @@ import axios from "axios";
  * @throws Will throw an error if the axios POST request fails.
  * @returns {Promise<string>} The session token.
  */
-async function generateToken(): Promise<string> {
-	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url: string = "https://api.quiltt.io/v1/users/sessions";
-	const data = {};
+async function generateToken(
+	email: string,
+	password: string,
+	authToken: string
+): Promise<string> {
+	const url = "https://api.quiltt.io/v1/users/sessions";
+	const data = {email, password};
 	const config = {
 		headers: {
 			Authorization: `Bearer ${authToken}`,
