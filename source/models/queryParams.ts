@@ -1,5 +1,5 @@
 export type QueryParams = {
-	desc: string;
+	desc?: string;
 	text: string;
 	values?: any[];
 };

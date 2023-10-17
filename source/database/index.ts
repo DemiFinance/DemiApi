@@ -5,9 +5,13 @@ const pool = new Pool();
 
 export const query = async (queryParams: QueryParams) => {
 	const start = Date.now();
-	const res = queryParams.values ? await pool.query(queryParams.text, queryParams.values) : await pool.query(queryParams.text);
+	const res = queryParams.values
+		? await pool.query(queryParams.text, queryParams.values)
+		: await pool.query(queryParams.text);
 	const duration = Date.now() - start;
-	console.log("Query: " + queryParams.desc + " "+ {duration, rows: res.rowCount});
+	console.log(
+		`Query: ${queryParams.desc}, Duration: ${duration}, Rows: ${res.rowCount}`
+	);
 
 	return res;
 };

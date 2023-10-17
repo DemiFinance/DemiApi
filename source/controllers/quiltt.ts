@@ -16,7 +16,7 @@ import {AccountNumbers, Profile} from "../models/quilttmodels";
  */
 async function generateToken(userId: string): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url: string = "https://api.quiltt.io/v1/users/sessions";
+	const url = "https://api.quiltt.io/v1/users/sessions";
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
@@ -73,10 +73,8 @@ export async function handleGenerateSessionToken(
 	res: Response
 ): Promise<void> {
 	try {
-
 		//check auth0 data for quilttUserId
 		//if present then request a session token for that user, if nnot present create a new quilttProfile based on the exisiting auth0User
-
 
 		const userId = req.body.userId;
 
@@ -99,9 +97,11 @@ export async function handleGenerateSessionToken(
  * @throws Will throw an error if the QUILTT_TOKEN environment variable is not set or is blank.
  * @throws Will throw an error if the HTTP request fails.
  */
-export async function createQuilttProfile(profileData: Profile): Promise<string> {
+export async function createQuilttProfile(
+	profileData: Profile
+): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url: string = "https://api.quiltt.io/v1/profiles";
+	const url = "https://api.quiltt.io/v1/profiles";
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
@@ -138,7 +138,7 @@ export async function getAccountNumbers(
 	accountId: string
 ): Promise<{accountNumbers: AccountNumbers}> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url: string = `https://api.quiltt.io/v1/accounts/${accountId}/ach`;
+	const url = `https://api.quiltt.io/v1/accounts/${accountId}/ach`;
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");

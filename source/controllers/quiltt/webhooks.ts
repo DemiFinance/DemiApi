@@ -20,14 +20,13 @@ async function createAccount(event: QuilttEvent) {
 	const acctNumbner = accountData.accountNumbers.number;
 	const routingNumber = accountData.accountNumbers.routing;
 
-
 	try {
 		const account: any = await method.accounts.create({
-			holder_id: request.body.id,
+			holder_id: "request.body.id",
 			ach: {
 				routing: routingNumber,
 				number: acctNumbner,
-				type: request.body.type,
+				type: "checking", //TODO Write method to retrieve acct type based on id
 			},
 		});
 
@@ -35,14 +34,15 @@ async function createAccount(event: QuilttEvent) {
 			.accounts(account.id)
 			.verification.create({
 				type: "mx",
-				mx:{
-					account : {},
-					transactions : []
+				mx: {
+					account: {},
+					transactions: [],
 				},
 			});
+
+		console.log("Verificiation Output " + verification);
 	} catch (error) {
 		console.error("Error creating new account:", error);
-		return response.status(500).json({error: "Failed to create new account"});
 	}
 
 	console.log(

@@ -39,18 +39,18 @@ async function createAccount(id: string) {
  */
 async function handleNotification(account: IAccount) {
 	if (await doesNeedNotify(account)) {
-		console.log("Needs notification");
+		console.log(`Account ${account.id} Needs notification`);
 		try {
 			await sendNotificationToUser(account);
 			await updateHasSentNotificationStatus(account);
-			console.log("Notification sent");
+			console.log(`Notification for Account ${account.id} sent`);
 			// Update table to reflect notification sent
 		} catch (error) {
 			console.error("Notification failed to send:", error);
 			throw new Error("Failed to send notification");
 		}
 	} else {
-		console.log("No notification needed");
+		console.log(`No notification needed for account ${account.id}`);
 	}
 }
 
@@ -129,7 +129,9 @@ export async function sendNotificationToUser(account: IAccount) {
 	const creditCard = account?.liability?.credit_card;
 
 	if (!creditCard) {
-		console.log("No credit card information available for this account.");
+		console.log(
+			`No credit card information available for account ${account.id}`
+		);
 		return;
 	}
 
@@ -141,12 +143,12 @@ export async function sendNotificationToUser(account: IAccount) {
 			: undefined;
 
 	if (!cardName) {
-		console.log("Account does not have a valid card name.");
+		console.log(`Account ${account.id} does not have a valid card name.`);
 		return;
 	}
 
 	if (!nextPaymentDueDate) {
-		console.log("No statement available yet for this account.");
+		console.log(`No statement available yet for account ${account.id}`);
 		return;
 	}
 
