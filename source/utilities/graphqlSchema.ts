@@ -1,8 +1,8 @@
 import {gql} from "graphql-tag";
 
 export const AccountsSchema = gql`
-	query SpendingAccountsWithTransactionsQuery {
-		account(id: "acct_12uag3KIyeQsoqGhAmabGg") {
+	query SpendingAccountsWithTransactionsQuery($accountId: ID!) {
+		account(id: $accountId) {
 			sources {
 				... on MxAccount {
 					accountNumber
@@ -50,8 +50,8 @@ export const AccountsSchema = gql`
 `;
 
 export const TransactionsSchema = gql`
-	query TransactionsByAccountId {
-		account(id: "acct_12uag3KIyeQsoqGhAmabGg") {
+	query TransactionsByAccountId($accountId: ID!) {
+		account(id: $accountId) {
 			transactions {
 				source(type: MX) {
 					... on MxTransaction {

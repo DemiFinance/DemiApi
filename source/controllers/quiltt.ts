@@ -134,6 +134,16 @@ export async function createQuilttProfile(
 	}
 }
 
+/**
+ * Fetches the account numbers associated with a given account ID from the Quiltt API.
+ *
+ * @async
+ * @function
+ * @param {string} accountId - The ID of the account to fetch the numbers for.
+ * @returns {Promise<{accountNumbers: AccountNumbers}>} An object containing the account numbers.
+ * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
+ * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
+ */
 export async function getAccountNumbers(
 	accountId: string
 ): Promise<{accountNumbers: AccountNumbers}> {
