@@ -4,6 +4,6 @@ import jwtCheck from "../middleware/auth0";
 
 const router = express.Router();
 
-router.get("/sessionToken", jwtCheck, handleGenerateSessionToken);
+router.post("/sessionToken", jwtCheck, handleGenerateSessionToken);
 
 export = router;

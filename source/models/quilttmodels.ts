@@ -1,3 +1,16 @@
+export interface UnifiedWebhookObject {
+	id?: string;
+	type: string;
+	op?: string;
+	environment?: string;
+	eventTypes?: string[];
+	events?: Array<{type: string /* other fields */}>;
+}
+export interface AccountNumbers {
+	accountId: string;
+	number: string;
+	routing: string;
+}
 export interface QuilttEnvironment {
 	id: string;
 	name: string;

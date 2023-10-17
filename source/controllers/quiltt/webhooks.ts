@@ -1,21 +1,55 @@
 import {Request, Response} from "express";
 
-// import {Method, Environments} from "method-node";
+import {Method, Environments} from "method-node";
 // import * as db from "../../database/index.js";
 // import * as dbHelpers from "../../database/helpers";
 // import {sendNotificationByExternalId} from "../../utilities/onesignal";
 // import {fetchDaysInAdvanceByEntityId} from "../../controllers/auth0functions";
-import {QuilttWebhookObject} from "../../models/quilttmodels";
+import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
+import {getAccountNumbers} from "../quiltt";
 
-// const method = new Method({
-// 	apiKey: process.env.METHOD_API_KEY || "",
-// 	env: Environments.production,
-// });
+const method = new Method({
+	apiKey: process.env.METHOD_API_KEY || "",
+	env: Environments.production,
+});
 
-async function createAccount(event: any) {
-	console.log(`Created connection with id: ${event}`);
+async function createAccount(event: QuilttEvent) {
+	const accountId = event.record.id;
+	const accountData = await getAccountNumbers(accountId);
+
+	const acctNumbner = accountData.accountNumbers.number;
+	const routingNumber = accountData.accountNumbers.routing;
+
+
+	try {
+		const account: any = await method.accounts.create({
+			holder_id: request.body.id,
+			ach: {
+				routing: routingNumber,
+				number: acctNumbner,
+				type: request.body.type,
+			},
+		});
+
+		const verification: any = await method
+			.accounts(account.id)
+			.verification.create({
+				type: "mx",
+				mx:{
+					account : {},
+					transactions : []
+				},
+			});
+	} catch (error) {
+		console.error("Error creating new account:", error);
+		return response.status(500).json({error: "Failed to create new account"});
+	}
+
+	console.log(
+		`Created connection with id: ${event} ${acctNumbner} ${routingNumber}`
+	);
 }
-async function unimplementedFunc(event: any) {
+async function unimplementedFunc(event: QuilttEvent) {
 	console.log(`Created connection with id: ${event}`);
 }
 
@@ -23,7 +57,9 @@ async function unimplementedFunc(event: any) {
  * Maps operation types to their respective handler functions.
  * @type {Object.<string, function(string): Promise<void>>}
  */
-const operationHandlers: {[key: string]: (event: any) => Promise<void>} = {
+const quilttOperationHandlers: {
+	[key: string]: (event: QuilttEvent) => Promise<void>;
+} = {
 	"profile.created": unimplementedFunc,
 	"profile.updated": unimplementedFunc,
 	"profile.deleted": unimplementedFunc,
@@ -47,9 +83,9 @@ const operationHandlers: {[key: string]: (event: any) => Promise<void>} = {
  * @returns {Promise<void>}
  * @throws Will throw an error if no handler is found for a given operation.
  */
-async function processWebhookObject(webhookObject: QuilttWebhookObject) {
+async function processQuilttWebhookObject(webhookObject: QuilttWebhookObject) {
 	for (const event of webhookObject.events) {
-		const handler = operationHandlers[event.type];
+		const handler = quilttOperationHandlers[event.type];
 		if (handler) {
 			await handler(event);
 		} else {
@@ -76,7 +112,7 @@ export const quilttWebhookHandler = async (
 			events: request.body.events,
 		};
 
-		await processWebhookObject(webhook);
+		await processQuilttWebhookObject(webhook);
 	} catch (error) {
 		console.log("Webhook Error:", error);
 		return response.status(500).json({
