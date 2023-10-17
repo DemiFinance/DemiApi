@@ -1,17 +1,13 @@
 import {Pool} from "pg";
+import {QueryParams} from "../models/queryParams";
 
 const pool = new Pool();
 
-type QueryParams = {
-	text: string;
-	values?: any[];
-};
-
-export const query = async ({text, values}: QueryParams) => {
+export const query = async (queryParams: QueryParams) => {
 	const start = Date.now();
-	const res = values ? await pool.query(text, values) : await pool.query(text);
+	const res = queryParams.values ? await pool.query(queryParams.text, queryParams.values) : await pool.query(queryParams.text);
 	const duration = Date.now() - start;
-	console.log("executed query", {duration, rows: res.rowCount});
+	console.log("Query: " + queryParams.desc + " "+ {duration, rows: res.rowCount});
 
 	return res;
 };

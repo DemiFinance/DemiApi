@@ -9,6 +9,7 @@ import {QueryParams} from "../models/queryParams";
  */
 export function generateAccountSQL(account: IAccount): QueryParams {
 	return {
+		desc: `Insert Account Data: ${account.id}`,
 		text: `INSERT INTO Account (id, holder_id, status, type, clearing, capabilities, available_capabilities, error, metadata, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ON CONFLICT (id)
@@ -48,6 +49,7 @@ export function generateAccountSQL(account: IAccount): QueryParams {
  */
 export function generateLiabilitySQL(account: IAccount): QueryParams {
 	return {
+		desc: `Insert Liabilitiy Data ${account.id}`,
 		text: `INSERT INTO Liability (id, mch_id, mask, type, payment_status, data_status, data_sync_type, data_last_successful_sync, data_source, data_updated_at, ownership, data_status_error, hash)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         ON CONFLICT (id)
@@ -91,6 +93,7 @@ export function generateLiabilitySQL(account: IAccount): QueryParams {
 export function generateCreditCardSQL(account: IAccount): QueryParams {
 	const cc = account.liability?.credit_card;
 	return {
+		desc: `Insert Credit Card Data: ${account.id}`,
 		text: `INSERT INTO CreditCard 
         (id, name, balance, opened_at, last_payment_date, last_payment_amount, next_payment_due_date, next_payment_minimum_amount, last_statement_balance, remaining_statement_balance, available_credit, interest_rate_percentage, interest_rate_type, interest_rate_source, past_due_status, past_due_balance, past_due_date, auto_pay_status, auto_pay_amount, auto_pay_date, sub_type, term_length, closed_at, credit_limit, pending_purchase_authorization_amount, pending_credit_authorization_amount, interest_saving_balance, next_statement_date) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
@@ -166,6 +169,7 @@ export function generateCreditCardSQL(account: IAccount): QueryParams {
 export function generateStatementSQL(account: IAccount): QueryParams {
 	const cc = account.liability?.credit_card;
 	return {
+		desc: `Insert Statement: ${account.id}`,
 		text: `
         WITH latest_update AS (
             SELECT EXTRACT(MONTH FROM statement_due_date::date) AS month,
@@ -201,6 +205,7 @@ export function generateStatementSQL(account: IAccount): QueryParams {
  */
 export function generatePaymentNotifiedSQL(account: IAccount): QueryParams {
 	return {
+		desc: `Fetch Notification Status: ${account.id}`,
 		text: `
             SELECT 
                 payment_notified
@@ -232,6 +237,7 @@ export function updateHasSentNotificationStatus(
 	account: IAccount
 ): QueryParams {
 	return {
+		desc: `Update Notification Status: ${account.id}`,
 		text: `
             UPDATE 
                 AccountStatementHistory
