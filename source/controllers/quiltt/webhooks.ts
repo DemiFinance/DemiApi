@@ -1,10 +1,12 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
 import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
-import {getAccountNumbers} from "../quiltt";
 import {
-	accountDetailsById,
-	graphqlClient,
+	fetchAccountInfo,
+	generateTokenById,
+	getAccountNumbers,
+} from "../quiltt";
+import {
 	holderFromAccountId,
 	transactionsByAccountId,
 } from "../../utilities/graphqlClient";
@@ -14,17 +16,6 @@ const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
-
-/**
- * Fetches account information for the specified account ID.
- *
- * @param {string} accountId - The ID of the account to fetch information for.
- * @returns {Promise<any>} The account information.
- */
-async function fetchAccountInfo(sessionToken: string, accountId: string) {
-	const accountResponse = await accountDetailsById(sessionToken, accountId);
-	return accountResponse.data;
-}
 
 /**
  * Fetches transactions for the specified account ID.
@@ -143,19 +134,19 @@ const ACCOUNT_TYPES = {
 async function createAccount(event: QuilttEvent) {
 	const {id: accountId} = event.record;
 	try {
-		const [accountData, accountInfo, transactionsObject, holderInfo] =
-			await Promise.all([
-				getAccountNumbers(accountId),
-				fetchAccountInfo(accountId),
-				fetchTransactions(accountId),
-				fetchHolderInfo(accountId),
-			]);
+		const fetchedAccount = await fetchAccountInfo(accountId);
+		const accountInfo = fetchedAccount.body;
+		const sessionToken = await generateTokenById(fetchedAccount.profileId);
+		const accountType = getNormalizedAccountType(fetchedAccount.type);
+
+		const [accountData, transactionsObject, holderInfo] = await Promise.all([
+			getAccountNumbers(accountId),
+			fetchTransactions(sessionToken, accountId),
+			fetchHolderInfo(sessionToken, accountId),
+		]);
 
 		const {number: accountNumber, routing: routingNumber} =
 			accountData.accountNumbers;
-		const accountType = getNormalizedAccountType(
-			accountInfo.account.sources[0].type
-		);
 
 		const account = await createAccountInMethod(
 			accountNumber,

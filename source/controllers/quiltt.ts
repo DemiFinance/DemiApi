@@ -1,18 +1,17 @@
 import {Request, Response} from "express";
 import axios from "axios";
-import {getPhoneNumberById} from "./auth0functions";
+import {addQuilttIdToMetadata, getPhoneNumberById} from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
 
 /**
- * Generates a session token by making a POST request to the Quiltt API.
+ * Generates a session token using a user's phone number, which is retrieved by their user ID.
  *
  * @async
  * @function
- * @param {string} email - User's email.
- * @param {string} password - User's password.
- * @param {string} authToken - Authorization token.
- * @throws Will throw an error if the axios POST request fails.
- * @returns {Promise<string>} The session token.
+ * @param {string} userId - The ID of the user to generate a session token for.
+ * @returns {Promise<string>} - A Promise that resolves to a session token string.
+ * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
+ * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
  */
 async function generateToken(userId: string): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
@@ -37,7 +36,7 @@ async function generateToken(userId: string): Promise<string> {
 		};
 
 		const response = await axios.post(url, data, config);
-		addUserIdToMetadata(response.data.userId);
+		addUserIdToMetadata(userId, response.data.userId);
 		return response.data.sessionToken;
 	} catch (error: any) {
 		console.error("Error generating session token:", error.message);
@@ -55,8 +54,73 @@ async function generateToken(userId: string): Promise<string> {
 	}
 }
 
-export async function addUserIdToMetadata(userId: string) {
-	console.log(userId);
+/**
+ * Wraps the addQuilttIdToMetadata function to handle any specific logic for adding user ID to metadata.
+ *
+ * @param {string} userId - The user ID to be added to metadata.
+ * @param {string} quilttId - The Quiltt ID to be associated with the user ID.
+ * @returns {Promise<void>} A promise that resolves when the metadata has been updated.
+ */
+export async function addUserIdToMetadata(
+	userId: string,
+	quilttId: string
+): Promise<void> {
+	try {
+		// Await the promise returned by addQuilttIdToMetadata
+		await addQuilttIdToMetadata(userId, quilttId);
+		console.log(`Metadata updated successfully for user ${userId}`);
+	} catch (error) {
+		console.error(`Error updating metadata for user ${userId}:`, error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+}
+
+/**
+ * Generates a session token using a user's ID.
+ *
+ * @async
+ * @function
+ * @param {string} userId - The ID of the user to generate a session token for.
+ * @returns {Promise<string>} - A Promise that resolves to a session token string.
+ * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
+ * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
+ */
+export async function generateTokenById(userId: string): Promise<string> {
+	const authToken: string | undefined = process.env.QUILTT_TOKEN;
+	const url = "https://api.quiltt.io/v1/users/sessions";
+
+	if (!authToken) {
+		console.error("QUILTT_TOKEN environment variable is not set or is blank");
+		throw new Error("Internal Server Error");
+	}
+
+	try {
+		const data = {
+			userId: userId,
+		};
+
+		const config = {
+			headers: {
+				Authorization: `Bearer ${authToken}`,
+			},
+		};
+
+		const response = await axios.post(url, data, config);
+		return response.data.sessionToken;
+	} catch (error: any) {
+		console.error("Error generating session token:", error.message);
+		if (error.response) {
+			console.error("Response data:", error.response.data);
+			console.error("Response status:", error.response.status);
+			throw new Error(
+				`Error: ${error.response.status}, ${JSON.stringify(
+					error.response.data
+				)}`
+			);
+		} else {
+			throw new Error("Internal Server Error");
+		}
+	}
 }
 
 /**
@@ -164,6 +228,58 @@ export async function getAccountNumbers(
 
 		const response = await axios.get(url, config);
 		return {accountNumbers: response.data};
+	} catch (error: any) {
+		console.error("Error fetching account:", error.message);
+		if (error.response) {
+			console.error("Response data:", error.response.data);
+			console.error("Response status:", error.response.status);
+			throw new Error(
+				`Error: ${error.response.status}, ${JSON.stringify(
+					error.response.data
+				)}`
+			);
+		} else {
+			throw new Error("Internal Server Error");
+		}
+	}
+}
+
+/**
+ * Fetches account information associated with a given account ID from the Quiltt API.
+ *
+ * @async
+ * @function
+ * @param {string} accountId - The ID of the account to fetch information for.
+ * @returns {Promise<{body: object, profileId: string, type: string}>} An object containing the account information, profile ID, and type.
+ * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
+ * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
+ */
+export async function fetchAccountInfo(
+	accountId: string
+): Promise<{body: object; profileId: string; type: string}> {
+	const authToken: string | undefined = process.env.QUILTT_TOKEN;
+	const url = `https://api.quiltt.io/v1/remote/mx/accounts/${accountId}`;
+
+	if (!authToken) {
+		console.error("QUILTT_TOKEN environment variable is not set or is blank");
+		throw new Error("Internal Server Error");
+	}
+
+	try {
+		const config = {
+			headers: {
+				Authorization: `Bearer ${authToken}`,
+			},
+		};
+
+		const response = await axios.get(url, config);
+		const body =
+			response.data.documents["api.mx.com"][
+				"/users/{user_guid}/accounts/{account_guid}"
+			].body;
+		const profileId = response.data.profileId;
+		const type = response.data.type; // Extracting the 'type' parameter
+		return {body, profileId, type}; // Returning 'type' along with 'body' and 'profileId'
 	} catch (error: any) {
 		console.error("Error fetching account:", error.message);
 		if (error.response) {
