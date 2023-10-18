@@ -1,6 +1,6 @@
 import {gql} from "graphql-tag";
 
-export const AccountsSchema = gql`
+export const AccountDetailsByAccountId = gql`
 	query SpendingAccountsWithTransactionsQuery($accountId: ID!) {
 		account(id: $accountId) {
 			sources {
@@ -49,7 +49,7 @@ export const AccountsSchema = gql`
 	}
 `;
 
-export const TransactionsSchema = gql`
+export const TransactionsByAccountId = gql`
 	query TransactionsByAccountId($accountId: ID!) {
 		account(id: $accountId) {
 			transactions {
@@ -89,6 +89,25 @@ export const TransactionsSchema = gql`
 					}
 				}
 			}
+		}
+	}
+`;
+
+export const HolderFromAccountId = gql`
+	query HolderFromAccountId($accountId: ID!) {
+		source {
+			... on MxAccount {
+				userId
+			}
+		}
+	}
+`;
+
+export const GetProfileId = gql`
+	query GetProfileId {
+		profile {
+			id
+			uuid
 		}
 	}
 `;

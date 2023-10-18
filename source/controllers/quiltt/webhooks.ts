@@ -2,11 +2,13 @@ import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
 import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
 import {getAccountNumbers} from "../quiltt";
-import client from "../../utilities/graphqlClient";
 import {
-	AccountsSchema,
-	TransactionsSchema,
-} from "../../utilities/graphqlSchema";
+	accountDetailsById,
+	graphqlClient,
+	holderFromAccountId,
+	transactionsByAccountId,
+} from "../../utilities/graphqlClient";
+import {getEntityIdByQuilttAccount} from "../auth0functions";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -19,11 +21,8 @@ const method = new Method({
  * @param {string} accountId - The ID of the account to fetch information for.
  * @returns {Promise<any>} The account information.
  */
-async function fetchAccountInfo(accountId: string) {
-	const accountResponse = await client.query({
-		query: AccountsSchema,
-		variables: {accountId},
-	});
+async function fetchAccountInfo(sessionToken: string, accountId: string) {
+	const accountResponse = await accountDetailsById(sessionToken, accountId);
 	return accountResponse.data;
 }
 
@@ -33,12 +32,34 @@ async function fetchAccountInfo(accountId: string) {
  * @param {string} accountId - The ID of the account to fetch transactions for.
  * @returns {Promise<any>} The transactions data.
  */
-async function fetchTransactions(accountId: string) {
-	const transactionsResponse = await client.query({
-		query: TransactionsSchema,
-		variables: {accountId},
-	});
+async function fetchTransactions(sessionToken: string, accountId: string) {
+	const transactionsResponse = await transactionsByAccountId(
+		sessionToken,
+		accountId
+	);
 	return transactionsResponse.data;
+}
+
+/**
+ * Fetches holder information for the specified account ID, and retrieves the entity ID associated with the Quiltt account ID.
+ *
+ * @param {string} accountId - The ID of the account to fetch information for.
+ * @returns {Promise<string>} The entity ID associated with the Quiltt account ID.
+ */
+async function fetchHolderInfo(
+	sessionToken: string,
+	accountId: string
+): Promise<string> {
+	try {
+		const accountResponse = await holderFromAccountId(sessionToken, accountId);
+
+		const quilttAccountId = accountResponse.data; // Assuming accountResponse.data is the Quiltt account ID
+		const entityId = await getEntityIdByQuilttAccount(quilttAccountId);
+		return entityId;
+	} catch (error) {
+		console.error("Error fetching holder info:", error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
 }
 
 /**
@@ -107,6 +128,11 @@ async function createAccountVerification(
 	return verification;
 }
 
+const ACCOUNT_TYPES = {
+	CHECKING: "CHECKING",
+	SAVINGS: "SAVINGS",
+};
+
 /**
  * Creates an account based on the specified event data, and performs additional operations such as
  * fetching account info, fetching transactions, creating an account in the method service, and creating
@@ -115,29 +141,29 @@ async function createAccountVerification(
  * @param {QuilttEvent} event - The event data containing the account ID and other relevant information.
  */
 async function createAccount(event: QuilttEvent) {
-	const accountId = event.record.id;
-	const accountData = await getAccountNumbers(accountId);
-
-	const accountNumber = accountData.accountNumbers.number;
-	const routingNumber = accountData.accountNumbers.routing;
-
-	const accountInfo = await fetchAccountInfo(accountId);
-	const accountType = accountInfo.account.sources[0].type;
-	const normalizedAccountType =
-		accountType === "CHECKING" || accountType === "SAVINGS"
-			? accountType.toLowerCase()
-			: accountType;
-
-	const transactionsObject = await fetchTransactions(accountId);
-
+	const {id: accountId} = event.record;
 	try {
-		const holderId = "request.body.id"; // Replace with the actual holder id retrieval logic
+		const [accountData, accountInfo, transactionsObject, holderInfo] =
+			await Promise.all([
+				getAccountNumbers(accountId),
+				fetchAccountInfo(accountId),
+				fetchTransactions(accountId),
+				fetchHolderInfo(accountId),
+			]);
+
+		const {number: accountNumber, routing: routingNumber} =
+			accountData.accountNumbers;
+		const accountType = getNormalizedAccountType(
+			accountInfo.account.sources[0].type
+		);
+
 		const account = await createAccountInMethod(
 			accountNumber,
 			routingNumber,
-			normalizedAccountType,
-			holderId
+			accountType,
+			holderInfo
 		);
+
 		const verification = await createAccountVerification(
 			account.id,
 			accountInfo,
@@ -149,9 +175,13 @@ async function createAccount(event: QuilttEvent) {
 		console.error("Error creating new account:", error);
 	}
 
-	console.log(
-		`Created connection with id: ${event.record.id} ${accountNumber} ${routingNumber}`
-	);
+	console.log(`Created connection with id: ${accountId}`);
+}
+
+function getNormalizedAccountType(type: string): string {
+	return type === ACCOUNT_TYPES.CHECKING || type === ACCOUNT_TYPES.SAVINGS
+		? type.toLowerCase()
+		: type;
 }
 
 async function unimplementedFunc(event: QuilttEvent) {

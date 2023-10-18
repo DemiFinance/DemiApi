@@ -380,3 +380,85 @@ export const getPhoneNumberById = async (userId: string): Promise<string> => {
 		return "No number found";
 	}
 };
+
+/**
+ * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
+ *
+ * @param {string} quilttAccountId - The Quiltt account ID used to search the user's metadata.
+ * @returns {Promise<string>} A promise that resolves to the entity ID if found, or rejects with an error if not found or if the request fails.
+ * @throws Will throw an error if the request fails or if no user with a matching Quiltt account ID is found.
+ * @async
+ */
+export const getEntityIdByQuilttAccount = async (
+	quilttAccountId: string
+): Promise<string> => {
+	try {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
+			params: {
+				q: `app_metadata.quiltt_account_id:"${quilttAccountId}"`,
+				search_engine: "v3",
+			},
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		console.log("Requested entityId", data);
+
+		// Assuming the first user in the returned array is the relevant user
+		const entityId = data[0]?.app_metadata.entity_id;
+
+		if (!entityId) {
+			throw new Error("No matching entity found");
+		}
+
+		return entityId;
+	} catch (error) {
+		console.error(error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+};
+
+/**
+ * Updates a user's metadata in the Auth0 Management API to include a Quiltt account ID.
+ *
+ * @param {string} entityId - The ID of the entity (user) whose metadata should be updated.
+ * @param {string} quilttId - The Quiltt account ID to add to the user's metadata.
+ * @returns {Promise<void>} A promise that resolves when the metadata has been successfully updated.
+ * @throws Will throw an error if the request to update the metadata fails.
+ * @async
+ */
+export const addQuilttIdToMetadata = async (
+	entityId: string,
+	quilttId: string
+): Promise<void> => {
+	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${entityId}`;
+	const requestPayload = {
+		app_metadata: {
+			quiltt_account_id: quilttId,
+		},
+	};
+
+	try {
+		const accessToken = await getToken();
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		const axiosConfig: AxiosRequestConfig = {
+			method: "PATCH",
+			url: endpoint,
+			headers: requestHeaders,
+			data: requestPayload,
+		};
+
+		await axios.request(axiosConfig);
+		console.log("Metadata updated successfully");
+	} catch (error) {
+		console.error("Error updating metadata:", error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+};

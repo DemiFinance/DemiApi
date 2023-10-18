@@ -22,6 +22,7 @@ async function updatePayment(id: string) {
 
 async function createEntity(id: string) {
 	console.log(`Created entity with id: ${id}`);
+	//create quiltt profile... add quiltt id to metwadata
 }
 
 async function updateEntity(id: string) {
