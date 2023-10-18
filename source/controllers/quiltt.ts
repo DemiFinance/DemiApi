@@ -137,12 +137,14 @@ export async function handleGenerateSessionToken(
 	res: Response
 ): Promise<void> {
 	try {
+		console.log("Generating session token");
 		//check auth0 data for quilttUserId
 		//if present then request a session token for that user, if nnot present create a new quilttProfile based on the exisiting auth0User
 
 		const userId = req.body.userId;
 
 		const sessionToken: string = await generateToken(userId);
+		console.log("Generated session token");
 		res.status(200).json({sessionToken});
 	} catch (error: any) {
 		console.error(error.message);
