@@ -1,5 +1,5 @@
 // Import necessary modules from Apollo Client
-import {ApolloClient, InMemoryCache, HttpLink} from "@apollo/client";
+import {ApolloClient, InMemoryCache, HttpLink} from "@apollo/client/core";
 
 import {
 	TransactionsByAccountId,
