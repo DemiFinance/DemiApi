@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import axios from "axios";
-import {addQuilttIdToMetadata} from "./auth0functions";
+import {addQuilttIdToMetadata, getQuilttIdByUserId} from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
 
 /**
@@ -137,13 +137,22 @@ export async function handleGenerateSessionToken(
 	res: Response
 ): Promise<void> {
 	try {
-		console.log("Generating session token");
-		//check auth0 data for quilttUserId
-		//if present then request a session token for that user, if nnot present create a new quilttProfile based on the exisiting auth0User
-
 		const userId = req.body.userId;
+		console.log("Generating session token for User ID:", userId);
 
-		const sessionToken: string = await generateToken(userId);
+		let sessionToken: string;
+		const quilttId = await getQuilttIdByUserId(userId);
+
+		if (quilttId) {
+			// quiltt_account_id found, do something with it
+			sessionToken = await generateTokenById(quilttId);
+			console.log("Quiltt ID:", quilttId);
+		} else {
+			// quiltt_account_id not found or an error occurred, handle accordingly
+			sessionToken = await generateToken(userId);
+			console.error("Quiltt ID not found or an error occurred");
+		}
+
 		console.log("Generated session token");
 		res.status(200).json({sessionToken});
 	} catch (error: any) {
