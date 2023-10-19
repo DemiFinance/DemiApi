@@ -69,14 +69,14 @@ export async function transactionsByAccountId(
 	return response.data;
 }
 
-// Usage
-const sessionToken = "your-session-token";
-const accountId = "some-account-id";
+// // Usage
+// const sessionToken = "your-session-token";
+// const accountId = "some-account-id";
 
-holderFromAccountId(sessionToken, accountId)
-	.then((data) => console.log(data))
-	.catch((error) => console.error(error));
+// holderFromAccountId(sessionToken, accountId)
+// 	.then((data) => console.log(data))
+// 	.catch((error) => console.error(error));
 
-transactionsByAccountId(sessionToken, accountId)
-	.then((data) => console.log(data))
-	.catch((error) => console.error(error));
+// transactionsByAccountId(sessionToken, accountId)
+// 	.then((data) => console.log(data))
+// 	.catch((error) => console.error(error));

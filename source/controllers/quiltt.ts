@@ -15,7 +15,7 @@ import {AccountNumbers, Profile} from "../models/quilttmodels";
  */
 async function generateToken(userId: string): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url = "https://api.quiltt.io/v1/users/sessions";
+	const url = "https://auth.quiltt.io/v1/users/sessions";
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
@@ -23,10 +23,10 @@ async function generateToken(userId: string): Promise<string> {
 	}
 
 	try {
-		const phoneNumber: string = await getPhoneNumberById(userId);
+		const phone: string = await getPhoneNumberById(userId);
 
 		const data = {
-			phoneNumber: phoneNumber,
+			phone: phone,
 		};
 
 		const config = {
@@ -87,7 +87,7 @@ export async function addUserIdToMetadata(
  */
 export async function generateTokenById(userId: string): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url = "https://api.quiltt.io/v1/users/sessions";
+	const url = "https://auth.quiltt.io/v1/users/sessions";
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");

@@ -369,7 +369,7 @@ export const getPhoneNumberById = async (userId: string): Promise<string> => {
 		};
 
 		const {data} = await axios.request(options);
-		console.log("requested phone number", data);
+		console.log("requested phone number", data.phone_number);
 
 		// Extract the phone number from the response data
 		const phoneNumber = data.phone_number;
