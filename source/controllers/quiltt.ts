@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import axios from "axios";
-import {addQuilttIdToMetadata, getPhoneNumberById} from "./auth0functions";
+import {addQuilttIdToMetadata} from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
 
 /**
@@ -23,10 +23,10 @@ async function generateToken(userId: string): Promise<string> {
 	}
 
 	try {
-		const phone: string = await getPhoneNumberById(userId);
+		//const phone: string = await getPhoneNumberById(userId);
 
 		const data = {
-			phone: phone,
+			//phone: phone,
 		};
 
 		const config = {
