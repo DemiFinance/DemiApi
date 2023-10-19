@@ -462,3 +462,28 @@ export const addQuilttIdToMetadata = async (
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
+
+export const getQuilttId = async (userId: string): Promise<string> => {
+	const endpoint = `https://api.example.com/users/${userId}/quilttId`;
+
+	try {
+		const accessToken = await getToken(); // Assuming getToken is a function that retrieves your access token
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		const axiosConfig: AxiosRequestConfig = {
+			method: "GET",
+			url: endpoint,
+			headers: requestHeaders,
+		};
+
+		const response = await axios.request(axiosConfig);
+		const quilttId = response.data.quilttId;
+		return quilttId;
+	} catch (error) {
+		console.error("Error retrieving quilttId:", error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+};
