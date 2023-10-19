@@ -463,27 +463,24 @@ export const addQuilttIdToMetadata = async (
 	}
 };
 
-export const getQuilttId = async (userId: string): Promise<string> => {
-	const endpoint = `https://api.example.com/users/${userId}/quilttId`;
-
+export const getQuilttIdByUserId = async (
+	userId: string
+): Promise<string | null> => {
 	try {
-		const accessToken = await getToken(); // Assuming getToken is a function that retrieves your access token
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		const axiosConfig: AxiosRequestConfig = {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
 			method: "GET",
-			url: endpoint,
-			headers: requestHeaders,
+			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
+			headers: {authorization: `Bearer ${token}`},
 		};
 
-		const response = await axios.request(axiosConfig);
-		const quilttId = response.data.quilttId;
-		return quilttId;
+		const {data} = await axios.request(options);
+		console.log("requested user", data);
+
+		// Assuming the data object is the relevant user
+		return data?.app_metadata.quiltt_account_id || null;
 	} catch (error) {
-		console.error("Error retrieving quilttId:", error);
-		throw error; // Re-throw the error to be handled by the calling function
+		console.error(error);
+		return null;
 	}
 };
