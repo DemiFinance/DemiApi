@@ -144,11 +144,11 @@ export async function handleGenerateSessionToken(
 		const quilttId = await getQuilttIdByUserId(userId);
 
 		if (quilttId) {
-			// quiltt_account_id found, do something with it
+			console.log("Quiltt ID found");
 			sessionToken = await generateTokenById(quilttId);
 			console.log("Quiltt ID:", quilttId);
 		} else {
-			// quiltt_account_id not found or an error occurred, handle accordingly
+			console.log("Quiltt ID not found");
 			sessionToken = await generateToken(userId);
 			console.error("Quiltt ID not found or an error occurred");
 		}
