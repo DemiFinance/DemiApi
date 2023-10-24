@@ -13,16 +13,6 @@ const method = new Method({
 	env: Environments.production,
 });
 
-//TODO - Needs
-/**
- * 1. create new entity
- * 1.1 Recieve name + phone number from App
- * 1.2 Push name + number to method
- * 1.3 retrieve created entity from method
- * 1.4 push entity information + user info to database
- * 1.5 return entity info to app?
- */
-
 const testWithMethod = async (request: Request, response: Response) => {
 	try {
 		const ent = await method.entities.create({
