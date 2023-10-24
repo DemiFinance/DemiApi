@@ -23,11 +23,8 @@ async function generateToken(userId: string): Promise<string> {
 	}
 
 	try {
-		//const phone: string = await getPhoneNumberById(userId);
-
-		const data = {
-			//phone: phone,
-		};
+		console.log("Creating new profile with token");
+		const data = {};
 
 		const config = {
 			headers: {
@@ -95,6 +92,7 @@ export async function generateTokenById(userId: string): Promise<string> {
 	}
 
 	try {
+		console.log("Createing token for exisiting profile");
 		const data = {
 			userId: userId,
 		};
@@ -106,7 +104,8 @@ export async function generateTokenById(userId: string): Promise<string> {
 		};
 
 		const response = await axios.post(url, data, config);
-		return response.data.sessionToken;
+		//console.log(`session response thing ${JSON.stringify(response)}`);
+		return response.data.token;
 	} catch (error: any) {
 		console.error("Error generating session token:", error.message);
 		if (error.response) {
@@ -140,21 +139,20 @@ export async function handleGenerateSessionToken(
 		const userId = req.body.userId;
 		console.log("Generating session token for User ID:", userId);
 
-		let sessionToken: string;
+		//let sessionToken: string;
 		const quilttId = await getQuilttIdByUserId(userId);
 
 		if (quilttId) {
-			console.log("Quiltt ID found");
-			sessionToken = await generateTokenById(quilttId);
-			console.log("Quiltt ID:", quilttId);
+			console.log(`Quiltt ID found: ${quilttId}`);
+			const sessionToken: string  = await generateTokenById(quilttId);
+			console.log(`generateed session token ${sessionToken}`);
+			res.status(200).json({sessionToken});
 		} else {
 			console.log("Quiltt ID not found");
-			sessionToken = await generateToken(userId);
-			console.error("Quiltt ID not found or an error occurred");
+			const sessionToken: string = await generateToken(userId);
+			console.log(`generateed session token ${sessionToken}`);
+			res.status(200).json({sessionToken});
 		}
-
-		console.log("Generated session token");
-		res.status(200).json({sessionToken});
 	} catch (error: any) {
 		console.error(error.message);
 		const isInternalError = error.message.includes("Internal Server Error");

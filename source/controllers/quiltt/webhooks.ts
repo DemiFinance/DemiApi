@@ -176,7 +176,7 @@ function getNormalizedAccountType(type: string): string {
 }
 
 async function unimplementedFunc(event: QuilttEvent) {
-	console.log(`Created connection with id: ${event}`);
+	console.log(`Created connection with id: ${event.id}`);
 }
 
 /**
@@ -191,6 +191,7 @@ const quilttOperationHandlers: {
 	"profile.deleted": unimplementedFunc,
 	"connection.created": unimplementedFunc,
 	"connection.updated": unimplementedFunc,
+	"connection.deleted": unimplementedFunc,
 	"connection.synced.successful": unimplementedFunc,
 	"connection.synced.successful.historical": unimplementedFunc,
 	"connection.synced.errored.repairable": unimplementedFunc,
@@ -201,6 +202,7 @@ const quilttOperationHandlers: {
 	"account.created": createAccount,
 	"account.updated": unimplementedFunc,
 	"account.verified": unimplementedFunc,
+	"account.deleted": unimplementedFunc,
 };
 
 /**
