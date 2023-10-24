@@ -95,7 +95,7 @@ export const TransactionsByAccountId = gql`
 
 export const HolderFromAccountId = gql`
 	query HolderFromAccountId($accountId: ID!) {
-		source {
+		sources {
 			... on MxAccount {
 				userId
 			}
