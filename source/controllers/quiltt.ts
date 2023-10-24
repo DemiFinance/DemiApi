@@ -144,7 +144,7 @@ export async function handleGenerateSessionToken(
 
 		if (quilttId) {
 			console.log(`Quiltt ID found: ${quilttId}`);
-			const sessionToken: string  = await generateTokenById(quilttId);
+			const sessionToken: string = await generateTokenById(quilttId);
 			console.log(`generateed session token ${sessionToken}`);
 			res.status(200).json({sessionToken});
 		} else {
