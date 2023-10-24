@@ -180,6 +180,7 @@ async function createAccount(event: QuilttEvent) {
 			accountType,
 			holderInfo
 		);
+		console.log("Account Output:", account);
 
 		const verification = await createAccountVerification(
 			account.id,
