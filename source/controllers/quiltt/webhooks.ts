@@ -1,6 +1,10 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
-import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
+import {
+	QuilttEvent,
+	QuilttWebhookObject,
+	TransactionJSON,
+} from "../../models/quilttmodels";
 import {
 	fetchAccountInfo,
 	generateTokenById,
@@ -11,6 +15,7 @@ import {
 	transactionsByAccountId,
 } from "../../utilities/graphqlClient";
 import {getEntityIdByQuilttAccount} from "../auth0functions";
+import {MxTransaction} from "../../models/mx/mxtransaction";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -24,13 +29,34 @@ const method = new Method({
  * @returns {Promise<any>} The transactions data.
  */
 async function fetchTransactions(sessionToken: string, accountId: string) {
-	const transactionsResponse = await transactionsByAccountId(
-		sessionToken,
-		accountId
-	);
-	return transactionsResponse.data;
+	try {
+		const transactionsResponse = await transactionsByAccountId(
+			sessionToken,
+			accountId
+		);
+		return parseTransactions(transactionsResponse);
+	} catch (error) {
+		console.error("Failed to fetch or parse transactions:", error);
+		throw error;
+	}
 }
 
+/**
+ * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
+ * in the `json.data.account.transactions` array.
+ *
+ * @param {TransactionJSON} json - The JSON object containing the transaction data.
+ * @returns {{ transactions: MxTransaction[] }} An object containing an array of parsed transactions.
+ *
+ */
+function parseTransactions(json: TransactionJSON): {
+	transactions: MxTransaction[];
+} {
+	const transactionsArray = json.data.account.transactions.map(
+		(transaction) => transaction.source
+	);
+	return {transactions: transactionsArray};
+}
 /**
  * Fetches holder information for the specified account ID, and retrieves the entity ID associated with the Quiltt account ID.
  *
