@@ -1,22 +1,21 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
+import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
 import {
-	QuilttEvent,
-	QuilttWebhookObject,
-	TransactionJSON,
-} from "../../models/quilttmodels";
-import {
+	addUUIDToMetadata,
 	fetchAccountInfo,
-	generateTokenById,
 	getAccountNumbers,
 } from "../quiltt";
 import {
 	holderFromAccountId,
 	transactionsByAccountId,
 } from "../../utilities/graphqlClient";
-import {getEntityIdByQuilttAccount} from "../auth0functions";
-import {MxTransaction} from "../../models/mx/mxtransaction";
-
+import {
+	getAuth0IdByQuilttId,
+	getEntityIdByQuilttAccount,
+} from "../auth0functions";
+import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
+import {generateTokenById} from "../../utilities/quilttUtil";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -28,13 +27,17 @@ const method = new Method({
  * @param {string} accountId - The ID of the account to fetch transactions for.
  * @returns {Promise<any>} The transactions data.
  */
-async function fetchTransactions(sessionToken: string, accountId: string) {
+export async function fetchTransactions(
+	sessionToken: string,
+	accountId: string
+) {
 	try {
 		const transactionsResponse = await transactionsByAccountId(
 			sessionToken,
 			accountId
 		);
 		return parseTransactions(transactionsResponse);
+		//return transactionsResponse;
 	} catch (error) {
 		console.error("Failed to fetch or parse transactions:", error);
 		throw error;
@@ -43,35 +46,43 @@ async function fetchTransactions(sessionToken: string, accountId: string) {
 
 /**
  * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
- * in the `json.data.account.transactions` array.
+ * in the `json.account.transactions` array and excluding the __typename field.
  *
  * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {{ transactions: MxTransaction[] }} An object containing an array of parsed transactions.
+ * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
  *
+ * @example
+ * // ...
  */
-function parseTransactions(json: TransactionJSON): {
-	transactions: MxTransaction[];
-} {
-	const transactionsArray = json.data.account.transactions.map(
-		(transaction) => transaction.source
-	);
-	return {transactions: transactionsArray};
+function parseTransactions(json: TransactionJSON): MxTransaction[] {
+	if (!json || !json.account || !json.account.transactions) {
+		throw new Error("Invalid JSON structure");
+	}
+
+	const transactionsArray = json.account.transactions.map((transaction) => {
+		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
+		__typename; // Use __typename to prevent TypeScript from throwing an error
+		return source;
+	});
+
+	return transactionsArray;
 }
+
 /**
  * Fetches holder information for the specified account ID, and retrieves the entity ID associated with the Quiltt account ID.
- *
+ * @param {string} quilttUserId - The ID of the Quiltt user.
  * @param {string} accountId - The ID of the account to fetch information for.
  * @returns {Promise<string>} The entity ID associated with the Quiltt account ID.
  */
-async function fetchHolderInfo(
-	sessionToken: string,
+export async function fetchHolderInfo(
+	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
 	try {
-		const accountResponse = await holderFromAccountId(sessionToken, accountId);
-
-		const quilttAccountId = accountResponse.data; // Assuming accountResponse.data is the Quiltt account ID
-		const entityId = await getEntityIdByQuilttAccount(quilttAccountId);
+		const accountResponse = await holderFromAccountId(quilttUserId, accountId);
+		console.log("Account Response:", accountResponse);
+		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
+		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
 		return entityId;
 	} catch (error) {
 		console.error("Error fetching holder info:", error);
@@ -162,14 +173,16 @@ async function createAccount(event: QuilttEvent) {
 	try {
 		const fetchedAccount = await fetchAccountInfo(accountId);
 		const accountInfo = fetchedAccount.body;
+		const quilttUserId = fetchedAccount.profileId;
 		const sessionToken = await generateTokenById(fetchedAccount.profileId);
 		const accountType = getNormalizedAccountType(fetchedAccount.type);
 
-		const [accountData, transactionsObject, holderInfo] = await Promise.all([
+		const [accountData, transactionsObject] = await Promise.all([
 			getAccountNumbers(accountId),
 			fetchTransactions(sessionToken, accountId),
-			fetchHolderInfo(sessionToken, accountId),
 		]);
+
+		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
 		const {number: accountNumber, routing: routingNumber} =
 			accountData.accountNumbers;
@@ -182,13 +195,7 @@ async function createAccount(event: QuilttEvent) {
 		);
 		console.log("Account Output:", account);
 
-		const verification = await createAccountVerification(
-			account.id,
-			accountInfo,
-			transactionsObject
-		);
-
-		console.log("Verification Output:", verification);
+		createAccountVerification(account.id, accountInfo, transactionsObject);
 	} catch (error) {
 		console.error("Error creating new account:", error);
 	}
@@ -203,7 +210,39 @@ function getNormalizedAccountType(type: string): string {
 }
 
 async function unimplementedFunc(event: QuilttEvent) {
-	console.log(`Created connection with id: ${event.id}`);
+	if (event) {
+		return;
+	}
+	//console.log(`Created connection with id: ${event.id}`);
+}
+
+/**
+ * Handles the creation of a Quiltt profile via a webhook event.
+ *
+ * @param {QuilttEvent} event - The Quiltt event object.
+ * @throws Will throw an error if any of the asynchronous operations fail.
+ */
+async function createQuilttProfile_WebhookEvent(
+	event: QuilttEvent
+): Promise<void> {
+	try {
+		const quilttId = event.record.id;
+
+		// Fetch the Auth0 user ID associated with the Quiltt ID.
+		const auth0User = await getAuth0IdByQuilttId(quilttId);
+
+		// Ensure the event has a profile with a uuid.
+		if (!event.profile || !event.profile.uuid) {
+			throw new Error("Event profile missing or UUID missing.");
+		}
+		const uuid = event.profile.uuid;
+
+		// Attempt to add the UUID to the Auth0 user metadata.
+		addUUIDToMetadata(auth0User, uuid);
+	} catch (error) {
+		console.error("Error in createQuilttProfile_WebhookEvent:", error);
+		throw error; // Re-throw the error to allow further handling up the stack.
+	}
 }
 
 /**
@@ -213,7 +252,7 @@ async function unimplementedFunc(event: QuilttEvent) {
 const quilttOperationHandlers: {
 	[key: string]: (event: QuilttEvent) => Promise<void>;
 } = {
-	"profile.created": unimplementedFunc,
+	"profile.created": createQuilttProfile_WebhookEvent,
 	"profile.updated": unimplementedFunc,
 	"profile.deleted": unimplementedFunc,
 	"connection.created": unimplementedFunc,

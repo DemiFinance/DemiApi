@@ -1,22 +1,27 @@
 import {Request, Response} from "express";
 import axios from "axios";
-import {addQuilttIdToMetadata, getQuilttIdByUserId} from "./auth0functions";
+import {
+	addQuilttIdToMetadata,
+	addQuilttUuidToMetadata,
+	getQuilttIdByUserId,
+} from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
+import {generateTokenById} from "../utilities/quilttUtil";
 
 /**
- * Generates a session token using a user's phone number, which is retrieved by their user ID.
+ * Generates a new session token for a user.
  *
  * @async
- * @function
- * @param {string} userId - The ID of the user to generate a session token for.
- * @returns {Promise<string>} - A Promise that resolves to a session token string.
- * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
- * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
+ * @param {string} userId - The user's unique identifier.
+ * @returns {Promise<string>} The new session token.
+ * @throws Will throw an error if the QUILTT_TOKEN environment variable is not set or blank,
+ *         or if there is an error generating the session token.
  */
 async function generateToken(userId: string): Promise<string> {
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = "https://auth.quiltt.io/v1/users/sessions";
 
+	// Assuming you still want to keep this check
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
 		throw new Error("Internal Server Error");
@@ -25,7 +30,6 @@ async function generateToken(userId: string): Promise<string> {
 	try {
 		console.log("Creating new profile with token");
 		const data = {};
-
 		const config = {
 			headers: {
 				Authorization: `Bearer ${authToken}`,
@@ -33,7 +37,9 @@ async function generateToken(userId: string): Promise<string> {
 		};
 
 		const response = await axios.post(url, data, config);
+
 		addUserIdToMetadata(userId, response.data.userId);
+
 		return response.data.sessionToken;
 	} catch (error: any) {
 		console.error("Error generating session token:", error.message);
@@ -46,7 +52,8 @@ async function generateToken(userId: string): Promise<string> {
 				)}`
 			);
 		} else {
-			throw new Error("Internal Server Error");
+			console.log("Quiltt Server Error", error);
+			throw new Error("Quiltt Server Error");
 		}
 	}
 }
@@ -72,53 +79,17 @@ export async function addUserIdToMetadata(
 	}
 }
 
-/**
- * Generates a session token using a user's ID.
- *
- * @async
- * @function
- * @param {string} userId - The ID of the user to generate a session token for.
- * @returns {Promise<string>} - A Promise that resolves to a session token string.
- * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
- * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
- */
-export async function generateTokenById(userId: string): Promise<string> {
-	const authToken: string | undefined = process.env.QUILTT_TOKEN;
-	const url = "https://auth.quiltt.io/v1/users/sessions";
-
-	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("Internal Server Error");
-	}
-
+export async function addUUIDToMetadata(
+	userID: string,
+	uuid: string
+): Promise<void> {
 	try {
-		console.log("Createing token for exisiting profile");
-		const data = {
-			userId: userId,
-		};
-
-		const config = {
-			headers: {
-				Authorization: `Bearer ${authToken}`,
-			},
-		};
-
-		const response = await axios.post(url, data, config);
-		//console.log(`session response thing ${JSON.stringify(response)}`);
-		return response.data.token;
-	} catch (error: any) {
-		console.error("Error generating session token:", error.message);
-		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
-			throw new Error(
-				`Error: ${error.response.status}, ${JSON.stringify(
-					error.response.data
-				)}`
-			);
-		} else {
-			throw new Error("Internal Server Error");
-		}
+		// Await the promise returned by addQuilttIdToMetadata
+		await addQuilttUuidToMetadata(userID, uuid);
+		console.log(`UUID added to metadata for user ${userID}`);
+	} catch (error) {
+		console.error(`Error adding UUID to metadata for user ${userID}:`, error);
+		throw error; // Re-throw the error to be handled by the calling function
 	}
 }
 
@@ -145,12 +116,12 @@ export async function handleGenerateSessionToken(
 		if (quilttId) {
 			console.log(`Quiltt ID found: ${quilttId}`);
 			const sessionToken: string = await generateTokenById(quilttId);
-			console.log(`generateed session token ${sessionToken}`);
+			console.log(`Generated Session Token ${sessionToken}`);
 			res.status(200).json({sessionToken});
 		} else {
 			console.log("Quiltt ID not found");
 			const sessionToken: string = await generateToken(userId);
-			console.log(`generateed session token ${sessionToken}`);
+			console.log(`Generated Session Token ${sessionToken}`);
 			res.status(200).json({sessionToken});
 		}
 	} catch (error: any) {
@@ -178,7 +149,7 @@ export async function createQuilttProfile(
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("Internal Server Error");
+		throw new Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -197,12 +168,12 @@ export async function createQuilttProfile(
 			console.error("Response data:", error.response.data);
 			console.error("Response status:", error.response.status);
 			throw new Error(
-				`Error: ${error.response.status}, ${JSON.stringify(
+				`createQuilttProfile Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
 				)}`
 			);
 		} else {
-			throw new Error("Internal Server Error");
+			throw new Error("createQuilttProfile Error");
 		}
 	}
 }
@@ -225,7 +196,7 @@ export async function getAccountNumbers(
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("Internal Server Error");
+		throw new Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -236,6 +207,8 @@ export async function getAccountNumbers(
 		};
 
 		const response = await axios.get(url, config);
+
+		console.log("Account nutsack:", response);
 		return {accountNumbers: response.data};
 	} catch (error: any) {
 		console.error("Error fetching account:", error.message);
@@ -248,7 +221,7 @@ export async function getAccountNumbers(
 				)}`
 			);
 		} else {
-			throw new Error("Internal Server Error");
+			throw new Error("GetAccountNumber Error");
 		}
 	}
 }
@@ -271,7 +244,7 @@ export async function fetchAccountInfo(
 
 	if (!authToken) {
 		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("Internal Server Error");
+		throw new Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -300,7 +273,7 @@ export async function fetchAccountInfo(
 				)}`
 			);
 		} else {
-			throw new Error("Internal Server Error");
+			throw new Error("FetchAccountInfo Error");
 		}
 	}
 }

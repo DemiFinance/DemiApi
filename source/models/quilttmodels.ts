@@ -1,5 +1,3 @@
-import {MxTransaction} from "./mx/mxtransaction";
-
 export interface UnifiedWebhookObject {
 	id?: string;
 	type: string;
@@ -79,13 +77,3 @@ export interface QuilttEvent {
 	profile?: Profile;
 	record: RecordType;
 }
-
-export type TransactionJSON = {
-	data: {
-		account: {
-			transactions: {
-				source: MxTransaction;
-			}[];
-		};
-	};
-};

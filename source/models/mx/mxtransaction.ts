@@ -31,3 +31,17 @@ export type MxTransaction = {
 	updatedAt: string;
 	userGuid: string;
 };
+
+export type TransactionObject = {
+	__typename: string;
+	source: MxTransaction & {__typename: string}; // Include __typename in the source object type
+};
+
+export type AccountObject = {
+	__typename: string;
+	transactions: TransactionObject[];
+};
+
+export type TransactionJSON = {
+	account: AccountObject;
+};

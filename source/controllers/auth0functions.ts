@@ -2,6 +2,7 @@ import axios, {AxiosRequestConfig} from "axios";
 import {Request, Response} from "express";
 
 import {AuthenticationClient} from "auth0";
+import {Auth0_Metadata_Search_Error} from "../utilities/errors/demierrors";
 
 const auth0Auth = new AuthenticationClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
@@ -384,13 +385,13 @@ export const getPhoneNumberById = async (userId: string): Promise<string> => {
 /**
  * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
  *
- * @param {string} quilttAccountId - The Quiltt account ID used to search the user's metadata.
+ * @param {string} quilttUuid - The Quiltt UUID used to search the user's metadata.
  * @returns {Promise<string>} A promise that resolves to the entity ID if found, or rejects with an error if not found or if the request fails.
  * @throws Will throw an error if the request fails or if no user with a matching Quiltt account ID is found.
  * @async
  */
 export const getEntityIdByQuilttAccount = async (
-	quilttAccountId: string
+	quilttUuid: string
 ): Promise<string> => {
 	try {
 		const token = await getToken();
@@ -398,20 +399,19 @@ export const getEntityIdByQuilttAccount = async (
 			method: "GET",
 			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
 			params: {
-				q: `app_metadata.quiltt_account_id:"${quilttAccountId}"`,
+				q: `app_metadata.quiltt_uuid:"${quilttUuid}"`,
 				search_engine: "v3",
 			},
 			headers: {authorization: `Bearer ${token}`},
 		};
 
 		const {data} = await axios.request(options);
-		console.log("Requested entityId", data);
 
 		// Assuming the first user in the returned array is the relevant user
 		const entityId = data[0]?.app_metadata.entity_id;
 
 		if (!entityId) {
-			throw new Error("No matching entity found");
+			throw new Error(`No matching entity found with uuid ${quilttUuid}`);
 		}
 
 		return entityId;
@@ -463,6 +463,48 @@ export const addQuilttIdToMetadata = async (
 	}
 };
 
+/**
+ * Updates a user's metadata in the Auth0 Management API to include a Quiltt  UUID.
+ *
+ * @param {string} auth0Id - The ID of the entity (user) whose metadata should be updated.
+ * @param {string} uuid - The Quiltt account ID to add to the user's metadata.
+ * @returns {Promise<void>} A promise that resolves when the metadata has been successfully updated.
+ * @throws Will throw an error if the request to update the metadata fails.
+ * @async
+ */
+export const addQuilttUuidToMetadata = async (
+	auth0Id: string,
+	uuid: string
+): Promise<void> => {
+	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${auth0Id}`;
+	const requestPayload = {
+		app_metadata: {
+			quiltt_uuid: uuid,
+		},
+	};
+
+	try {
+		const accessToken = await getToken();
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		const axiosConfig: AxiosRequestConfig = {
+			method: "PATCH",
+			url: endpoint,
+			headers: requestHeaders,
+			data: requestPayload,
+		};
+
+		await axios.request(axiosConfig);
+		console.log("Metadata updated successfully: Quiltt UUID");
+	} catch (error) {
+		console.error("Error updating metadata:", error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+};
+
 export const getQuilttIdByUserId = async (
 	userId: string
 ): Promise<string | null> => {
@@ -475,12 +517,48 @@ export const getQuilttIdByUserId = async (
 		};
 
 		const {data} = await axios.request(options);
-		console.log("requested user", data);
 
 		// Assuming the data object is the relevant user
 		return data?.app_metadata.quiltt_account_id || null;
 	} catch (error) {
-		console.error(error);
+		console.error(`Failed to get QuilttId By User ID ${error}`);
 		return null;
 	}
+};
+
+/**
+ * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
+ *
+ * @param {string} quilttAccountId - The Quiltt account ID used to search the user's metadata.
+ * @returns {Promise<string>} A promise that resolves to the entity ID if found, or rejects with an error if not found or if the request fails.
+ * @throws Will throw an error if the request fails or if no user with a matching Quiltt account ID is found.
+ * @async
+ */
+export const getAuth0IdByQuilttId = async (
+	quilttAccountId: string
+): Promise<string> => {
+	const token = await getToken();
+	const options: AxiosRequestConfig = {
+		method: "GET",
+		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
+		params: {
+			q: `app_metadata.quiltt_account_id:"${quilttAccountId}"`,
+			search_engine: "v3",
+		},
+		headers: {authorization: `Bearer ${token}`},
+	};
+
+	const {data} = await axios.request(options);
+	console.log("Requested entityId", data);
+
+	// Assuming the first user in the returned array is the relevant user
+	const userId = data[0]?.user_id;
+
+	if (!userId) {
+		throw new Auth0_Metadata_Search_Error(
+			`No matching entity found with Quiltt Account ID ${quilttAccountId}}`
+		);
+	}
+
+	return userId;
 };
