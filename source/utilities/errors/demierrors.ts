@@ -18,3 +18,16 @@ export class Quiltt_SessionToken_Error extends Error {
 		this.name = "Quiltt Token Error";
 	}
 }
+
+export class Phone_Number_Not_Found extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "Phone number not found in auth0 profile!";
+	}
+}
+export class Phone_Number_Bad_Format extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "Phone number not e164 formatted!";
+	}
+}

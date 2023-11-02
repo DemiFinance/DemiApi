@@ -2,7 +2,12 @@ import axios, {AxiosRequestConfig} from "axios";
 import {Request, Response} from "express";
 
 import {AuthenticationClient} from "auth0";
-import {Auth0_Metadata_Search_Error} from "../utilities/errors/demierrors";
+import {
+	Auth0_Metadata_Search_Error,
+	Phone_Number_Bad_Format,
+	Phone_Number_Not_Found,
+} from "../utilities/errors/demierrors";
+import {User} from "../models/auth0";
 
 const auth0Auth = new AuthenticationClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
@@ -27,6 +32,31 @@ export const getAccessToken = async (): Promise<string> => {
 		return "";
 	}
 };
+
+export async function getToken(): Promise<string> {
+	const options = {
+		method: "POST",
+		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token",
+		headers: {"content-type": "application/x-www-form-urlencoded"},
+		data: new URLSearchParams({
+			grant_type: "client_credentials",
+			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
+			client_secret: process.env.AUTH0_CLIENT_SECRET || "",
+			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
+			//audience: "https://api.demifinance.com",
+		}),
+	};
+
+	try {
+		const response = await axios.request(options);
+		console.log("[AUTH0 Response - Token] " + response.data.access_token);
+
+		return response.data.access_token;
+	} catch (error) {
+		console.error("[AUTH0 Response - Token Fetching Error] " + error);
+		return "";
+	}
+}
 
 /**
  * Update a user's metadata in Auth0.
@@ -103,33 +133,6 @@ export async function changeAccountName(
 			error
 		);
 		throw new Error("Failed to update user account name metadata");
-	}
-}
-
-//returns a token, tested and working
-
-export async function getToken(): Promise<string> {
-	const options = {
-		method: "POST",
-		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token",
-		headers: {"content-type": "application/x-www-form-urlencoded"},
-		data: new URLSearchParams({
-			grant_type: "client_credentials",
-			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
-			client_secret: process.env.AUTH0_CLIENT_SECRET || "",
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			//audience: "https://api.demifinance.com",
-		}),
-	};
-
-	try {
-		const response = await axios.request(options);
-		console.log("[AUTH0 Response - Token] " + response.data.access_token);
-
-		return response.data.access_token;
-	} catch (error) {
-		console.error("[AUTH0 Response - Token Fetching Error] " + error);
-		return "";
 	}
 }
 
@@ -360,28 +363,6 @@ export const getDaysInAdvanceByEntityId = async (
 	}
 };
 
-export const getPhoneNumberById = async (userId: string): Promise<string> => {
-	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-		console.log("requested phone number", data.phone_number);
-
-		// Extract the phone number from the response data
-		const phoneNumber = data.phone_number;
-
-		return phoneNumber;
-	} catch (error) {
-		console.error(error);
-		return "No number found";
-	}
-};
-
 /**
  * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
  *
@@ -549,7 +530,6 @@ export const getAuth0IdByQuilttId = async (
 	};
 
 	const {data} = await axios.request(options);
-	console.log("Requested entityId", data);
 
 	// Assuming the first user in the returned array is the relevant user
 	const userId = data[0]?.user_id;
@@ -561,4 +541,138 @@ export const getAuth0IdByQuilttId = async (
 	}
 
 	return userId;
+};
+
+/**
+ * Fetches the `phone_number` value from the body of a specified user in Auth0 using their `userId`.
+ *
+ * @async
+ * @param {string} userId - The identifier of the user in Auth0.
+ * @returns {Promise<string|null>} - A Promise that resolves to the `phone_number` value as a number,
+ *                                   or null if the value is not found or an error occurs.
+ * @throws Will throw an error if unable to retrieve the token or make the API request.
+ *
+ */
+export const getUserPhoneNumber = async (
+	userId: string
+): Promise<string | null> => {
+	try {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
+			headers: {authorization: `Bearer ${token}`},
+		};
+		const {data} = await axios.request(options);
+		if (data?.phone_number) {
+			const e164Format = /^\+1\d{10}$/;
+			if (e164Format.test(data.phone_number)) {
+				console.log("Phone number found:", data.phone_number);
+				return data.phone_number;
+			} else {
+				throw new Phone_Number_Bad_Format("Phone number not in E.164 format");
+			}
+		} else {
+			throw new Phone_Number_Not_Found("Phone number not found");
+		}
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+};
+
+/**
+ * Fetches user data based on a specified field and value from the Auth0 Management API.
+ *
+ * @async
+ * @function
+ * @param {keyof User} field - The field to search by.
+ * @param {string | number} value - The value to search for.
+ * @returns {Promise<User | null>} A Promise that resolves to the user data if found, or null if not found or an error occurs.
+ * @throws Will throw an error if unable to retrieve the token or make the API request.
+ */
+export const getUserByField = async (
+	field: keyof User,
+	value: string | number
+): Promise<User | null> => {
+	try {
+		const token = await getToken();
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
+			params: {
+				q: `${field}:"${value}"`,
+				search_engine: "v3",
+			},
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+		return data[0] || null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+};
+
+/**
+ * Updates user data in the Auth0 Management API.
+ *
+ * @async
+ * @function
+ * @param {string} userId - The user ID of the user to update.
+ * @param {Partial<User>} updatedData - The updated data.
+ * @returns {Promise<void>} A Promise that resolves when the data has been successfully updated.
+ * @throws Will throw an error if unable to retrieve the token or make the API request.
+ */
+export const updateUserData = async (
+	userId: string,
+	updatedData: Partial<User>
+): Promise<void> => {
+	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
+	const requestPayload = {app_metadata: updatedData.app_metadata}; // Assuming only app_metadata can be updated
+
+	try {
+		const accessToken = await getToken();
+		const requestHeaders = {
+			authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		};
+
+		const axiosConfig: AxiosRequestConfig = {
+			method: "PATCH",
+			url: endpoint,
+			headers: requestHeaders,
+			data: requestPayload,
+		};
+
+		await axios.request(axiosConfig);
+		console.log("User data updated successfully");
+	} catch (error) {
+		console.error("Error updating user data:", error);
+		throw error;
+	}
+};
+
+/**
+ * Fetches the phone number of a user by their user ID from the Auth0 Management API.
+ *
+ * @async
+ * @function
+ * @param {string} userId - The user ID of the user.
+ * @returns {Promise<string>} A Promise that resolves to the phone number if found.
+ * @throws Will throw an error if unable to retrieve the token or make the API request, or if no number is found.
+ */
+export const getPhoneNumberById = async (userId: string): Promise<string> => {
+	try {
+		const user = await getUserByField("user_id", userId);
+		if (user && user.phone_number) {
+			return user.phone_number;
+		} else {
+			throw new Error("No number found");
+		}
+	} catch (error) {
+		console.error(error);
+		return "No number found";
+	}
 };

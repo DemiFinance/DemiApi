@@ -228,8 +228,16 @@ async function createQuilttProfile_WebhookEvent(
 	try {
 		const quilttId = event.record.id;
 
-		// Fetch the Auth0 user ID associated with the Quiltt ID.
-		const auth0User = await getAuth0IdByQuilttId(quilttId);
+		// Define the retry parameters.
+		const maxRetries = 5;
+		const initialDelay = 1000; // 1 second
+
+		// Fetch the Auth0 user ID associated with the Quiltt ID, with retry logic.
+		const auth0User = await retryAsync(
+			() => getAuth0IdByQuilttId(quilttId),
+			maxRetries,
+			initialDelay
+		);
 
 		// Ensure the event has a profile with a uuid.
 		if (!event.profile || !event.profile.uuid) {
@@ -243,6 +251,40 @@ async function createQuilttProfile_WebhookEvent(
 		console.error("Error in createQuilttProfile_WebhookEvent:", error);
 		throw error; // Re-throw the error to allow further handling up the stack.
 	}
+}
+
+function assertNever(value: string): never {
+	throw new Error(`Unexpected value: ${value}`);
+}
+
+/**
+ * Retries an async function with exponential backoff.
+ *
+ * @param {() => Promise<T>} asyncFn - The async function to retry.
+ * @param {number} maxRetries - The maximum number of retries.
+ * @param {number} delay - The initial delay between retries, in milliseconds.
+ * @returns {Promise<T>} - The result of the async function.
+ */
+async function retryAsync<T>(
+	asyncFn: () => Promise<T>,
+	maxRetries: number,
+	delay: number
+): Promise<T> {
+	for (let i = 0; i < maxRetries; i++) {
+		try {
+			return await asyncFn();
+		} catch (error) {
+			console.error(`Retry ${i + 1}/${maxRetries} failed:`, error);
+			if (i < maxRetries - 1) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, Math.min(delay * 2 ** i, 16000))
+				);
+			} else {
+				throw error;
+			}
+		}
+	}
+	assertNever("Reached unreachable code in retryAsync");
 }
 
 /**

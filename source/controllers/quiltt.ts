@@ -4,6 +4,7 @@ import {
 	addQuilttIdToMetadata,
 	addQuilttUuidToMetadata,
 	getQuilttIdByUserId,
+	getUserPhoneNumber,
 } from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
 import {generateTokenById} from "../utilities/quilttUtil";
@@ -29,7 +30,7 @@ async function generateToken(userId: string): Promise<string> {
 
 	try {
 		console.log("Creating new profile with token");
-		const data = {};
+		const data = {phone: await getUserPhoneNumber(userId)};
 		const config = {
 			headers: {
 				Authorization: `Bearer ${authToken}`,
