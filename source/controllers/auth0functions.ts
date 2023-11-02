@@ -4,10 +4,9 @@ import {Request, Response} from "express";
 import {AuthenticationClient} from "auth0";
 import {
 	Auth0_Metadata_Search_Error,
-	Phone_Number_Bad_Format,
 	Phone_Number_Not_Found,
 } from "../utilities/errors/demierrors";
-import {User} from "../models/auth0";
+import {AppMetadata, User} from "../models/auth0";
 
 const auth0Auth = new AuthenticationClient({
 	domain: "dev-0u7isllacvzlfhww.auth0.com",
@@ -43,7 +42,6 @@ export async function getToken(): Promise<string> {
 			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
 			client_secret: process.env.AUTH0_CLIENT_SECRET || "",
 			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			//audience: "https://api.demifinance.com",
 		}),
 	};
 
@@ -104,84 +102,6 @@ export async function updateUserMeta(
 	}
 }
 
-export async function changeAccountName(
-	accessToken: string,
-	userId: string,
-	accountName: string,
-	accountId: string
-): Promise<any> {
-	try {
-		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-
-		// Send a PATCH request to the Auth0 Management API to update the user's metadata to rename a bank account
-		const response = await axios.patch(
-			endpoint,
-			{user_metadata: {account_name: accountName, account_id: accountId}},
-			{
-				headers: {
-					authorization: `Bearer ${accessToken}`,
-					"Content-Type": "application/json",
-				},
-			}
-		);
-
-		// Return the response data
-		return response.data;
-	} catch (error) {
-		console.error(
-			`Error updating user account name metadata for user with ID ${userId}:`,
-			error
-		);
-		throw new Error("Failed to update user account name metadata");
-	}
-}
-
-export const addNotificationTokenToMetadata = async (
-	request: Request,
-	response: Response
-) => {
-	// Extract userId and tokenString from request
-	const {userId, tokenString} = request.body;
-
-	try {
-		// Define the endpoint URL
-		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-
-		// Prepare the payload for the PATCH request
-		const requestPayload = {
-			app_metadata: {
-				notificationToken: tokenString,
-			},
-		};
-
-		// Get the accessToken
-		const accessToken = await getToken();
-
-		// Prepare the headers for the PATCH request
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		// Send the PATCH request to the Auth0 Management API to update the user's metadata
-		const axiosResponse = await axios.patch(endpoint, requestPayload, {
-			headers: requestHeaders,
-		});
-
-		// Send the response data
-		response.json(axiosResponse.data);
-	} catch (error) {
-		// Log and re-throw the error with a descriptive message
-		console.error(
-			`Error updating user notification token for user with ID ${request.body.userId}:`,
-			error
-		);
-		response.status(500).json({
-			message: `Failed to update user notification token: ${error}`,
-		});
-	}
-};
-
 export const getNotificationTokenByEntyityId = async (
 	request: Request,
 	response: Response
@@ -212,62 +132,6 @@ export const getNotificationTokenByEntyityId = async (
 	} catch (error) {
 		console.error(error);
 		return response.status(500).json({error: "Internal server error"});
-	}
-};
-
-/**
- * Adds or updates the `daysInAdvanceForUpcomingPayments` value in the user's metadata.
- *
- * @async
- * @function
- * @param {Request} request - Express request object containing the user ID and days in advance value.
- * @param {Response} response - Express response object used to send the response.
- * @throws Will throw an error if the Auth0 Management API request fails.
- * @returns {Promise<void>}
- */
-export const addDaysInAdvanceToMetadata = async (
-	request: Request,
-	response: Response
-) => {
-	// Extract userId and daysInAdvance from request
-	const userId = request.params.id;
-	const daysInAdvance = request.body.daysInAdvance;
-
-	try {
-		// Define the endpoint URL
-		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-
-		// Prepare the payload for the PATCH request
-		const requestPayload = {
-			app_metadata: {
-				daysInAdvance,
-			},
-		};
-
-		// Get the accessToken
-		const accessToken = await getToken();
-
-		// Prepare the headers for the PATCH request
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		// Send the PATCH request to the Auth0 Management API to update the user's metadata
-		const axiosResponse = await axios.patch(endpoint, requestPayload, {
-			headers: requestHeaders,
-		});
-
-		// Send the response data
-		response.json(axiosResponse.data);
-	} catch (error) {
-		console.error(
-			`Error updating days in advance for upcoming payments for user with ID ${request.body.userId}:`,
-			error
-		);
-		response.status(500).json({
-			message: `Failed to update days in advance for upcoming payments: ${error}`,
-		});
 	}
 };
 
@@ -544,40 +408,25 @@ export const getAuth0IdByQuilttId = async (
 };
 
 /**
- * Fetches the `phone_number` value from the body of a specified user in Auth0 using their `userId`.
+ * Fetches the phone number of a user by their user ID from the Auth0 Management API.
  *
  * @async
- * @param {string} userId - The identifier of the user in Auth0.
- * @returns {Promise<string|null>} - A Promise that resolves to the `phone_number` value as a number,
- *                                   or null if the value is not found or an error occurs.
- * @throws Will throw an error if unable to retrieve the token or make the API request.
- *
+ * @function
+ * @param {string} userId - The user ID of the user.
+ * @returns {Promise<string>} A Promise that resolves to the phone number if found.
+ * @throws Will throw an error if unable to retrieve the token or make the API request, or if no number is found.
  */
-export const getUserPhoneNumber = async (
-	userId: string
-): Promise<string | null> => {
+export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
-			headers: {authorization: `Bearer ${token}`},
-		};
-		const {data} = await axios.request(options);
-		if (data?.phone_number) {
-			const e164Format = /^\+1\d{10}$/;
-			if (e164Format.test(data.phone_number)) {
-				console.log("Phone number found:", data.phone_number);
-				return data.phone_number;
-			} else {
-				throw new Phone_Number_Bad_Format("Phone number not in E.164 format");
-			}
+		const user = await getUserByField("user_id", userId);
+		if (user && user.phone_number) {
+			return user.phone_number;
 		} else {
-			throw new Phone_Number_Not_Found("Phone number not found");
+			throw new Phone_Number_Not_Found("No number found");
 		}
 	} catch (error) {
 		console.error(error);
-		return null;
+		return "No number found";
 	}
 };
 
@@ -597,18 +446,37 @@ export const getUserByField = async (
 ): Promise<User | null> => {
 	try {
 		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
-			params: {
-				q: `${field}:"${value}"`,
-				search_engine: "v3",
-			},
-			headers: {authorization: `Bearer ${token}`},
-		};
+		let url: string;
+		let options: AxiosRequestConfig;
+
+		if (field === "user_id") {
+			// If the field is user_id, construct the URL to directly query the user
+			url = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${value}`;
+			options = {
+				method: "GET",
+				url,
+				headers: {authorization: `Bearer ${token}`},
+			};
+		} else {
+			// For other fields, construct the URL to perform a search
+			url = "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users";
+			options = {
+				method: "GET",
+				url,
+				params: {
+					q: `${field}:"${value}"`,
+					search_engine: "v3",
+				},
+				headers: {authorization: `Bearer ${token}`},
+			};
+		}
 
 		const {data} = await axios.request(options);
-		return data[0] || null;
+
+		// If the field is user_id, the data object is the relevant user
+		// Otherwise, assuming the first user in the returned array is the relevant user
+		const user = field === "user_id" ? data : data[0];
+		return user || null;
 	} catch (error) {
 		console.error(error);
 		return null;
@@ -616,21 +484,72 @@ export const getUserByField = async (
 };
 
 /**
- * Updates user data in the Auth0 Management API.
- *
+ * Callback to construct a query string for fetching user data.
+ * @callback ConstructQueryCallback
+ * @param {keyof User} field - The field to search by.
+ * @param {string | number} value - The value to search for.
+ * @returns {string} The constructed query string.
+ */
+type ConstructQueryCallback = (
+	field: keyof User,
+	value: string | number
+) => string;
+
+/**
+ * Fetches user data based on a specified query from the Auth0 Management API.
  * @async
- * @function
- * @param {string} userId - The user ID of the user to update.
- * @param {Partial<User>} updatedData - The updated data.
- * @returns {Promise<void>} A Promise that resolves when the data has been successfully updated.
+ * @function getUserByQuery
+ * @param {ConstructQueryCallback} constructQuery - The callback to construct the query string.
+ * @param {string | number} value - The value to search for.
+ * @returns {Promise<User | null>} A Promise that resolves to the user data if found, or null if not found or an error occurs.
  * @throws Will throw an error if unable to retrieve the token or make the API request.
  */
-export const updateUserData = async (
+export const getUserByQuery = async (
+	constructQuery: ConstructQueryCallback,
+	value: string | number
+): Promise<User | null> => {
+	try {
+		const token = await getToken();
+		const url = "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users";
+		const queryString = constructQuery("app_metadata", value);
+
+		const options: AxiosRequestConfig = {
+			method: "GET",
+			url,
+			params: {
+				q: queryString,
+				search_engine: "v3",
+			},
+			headers: {authorization: `Bearer ${token}`},
+		};
+
+		const {data} = await axios.request(options);
+
+		// Assuming the first user in the returned array is the relevant user
+		const user = data[0];
+		return user || null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+};
+
+/**
+ * Updates user metadata in the Auth0 Management API.
+ *
+ * @async
+ * @function updateUserMetadata
+ * @param {string} userId - The user ID of the user to update.
+ * @param {Partial<AppMetadata>} metadata - The updated metadata.
+ * @returns {Promise<void>} A Promise that resolves when the metadata has been successfully updated.
+ * @throws Will throw an error if unable to retrieve the token or make the API request.
+ */
+export const updateUserMetadata = async (
 	userId: string,
-	updatedData: Partial<User>
+	metadata: Partial<AppMetadata>
 ): Promise<void> => {
 	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-	const requestPayload = {app_metadata: updatedData.app_metadata}; // Assuming only app_metadata can be updated
+	const requestPayload = {app_metadata: metadata}; // Updated to directly use the metadata param
 
 	try {
 		const accessToken = await getToken();
@@ -647,32 +566,91 @@ export const updateUserData = async (
 		};
 
 		await axios.request(axiosConfig);
-		console.log("User data updated successfully");
+		console.log("User metadata updated successfully");
 	} catch (error) {
-		console.error("Error updating user data:", error);
+		console.error("Error updating user metadata:", error);
 		throw error;
 	}
 };
 
 /**
- * Fetches the phone number of a user by their user ID from the Auth0 Management API.
- *
+ * Adds or updates the `notificationToken` value in the user's metadata.
  * @async
- * @function
- * @param {string} userId - The user ID of the user.
- * @returns {Promise<string>} A Promise that resolves to the phone number if found.
- * @throws Will throw an error if unable to retrieve the token or make the API request, or if no number is found.
+ * @function addNotificationTokenToMetadata
+ * @param {Request} request - Express request object containing the user ID and token string.
+ * @param {Response} response - Express response object used to send the response.
+ * @throws Will throw an error if unable to update the user metadata.
  */
-export const getPhoneNumberById = async (userId: string): Promise<string> => {
+export const addNotificationTokenToMetadata = async (
+	request: Request,
+	response: Response
+) => {
+	const {userId, tokenString} = request.body;
 	try {
-		const user = await getUserByField("user_id", userId);
-		if (user && user.phone_number) {
-			return user.phone_number;
-		} else {
-			throw new Error("No number found");
-		}
+		await updateUserMetadata(userId, {notificationToken: tokenString});
+		response.json({message: "Notification token updated successfully."});
+	} catch (error) {
+		console.error(
+			`Error updating user notification token for user with ID ${userId}:`,
+			error
+		);
+		response
+			.status(500)
+			.json({message: `Failed to update user notification token: ${error}`});
+	}
+};
+
+/**
+ * Retrieves the notification token of a user based on the entity ID.
+ * @async
+ * @function getNotificationTokenByEntityId
+ * @param {Request} request - Express request object.
+ * @param {Response} response - Express response object.
+ * @throws Will throw an error if unable to fetch the user metadata.
+ */
+export const getNotificationTokenByEntityId = async (
+	request: Request,
+	response: Response
+) => {
+	const entityId: string = request.params.id;
+	try {
+		const user = await getUserByQuery(
+			(field, value) => `${field}.notificationToken:"${value}"`,
+			entityId
+		);
+		if (!user) throw new Error(`User not found for entity ID: ${entityId}`);
+		const appMetadata = user.app_metadata.notificationToken;
+		response.status(200).json({entity: appMetadata});
 	} catch (error) {
 		console.error(error);
-		return "No number found";
+		response.status(500).json({error: "Internal server error"});
+	}
+};
+
+/**
+ * Adds or updates the `daysInAdvance` value for upcoming payments in the user's metadata.
+ * @async
+ * @function addDaysInAdvanceToMetadata
+ * @param {Request} request - Express request object containing the user ID and days in advance value.
+ * @param {Response} response - Express response object used to send the response.
+ * @throws Will throw an error if unable to update the user metadata.
+ */
+export const addDaysInAdvanceToMetadata = async (
+	request: Request,
+	response: Response
+) => {
+	const userId = request.params.id;
+	const daysInAdvance = request.body.daysInAdvance;
+	try {
+		await updateUserMetadata(userId, {daysInAdvance});
+		response.json({message: "Days in advance updated successfully."});
+	} catch (error) {
+		console.error(
+			`Error updating days in advance for upcoming payments for user with ID ${userId}:`,
+			error
+		);
+		response.status(500).json({
+			message: `Failed to update days in advance for upcoming payments: ${error}`,
+		});
 	}
 };
