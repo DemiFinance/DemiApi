@@ -372,40 +372,44 @@ export const getQuilttIdByUserId = async (
 };
 
 /**
+ * Constructs a query string for searching users by Quiltt account ID.
+ * @param {keyof User} field - The field to search by. This argument is not used, but is included for compatibility with the ConstructQueryCallback type.
+ * @param {string | number} value - The value to search for.
+ * @returns {string} The constructed query string.
+ */
+const constructQuilttIdQuery: ConstructQueryCallback = (
+	field: keyof User,
+	value: string | number
+) => `app_metadata.quiltt_account_id:"${value}"`;
+
+/**
  * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
  *
  * @param {string} quilttAccountId - The Quiltt account ID used to search the user's metadata.
  * @returns {Promise<string>} A promise that resolves to the entity ID if found, or rejects with an error if not found or if the request fails.
- * @throws Will throw an error if the request fails or if no user with a matching Quiltt account ID is found.
+ * @throws Will throw an Auth0_Metadata_Search_Error if no user is found or if unable to make the API request.
  * @async
  */
 export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
-	const token = await getToken();
-	const options: AxiosRequestConfig = {
-		method: "GET",
-		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
-		params: {
-			q: `app_metadata.quiltt_account_id:"${quilttAccountId}"`,
-			search_engine: "v3",
-		},
-		headers: {authorization: `Bearer ${token}`},
-	};
-
-	const {data} = await axios.request(options);
-
-	// Assuming the first user in the returned array is the relevant user
-	const userId = data[0]?.user_id;
-
-	if (!userId) {
+	try {
+		const user = await getUserByQuery(constructQuilttIdQuery, quilttAccountId);
+		if (!user) {
+			throw new Auth0_Metadata_Search_Error(
+				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
+			);
+		}
+		return user.user_id;
+	} catch (error) {
+		console.error(error);
 		throw new Auth0_Metadata_Search_Error(
-			`No matching entity found with Quiltt Account ID ${quilttAccountId}}`
+			`Error fetching user data: ${(error as Error).message}`
 		);
 	}
-
-	return userId;
 };
+
+
 
 /**
  * Fetches the phone number of a user by their user ID from the Auth0 Management API.
@@ -501,13 +505,13 @@ type ConstructQueryCallback = (
  * @function getUserByQuery
  * @param {ConstructQueryCallback} constructQuery - The callback to construct the query string.
  * @param {string | number} value - The value to search for.
- * @returns {Promise<User | null>} A Promise that resolves to the user data if found, or null if not found or an error occurs.
- * @throws Will throw an error if unable to retrieve the token or make the API request.
+ * @returns {Promise<User>} A Promise that resolves to the user data if found.
+ * @throws Will throw an Auth0_Metadata_Search_Error if no user is found or if unable to make the API request.
  */
 export const getUserByQuery = async (
 	constructQuery: ConstructQueryCallback,
 	value: string | number
-): Promise<User | null> => {
+): Promise<User> => {
 	try {
 		const token = await getToken();
 		const url = "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users";
@@ -525,14 +529,26 @@ export const getUserByQuery = async (
 
 		const {data} = await axios.request(options);
 
-		// Assuming the first user in the returned array is the relevant user
-		const user = data[0];
-		return user || null;
+		// Iterate over the returned users to find the matching user
+		for (const user of data) {
+			if (user.app_metadata && user.app_metadata.quiltt_account_id === value) {
+				return user;  // Return the matching user
+			}
+		}
+
+		// If no matching user is found, throw an error
+		throw new Auth0_Metadata_Search_Error(
+			`No matching user found for value: ${value}`
+		);
+
 	} catch (error) {
 		console.error(error);
-		return null;
+		throw new Auth0_Metadata_Search_Error(
+			`Error fetching user data: ${(error as Error).message}`
+		);
 	}
 };
+
 
 /**
  * Updates user metadata in the Auth0 Management API.

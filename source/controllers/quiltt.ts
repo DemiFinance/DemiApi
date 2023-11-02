@@ -41,7 +41,7 @@ async function generateToken(userId: string): Promise<string> {
 
 		addUserIdToMetadata(userId, response.data.userId);
 
-		return response.data.sessionToken;
+		return response.data.token;
 	} catch (error: any) {
 		console.error("Error generating session token:", error.message);
 		if (error.response) {
