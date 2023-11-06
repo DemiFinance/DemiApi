@@ -4,7 +4,7 @@ dotenv.config();
 import {Request, Response} from "express";
 import {Method, Environments, IAccountListOpts} from "method-node";
 
-import {changeAccountName, getToken} from "../auth0functions";
+//import {getToken} from "../auth0functions";
 import * as db from "../../database/index.js";
 
 const method = new Method({
@@ -167,13 +167,14 @@ const updateAccountName = async (request: Request, response: Response) => {
 	const account_id = request.params.account_id;
 
 	try {
-		const userId = request.body.auth0_id;
-		const accountName = request.body.accountName;
-		const accountId = request.body.accountId;
+		// const userId = request.body.auth0_id;
+		// const accountName = request.body.accountName;
+		// const accountId = request.body.accountId;
 
-		const token = await getToken();
+		// const token = await getToken();
 		try {
-			changeAccountName(token, userId, accountName, accountId);
+			console.log("depricated....");
+			//changeAccountName(token, userId, accountName, accountId);
 		} catch (error) {
 			console.log("[UPDATE METADATA ERROR]" + error);
 		}
