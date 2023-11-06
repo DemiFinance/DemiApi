@@ -261,7 +261,7 @@ export async function fetchAccountInfo(
 				"/users/{user_guid}/accounts/{account_guid}"
 			].body;
 		const profileId = response.data.profileId;
-		const type = response.data.type; // Extracting the 'type' parameter
+		const type = body.type; // Extracting the 'type' parameter
 		return {body, profileId, type}; // Returning 'type' along with 'body' and 'profileId'
 	} catch (error: any) {
 		console.error("Error fetching account:", error.message);
