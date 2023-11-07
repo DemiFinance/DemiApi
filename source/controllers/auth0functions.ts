@@ -1,35 +1,69 @@
-import axios, {AxiosRequestConfig} from "axios";
 import {Request, Response} from "express";
-
 import {
 	Auth0_Metadata_Search_Error,
 	Phone_Number_Not_Found,
 } from "../utilities/errors/demierrors";
-import {AppMetadata, User} from "../models/auth0";
+import {AppMetadata, LuceneQuery, User} from "../models/auth0";
+import {auth0Api} from "../utilities/axiosHelper";
 
-export async function getToken(): Promise<string> {
-	const options = {
-		method: "POST",
-		url: "https://dev-0u7isllacvzlfhww.us.auth0.com/oauth/token",
-		headers: {"content-type": "application/x-www-form-urlencoded"},
-		data: new URLSearchParams({
-			grant_type: "client_credentials",
-			client_id: "zkCzuZm3qchILm3LCbYXicdPIzF90EUg",
-			client_secret: process.env.AUTH0_CLIENT_SECRET || "",
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-		}),
-	};
-
+export const searchUsers = async (query: LuceneQuery) => {
 	try {
-		const response = await axios.request(options);
-		console.log("[AUTH0 Response - Token] " + response.data.access_token);
-
-		return response.data.access_token;
+		const response = await auth0Api.get("users", {
+			params: {q: query, search_engine: "v3"},
+		});
+		return response.data;
 	} catch (error) {
-		console.error("[AUTH0 Response - Token Fetching Error] " + error);
-		return "";
+		throw new Error("Failed to search users");
 	}
-}
+};
+
+export const getUserById = async (userId: string): Promise<User> => {
+	try {
+		const response = await auth0Api.get(`users/${userId}`);
+		return response.data;
+	} catch (error) {
+		throw new Error("Failed to get user by id");
+	}
+};
+
+export const fetchDaysInAdvanceByUserId = async (userId: string) => {
+	try {
+		const user = await getUserById(userId);
+		return user?.app_metadata.daysInAdvance || null;
+	} catch (error) {
+		// Handle or throw the error as needed
+		return null;
+	}
+};
+
+export const getEntityIdByQuilttAccount = async (quilttUuid: string) => {
+	const query = `app_metadata.quiltt_uuid:"${quilttUuid}"`;
+	try {
+		const users = await searchUsers(query);
+		const user = users[0]; // Consider adding more robust user selection logic
+		if (!user)
+			throw new Error(`No matching entity found with uuid ${quilttUuid}`);
+		return user.app_metadata.entity_id;
+	} catch (error) {
+		// Handle or throw the error as needed
+	}
+};
+
+export const updateUserMetadata = async (
+	userId: string,
+	metadata: Partial<AppMetadata>
+) => {
+	const endpoint = `users/${userId}`;
+	try {
+		await auth0Api.patch(endpoint, {app_metadata: metadata});
+		console.log("User metadata updated successfully");
+	} catch (error) {
+		console.error("Error updating user metadata:", error);
+		throw error; // Re-throw the error to be handled by the calling function
+	}
+};
+
+// Similar refactoring can be done for other functions that perform user retrieval operations.
 
 /**
  * Update a user's metadata in Auth0.
@@ -40,31 +74,19 @@ export async function getToken(): Promise<string> {
  * @returns The updated user object.
  */
 export async function updateUserMeta(
-	accessToken: string,
 	userId: string,
 	givenName: string,
 	familyName: string,
 	metadata: {[key: string]: any}
 ): Promise<any> {
+	const endpoint = `users/${userId}`;
 	try {
-		const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-
-		// Send a PATCH request to the Auth0 Management API to update the user's metadata
-		const response = await axios.patch(
-			endpoint,
-			{
-				name: `${givenName} ${familyName}`,
-				given_name: givenName,
-				family_name: familyName,
-				app_metadata: metadata,
-			},
-			{
-				headers: {
-					authorization: `Bearer ${accessToken}`,
-					"Content-Type": "application/json",
-				},
-			}
-		);
+		const response = await auth0Api.patch(endpoint, {
+			name: `${givenName} ${familyName}`,
+			given_name: givenName,
+			family_name: familyName,
+			app_metadata: metadata,
+		});
 
 		// Return the response data
 		return response.data;
@@ -86,60 +108,16 @@ export async function updateUserMeta(
  * @returns {Promise<number|null>} The number of days in advance or null if there's an error or if the data is not available.
  * @throws {Error} Throws an error if there's a failure in fetching the data.
  */
-export const fetchDaysInAdvanceByEntityId = async (
-	entityId: string
-): Promise<number | null> => {
+export const fetchDaysInAdvanceByEntityId = async (entityId: string) => {
+	const query = `app_metadata.daysInAdvance:"${entityId}"`;
 	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
-			params: {
-				q: `app_metadata.daysInAdvance:"${entityId}"`,
-				search_engine: "v3",
-			},
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-		console.log("requested entity", data);
-
-		// Assuming the first user in the returned array is the relevant user
-		return data[0]?.app_metadata.daysInAdvance || null;
+		const users = await searchUsers(query);
+		const user = users[0]; // Consider adding more robust user selection logic
+		if (!user)
+			throw new Error(`No matching entity found with entityId ${entityId}`);
+		return user.app_metadata.entity_id;
 	} catch (error) {
-		console.error(error);
-		return null;
-	}
-};
-
-/**
- * Fetches the `daysInAdvance` value from the `app_metadata` of a specified user in Auth0 using their `userId`.
- *
- * @async
- * @param {string} userId - The identifier of the user in Auth0.
- * @returns {Promise<number|null>} - A Promise that resolves to the `daysInAdvance` value as a number,
- *                                   or null if the value is not found or an error occurs.
- * @throws Will throw an error if unable to retrieve the token or make the API request.
- */
-export const fetchDaysInAdvanceByUserId = async (
-	userId: string
-): Promise<number | null> => {
-	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-		console.log("requested user", data);
-
-		// Assuming the data object is the relevant user
-		return data?.app_metadata.daysInAdvance || null;
-	} catch (error) {
-		console.error(error);
-		return null;
+		// Handle or throw the error as needed
 	}
 };
 
@@ -167,45 +145,6 @@ export const getDaysInAdvanceByEntityId = async (
 };
 
 /**
- * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
- *
- * @param {string} quilttUuid - The Quiltt UUID used to search the user's metadata.
- * @returns {Promise<string>} A promise that resolves to the entity ID if found, or rejects with an error if not found or if the request fails.
- * @throws Will throw an error if the request fails or if no user with a matching Quiltt account ID is found.
- * @async
- */
-export const getEntityIdByQuilttAccount = async (
-	quilttUuid: string
-): Promise<string> => {
-	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
-			params: {
-				q: `app_metadata.quiltt_uuid:"${quilttUuid}"`,
-				search_engine: "v3",
-			},
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-
-		// Assuming the first user in the returned array is the relevant user
-		const entityId = data[0]?.app_metadata.entity_id;
-
-		if (!entityId) {
-			throw new Error(`No matching entity found with uuid ${quilttUuid}`);
-		}
-
-		return entityId;
-	} catch (error) {
-		console.error(error);
-		throw error; // Re-throw the error to be handled by the calling function
-	}
-};
-
-/**
  * Updates a user's metadata in the Auth0 Management API to include a Quiltt account ID.
  *
  * @param {string} entityId - The ID of the entity (user) whose metadata should be updated.
@@ -218,29 +157,12 @@ export const addQuilttIdToMetadata = async (
 	entityId: string,
 	quilttId: string
 ): Promise<void> => {
-	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${entityId}`;
-	const requestPayload = {
-		app_metadata: {
-			quiltt_account_id: quilttId,
-		},
+	const metadata: Partial<AppMetadata> = {
+		quiltt_account_id: quilttId,
 	};
 
 	try {
-		const accessToken = await getToken();
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		const axiosConfig: AxiosRequestConfig = {
-			method: "PATCH",
-			url: endpoint,
-			headers: requestHeaders,
-			data: requestPayload,
-		};
-
-		await axios.request(axiosConfig);
-		console.log("Metadata updated successfully");
+		updateUserMetadata(entityId, metadata);
 	} catch (error) {
 		console.error("Error updating metadata:", error);
 		throw error; // Re-throw the error to be handled by the calling function
@@ -260,29 +182,12 @@ export const addQuilttUuidToMetadata = async (
 	auth0Id: string,
 	uuid: string
 ): Promise<void> => {
-	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${auth0Id}`;
-	const requestPayload = {
-		app_metadata: {
-			quiltt_uuid: uuid,
-		},
+	const metadata: Partial<AppMetadata> = {
+		quiltt_uuid: uuid,
 	};
 
 	try {
-		const accessToken = await getToken();
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		const axiosConfig: AxiosRequestConfig = {
-			method: "PATCH",
-			url: endpoint,
-			headers: requestHeaders,
-			data: requestPayload,
-		};
-
-		await axios.request(axiosConfig);
-		console.log("Metadata updated successfully: Quiltt UUID");
+		updateUserMetadata(auth0Id, metadata);
 	} catch (error) {
 		console.error("Error updating metadata:", error);
 		throw error; // Re-throw the error to be handled by the calling function
@@ -293,33 +198,15 @@ export const getQuilttIdByUserId = async (
 	userId: string
 ): Promise<string | null> => {
 	try {
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`,
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
+		const user = await getUserById(userId);
 
 		// Assuming the data object is the relevant user
-		return data?.app_metadata.quiltt_account_id || null;
+		return user?.app_metadata.quiltt_account_id || null;
 	} catch (error) {
 		console.error(`Failed to get QuilttId By User ID ${error}`);
 		return null;
 	}
 };
-
-/**
- * Constructs a query string for searching users by Quiltt account ID.
- * @param {keyof User} field - The field to search by. This argument is not used, but is included for compatibility with the ConstructQueryCallback type.
- * @param {string | number} value - The value to search for.
- * @returns {string} The constructed query string.
- */
-const constructQuilttIdQuery: ConstructQueryCallback = (
-	field: keyof User,
-	value: string | number
-) => `app_metadata.quiltt_account_id:"${value}"`;
 
 /**
  * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
@@ -333,7 +220,7 @@ export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
 	try {
-		const user = await getUserByQuery(constructQuilttIdQuery, quilttAccountId);
+		const user = await searchUsers(`quiltt_account_id:${quilttAccountId}`);
 		if (!user) {
 			throw new Auth0_Metadata_Search_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
@@ -359,7 +246,7 @@ export const getAuth0IdByQuilttId = async (
  */
 export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 	try {
-		const user = await getUserByField("user_id", userId);
+		const user = await getUserById(userId);
 		if (user && user.phone_number) {
 			return user.phone_number;
 		} else {
@@ -368,161 +255,6 @@ export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 	} catch (error) {
 		console.error(error);
 		return "No number found";
-	}
-};
-
-/**
- * Fetches user data based on a specified field and value from the Auth0 Management API.
- *
- * @async
- * @function
- * @param {keyof User} field - The field to search by.
- * @param {string | number} value - The value to search for.
- * @returns {Promise<User | null>} A Promise that resolves to the user data if found, or null if not found or an error occurs.
- * @throws Will throw an error if unable to retrieve the token or make the API request.
- */
-export const getUserByField = async (
-	field: keyof User,
-	value: string | number
-): Promise<User | null> => {
-	try {
-		const token = await getToken();
-		let url: string;
-		let options: AxiosRequestConfig;
-
-		if (field === "user_id") {
-			// If the field is user_id, construct the URL to directly query the user
-			url = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${value}`;
-			options = {
-				method: "GET",
-				url,
-				headers: {authorization: `Bearer ${token}`},
-			};
-		} else {
-			// For other fields, construct the URL to perform a search
-			url = "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users";
-			options = {
-				method: "GET",
-				url,
-				params: {
-					q: `${field}:"${value}"`,
-					search_engine: "v3",
-				},
-				headers: {authorization: `Bearer ${token}`},
-			};
-		}
-
-		const {data} = await axios.request(options);
-
-		// If the field is user_id, the data object is the relevant user
-		// Otherwise, assuming the first user in the returned array is the relevant user
-		const user = field === "user_id" ? data : data[0];
-		return user || null;
-	} catch (error) {
-		console.error(error);
-		return null;
-	}
-};
-
-/**
- * Callback to construct a query string for fetching user data.
- * @callback ConstructQueryCallback
- * @param {keyof User} field - The field to search by.
- * @param {string | number} value - The value to search for.
- * @returns {string} The constructed query string.
- */
-type ConstructQueryCallback = (
-	field: keyof User,
-	value: string | number
-) => string;
-
-/**
- * Fetches user data based on a specified query from the Auth0 Management API.
- * @async
- * @function getUserByQuery
- * @param {ConstructQueryCallback} constructQuery - The callback to construct the query string.
- * @param {string | number} value - The value to search for.
- * @returns {Promise<User>} A Promise that resolves to the user data if found.
- * @throws Will throw an Auth0_Metadata_Search_Error if no user is found or if unable to make the API request.
- */
-export const getUserByQuery = async (
-	constructQuery: ConstructQueryCallback,
-	value: string | number
-): Promise<User> => {
-	try {
-		const token = await getToken();
-		const url = "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users";
-		const queryString = constructQuery("app_metadata", value);
-
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url,
-			params: {
-				q: queryString,
-				search_engine: "v3",
-			},
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-
-		// Iterate over the returned users to find the matching user
-		for (const user of data) {
-			if (user.app_metadata && user.app_metadata.quiltt_account_id === value) {
-				return user;  // Return the matching user
-			}
-		}
-
-		// If no matching user is found, throw an error
-		throw new Auth0_Metadata_Search_Error(
-			`No matching user found for value: ${value}`
-		);
-
-	} catch (error) {
-		console.error(error);
-		throw new Auth0_Metadata_Search_Error(
-			`Error fetching user data: ${(error as Error).message}`
-		);
-	}
-};
-
-
-/**
- * Updates user metadata in the Auth0 Management API.
- *
- * @async
- * @function updateUserMetadata
- * @param {string} userId - The user ID of the user to update.
- * @param {Partial<AppMetadata>} metadata - The updated metadata.
- * @returns {Promise<void>} A Promise that resolves when the metadata has been successfully updated.
- * @throws Will throw an error if unable to retrieve the token or make the API request.
- */
-export const updateUserMetadata = async (
-	userId: string,
-	metadata: Partial<AppMetadata>
-): Promise<void> => {
-	const endpoint = `https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users/${userId}`;
-	const requestPayload = {app_metadata: metadata}; // Updated to directly use the metadata param
-
-	try {
-		const accessToken = await getToken();
-		const requestHeaders = {
-			authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
-		};
-
-		const axiosConfig: AxiosRequestConfig = {
-			method: "PATCH",
-			url: endpoint,
-			headers: requestHeaders,
-			data: requestPayload,
-		};
-
-		await axios.request(axiosConfig);
-		console.log("User metadata updated successfully");
-	} catch (error) {
-		console.error("Error updating user metadata:", error);
-		throw error;
 	}
 };
 

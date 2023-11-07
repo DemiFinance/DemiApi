@@ -5,7 +5,7 @@ import {Request, Response} from "express";
 
 import {Method, Environments} from "method-node";
 
-import {updateUserMeta, getToken} from "../auth0functions";
+import {updateUserMeta} from "../auth0functions";
 import {log} from "console";
 
 const method = new Method({
@@ -58,8 +58,7 @@ const postEntity = async (request: Request, response: Response) => {
 			entity_id: newEntity.id,
 		};
 
-		const tokena = await getToken();
-		await updateUserMeta(tokena, auth0_id, first_name, last_name, metadata);
+		await updateUserMeta(auth0_id, first_name, last_name, metadata);
 
 		return response.status(200).json({newEntity});
 	} catch (error) {

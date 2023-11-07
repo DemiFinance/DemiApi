@@ -72,3 +72,5 @@ export interface User {
 	guardian_authenticators: object;
 	passkeys: object;
 }
+
+export type LuceneQuery = string;
