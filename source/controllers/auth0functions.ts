@@ -1,36 +1,11 @@
 import axios, {AxiosRequestConfig} from "axios";
 import {Request, Response} from "express";
 
-import {AuthenticationClient} from "auth0";
 import {
 	Auth0_Metadata_Search_Error,
 	Phone_Number_Not_Found,
 } from "../utilities/errors/demierrors";
 import {AppMetadata, User} from "../models/auth0";
-
-const auth0Auth = new AuthenticationClient({
-	domain: "dev-0u7isllacvzlfhww.auth0.com",
-	clientId: "HNgNV6QQAj3T9ThpRMhTY0rGqAGfzeTn",
-	clientSecret: process.env.AUTH0_CLIENT_SECRET || "",
-});
-
-// Example function to obtain an access token with the necessary scopes
-export const getAccessToken = async (): Promise<string> => {
-	console.log("Attempting Token Retrevial");
-	try {
-		const tokenResponse = await auth0Auth.clientCredentialsGrant({
-			audience: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/",
-			scope: "read:users update:users",
-		});
-
-		return tokenResponse.access_token;
-	} catch (err) {
-		console.error("Token Gathering Failed");
-
-		console.error(err);
-		return "";
-	}
-};
 
 export async function getToken(): Promise<string> {
 	const options = {
