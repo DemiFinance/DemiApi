@@ -102,39 +102,6 @@ export async function updateUserMeta(
 	}
 }
 
-export const getNotificationTokenByEntyityId = async (
-	request: Request,
-	response: Response
-) => {
-	try {
-		const entityId: string = request.params.id;
-
-		const token = await getToken();
-		const options: AxiosRequestConfig = {
-			method: "GET",
-			url: "https://dev-0u7isllacvzlfhww.us.auth0.com/api/v2/users",
-			params: {
-				q: `app_metadata.notificationToken:"${entityId}"`,
-				search_engine: "v3",
-			},
-			headers: {authorization: `Bearer ${token}`},
-		};
-
-		const {data} = await axios.request(options);
-		console.log("requested entity", data);
-
-		// Assuming the first user in the returned array is the relevant user
-		const appMetadata = data[0]?.app_metadata.notificationToken;
-
-		return response.status(200).json({
-			entity: appMetadata,
-		});
-	} catch (error) {
-		console.error(error);
-		return response.status(500).json({error: "Internal server error"});
-	}
-};
-
 /**
  * Fetches the number of days in advance a user has selected for their notification based on the entity ID.
  *
@@ -178,9 +145,6 @@ export const fetchDaysInAdvanceByEntityId = async (
  * @returns {Promise<number|null>} - A Promise that resolves to the `daysInAdvance` value as a number,
  *                                   or null if the value is not found or an error occurs.
  * @throws Will throw an error if unable to retrieve the token or make the API request.
- *
- * @example
- * const daysInAdvance = await fetchDaysInAdvanceByUserId('user123');
  */
 export const fetchDaysInAdvanceByUserId = async (
 	userId: string
@@ -409,8 +373,6 @@ export const getAuth0IdByQuilttId = async (
 	}
 };
 
-
-
 /**
  * Fetches the phone number of a user by their user ID from the Auth0 Management API.
  *
@@ -586,60 +548,6 @@ export const updateUserMetadata = async (
 	} catch (error) {
 		console.error("Error updating user metadata:", error);
 		throw error;
-	}
-};
-
-/**
- * Adds or updates the `notificationToken` value in the user's metadata.
- * @async
- * @function addNotificationTokenToMetadata
- * @param {Request} request - Express request object containing the user ID and token string.
- * @param {Response} response - Express response object used to send the response.
- * @throws Will throw an error if unable to update the user metadata.
- */
-export const addNotificationTokenToMetadata = async (
-	request: Request,
-	response: Response
-) => {
-	const {userId, tokenString} = request.body;
-	try {
-		await updateUserMetadata(userId, {notificationToken: tokenString});
-		response.json({message: "Notification token updated successfully."});
-	} catch (error) {
-		console.error(
-			`Error updating user notification token for user with ID ${userId}:`,
-			error
-		);
-		response
-			.status(500)
-			.json({message: `Failed to update user notification token: ${error}`});
-	}
-};
-
-/**
- * Retrieves the notification token of a user based on the entity ID.
- * @async
- * @function getNotificationTokenByEntityId
- * @param {Request} request - Express request object.
- * @param {Response} response - Express response object.
- * @throws Will throw an error if unable to fetch the user metadata.
- */
-export const getNotificationTokenByEntityId = async (
-	request: Request,
-	response: Response
-) => {
-	const entityId: string = request.params.id;
-	try {
-		const user = await getUserByQuery(
-			(field, value) => `${field}.notificationToken:"${value}"`,
-			entityId
-		);
-		if (!user) throw new Error(`User not found for entity ID: ${entityId}`);
-		const appMetadata = user.app_metadata.notificationToken;
-		response.status(200).json({entity: appMetadata});
-	} catch (error) {
-		console.error(error);
-		response.status(500).json({error: "Internal server error"});
 	}
 };
 
