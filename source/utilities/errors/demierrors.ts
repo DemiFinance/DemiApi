@@ -5,6 +5,18 @@ export class Auth0_Metadata_Search_Error extends Error {
 	}
 }
 
+export class Auth0_Search_User_Error extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "Auth0 Search User Error";
+	}
+}
+export class Auth0_GetUserById_Error extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "Auth0 Search User Error";
+	}
+}
 export class Quiltt_Token_EnvVar_Error extends Error {
 	constructor(message: string) {
 		super(message);

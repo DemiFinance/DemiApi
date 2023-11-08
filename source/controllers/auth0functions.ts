@@ -1,6 +1,9 @@
 import {Request, Response} from "express";
 import {
+	Auth0_GetUserById_Error,
 	Auth0_Metadata_Search_Error,
+	Auth0_Search_User_Error,
+	Phone_Number_Bad_Format,
 	Phone_Number_Not_Found,
 } from "../utilities/errors/demierrors";
 import {AppMetadata, LuceneQuery, User} from "../models/auth0";
@@ -13,7 +16,8 @@ export const searchUsers = async (query: LuceneQuery) => {
 		});
 		return response.data;
 	} catch (error) {
-		throw new Error("Failed to search users");
+		console.log("[Search Users] Error:", error);
+		throw new Auth0_Search_User_Error("Failed to search users");
 	}
 };
 
@@ -22,7 +26,7 @@ export const getUserById = async (userId: string): Promise<User> => {
 		const response = await auth0Api.get(`users/${userId}`);
 		return response.data;
 	} catch (error) {
-		throw new Error("Failed to get user by id");
+		throw new Auth0_GetUserById_Error("Failed to get user by id");
 	}
 };
 
@@ -248,13 +252,25 @@ export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 	try {
 		const user = await getUserById(userId);
 		if (user && user.phone_number) {
-			return user.phone_number;
+			// Check if the phone number is in E.164 format
+			const e164Regex = /^\+[1-9]\d{1,14}$/;
+			if (e164Regex.test(user.phone_number)) {
+				return user.phone_number;
+			} else {
+				// If not, throw an error
+				throw new Phone_Number_Bad_Format(
+					"Phone number is not in E.164 format"
+				);
+			}
 		} else {
+			// If there's no phone number, throw an error
 			throw new Phone_Number_Not_Found("No number found");
 		}
 	} catch (error) {
+		// Log the error (perhaps consider a more sophisticated error handling strategy)
 		console.error(error);
-		return "No number found";
+		// Rethrow the error so it can be handled by the caller
+		throw error;
 	}
 };
 
