@@ -223,8 +223,10 @@ export const getQuilttIdByUserId = async (
 export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
+	
+	const query = `app_metadata.daysInAdvance:"${quilttAccountId}"`;
 	try {
-		const user = await searchUsers(`quiltt_account_id:${quilttAccountId}`);
+		const user = await searchUsers(query);
 		if (!user) {
 			throw new Auth0_Metadata_Search_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
