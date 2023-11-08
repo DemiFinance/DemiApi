@@ -6,6 +6,13 @@ import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
 import {fetchDaysInAdvanceByEntityId} from "../controllers/auth0functions";
+import {
+	CreditCard_Name_bad_format,
+	CreditCard_Name_missing,
+	CreditCard_No_Due_Date,
+	CreditCard_invalid_payment_date,
+	No_CreditCard_found,
+} from "../utilities/errors/demierrors";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -127,33 +134,53 @@ async function updateHasSentNotificationStatus(account: IAccount) {
  * @throws Will throw an error if the account does not have credit card information or if the notification fails to send.
  */
 export async function sendNotificationToUser(account: IAccount): Promise<void> {
+	// Check if credit card information is available
 	if (!account.liability?.credit_card) {
-		throw new Error(
+		throw new No_CreditCard_found(
 			`No credit card information available for account ${account.id}`
 		);
 	}
+
+	// Destructure necessary properties from the credit card information
 	const {name: cardName, next_payment_due_date: nextPaymentDueDateStr} =
 		account.liability.credit_card;
 
-	if (!cardName || typeof cardName !== "string") {
-		throw new Error(
-			`Card name is invalid or missing for account ${account.id}`
+	// Check if card name is present and is a string
+	if (!cardName) {
+		throw new CreditCard_Name_missing(
+			`Card name is missing for account ${account.id}`
+		);
+	}
+	if (typeof cardName !== "string") {
+		throw new CreditCard_Name_bad_format(
+			`Card name must be a string for account ${account.id}`
 		);
 	}
 
-	if (!nextPaymentDueDateStr || typeof nextPaymentDueDateStr !== "string") {
-		throw new Error(
-			`Next payment due date is invalid or missing for account ${account.id}`
+	// Check if next payment due date is present and is a string
+	if (!nextPaymentDueDateStr) {
+		throw new CreditCard_No_Due_Date(
+			`Next payment due date is missing for account ${account.id}`
+		);
+	}
+	if (typeof nextPaymentDueDateStr !== "string") {
+		throw new CreditCard_invalid_payment_date(
+			`Next payment due date must be a string for account ${account.id}`
 		);
 	}
 
+	// Convert the next payment due date string to a Date object and check if it's valid
 	const nextPaymentDueDate = new Date(nextPaymentDueDateStr);
 	if (isNaN(nextPaymentDueDate.getTime())) {
-		throw new Error(`Invalid next payment due date for account ${account.id}`);
+		throw new CreditCard_invalid_payment_date(
+			`Invalid next payment due date for account ${account.id}`
+		);
 	}
 
+	// Calculate the number of days until the due date
 	const daysUntilDueDate = calculateDaysUntilDueDate(nextPaymentDueDate);
 
+	// Check if the due date is not in the past
 	if (daysUntilDueDate <= 0) {
 		console.log(
 			"The payment due date is in the past or today. No notification will be sent."
@@ -161,9 +188,13 @@ export async function sendNotificationToUser(account: IAccount): Promise<void> {
 		return;
 	}
 
+	// Fetch the number of days in advance to send notification
 	const daysInAdvance = await fetchDaysInAdvance(account.holder_id);
+
+	// Calculate the delivery date for the notification
 	const deliveryDate = calculateDeliveryDate(nextPaymentDueDate, daysInAdvance);
 
+	// Log the intent to send notification and call the function to send it
 	console.log("Sending notification to user");
 	await sendNotification(
 		account.holder_id,

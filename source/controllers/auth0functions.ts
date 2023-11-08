@@ -223,7 +223,6 @@ export const getQuilttIdByUserId = async (
 export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
-	
 	const query = `app_metadata.daysInAdvance:"${quilttAccountId}"`;
 	try {
 		const user = await searchUsers(query);
