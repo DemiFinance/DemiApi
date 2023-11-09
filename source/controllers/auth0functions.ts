@@ -5,18 +5,25 @@ import {
 	Auth0_Search_User_Error,
 	Phone_Number_Bad_Format,
 	Phone_Number_Not_Found,
+	UserID_Not_a_string,
 } from "../utilities/errors/demierrors";
 import {AppMetadata, LuceneQuery, User} from "../models/auth0";
 import {auth0Api} from "../utilities/axiosHelper";
 
 export const searchUsers = async (query: LuceneQuery) => {
 	try {
+		logger.log("info", "[Search Users] Query:", query);
 		const response = await auth0Api.get("users", {
 			params: {q: query, search_engine: "v3"},
 		});
-		return response.data;
+
+		// Parse the JSON and cast to the User array
+		const users: User[] = response.data;
+
+		return users; // The response is an array of User objects
 	} catch (error) {
-		console.log("[Search Users] Error:", error);
+		logger.log("error", "[Search Users] Error:", error);
+		//console.log("[Search Users] Error:", error);
 		throw new Auth0_Search_User_Error("Failed to search users");
 	}
 };
@@ -24,7 +31,8 @@ export const searchUsers = async (query: LuceneQuery) => {
 export const getUserById = async (userId: string): Promise<User> => {
 	try {
 		const response = await auth0Api.get(`users/${userId}`);
-		return response.data;
+		const user: User = response.data;
+		return user;
 	} catch (error) {
 		throw new Auth0_GetUserById_Error("Failed to get user by id");
 	}
@@ -35,7 +43,6 @@ export const fetchDaysInAdvanceByUserId = async (userId: string) => {
 		const user = await getUserById(userId);
 		return user?.app_metadata.daysInAdvance || null;
 	} catch (error) {
-		// Handle or throw the error as needed
 		return null;
 	}
 };
@@ -113,13 +120,13 @@ export async function updateUserMeta(
  * @throws {Error} Throws an error if there's a failure in fetching the data.
  */
 export const fetchDaysInAdvanceByEntityId = async (entityId: string) => {
-	const query = `app_metadata.daysInAdvance:"${entityId}"`;
+	const query = `app_metadata.entity_id:"${entityId}"`;
 	try {
 		const users = await searchUsers(query);
 		const user = users[0]; // Consider adding more robust user selection logic
 		if (!user)
 			throw new Error(`No matching entity found with entityId ${entityId}`);
-		return user.app_metadata.entity_id;
+		return user.app_metadata.daysInAdvance;
 	} catch (error) {
 		// Handle or throw the error as needed
 	}
@@ -140,7 +147,7 @@ export const getDaysInAdvanceByEntityId = async (
 ) => {
 	try {
 		const entityId: string = request.params.id;
-		const daysInAdvance = await fetchDaysInAdvanceByUserId(entityId);
+		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
 		return response.status(200).json({daysInAdvance});
 	} catch (error) {
 		console.error(error);
@@ -223,20 +230,24 @@ export const getQuilttIdByUserId = async (
 export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
-	const query = `app_metadata.daysInAdvance:"${quilttAccountId}"`;
+	const query = `app_metadata.quiltt_account_id:"${quilttAccountId}"`;
 	try {
-		const user = await searchUsers(query);
+		console.log("[getAuth0IdByQuilttId]", quilttAccountId);
+		const user: User[] = await searchUsers(query);
 		if (!user) {
 			throw new Auth0_Metadata_Search_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
 			);
 		}
-		return user.user_id;
+		console.log("user", user);
+
+		if (typeof user[0].user_id !== "string") {
+			throw new UserID_Not_a_string("User ID must be a string");
+		}
+		return user[0].user_id;
 	} catch (error) {
 		console.error(error);
-		throw new Auth0_Metadata_Search_Error(
-			`Error fetching user data: ${(error as Error).message}`
-		);
+		throw new Auth0_Metadata_Search_Error((error as Error).message);
 	}
 };
 

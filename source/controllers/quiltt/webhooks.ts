@@ -16,6 +16,7 @@ import {
 } from "../auth0functions";
 import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
+import tracer from "../../wrappers/datadogTracer";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -83,6 +84,11 @@ export async function fetchHolderInfo(
 		console.log("Account Response:", accountResponse);
 		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
 		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
+
+		if (entityId === undefined) {
+			throw new Error("Entity ID is undefined");
+		}
+
 		return entityId;
 	} catch (error) {
 		console.error("Error fetching holder info:", error);
@@ -169,6 +175,7 @@ const ACCOUNT_TYPES = {
  * @param {QuilttEvent} event - The event data containing the account ID and other relevant information.
  */
 async function createAccount(event: QuilttEvent) {
+	const span = tracer.startSpan("create.account");
 	const {id: accountId} = event.record;
 	try {
 		const fetchedAccount = await fetchAccountInfo(accountId);
@@ -178,9 +185,15 @@ async function createAccount(event: QuilttEvent) {
 		const accountType = getNormalizedAccountType(fetchedAccount.type);
 
 		const [accountData, transactionsObject] = await Promise.all([
-			getAccountNumbers(accountId),
-			fetchTransactions(sessionToken, accountId),
+			tracer.scope().activate(span, () => getAccountNumbers(accountId)),
+			tracer
+				.scope()
+				.activate(span, () => fetchTransactions(sessionToken, accountId)),
 		]);
+		// const [accountData, transactionsObject] = await Promise.all([
+		// 	getAccountNumbers(accountId),
+		// 	fetchTransactions(sessionToken, accountId),
+		// ]);
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
@@ -196,11 +209,13 @@ async function createAccount(event: QuilttEvent) {
 		console.log("Account Output:", account);
 
 		createAccountVerification(account.id, accountInfo, transactionsObject);
+		span.finish();
 	} catch (error) {
-		console.error("Error creating new account:", error);
+		logger.log("error", "Error creating new account:" + error);
+		//console.error("Error creating new account:", error);
 	}
-
-	console.log(`Created connection with id: ${accountId}`);
+	logger.log("info", `Created connection with id: ${accountId}`);
+	//console.log(`Created connection with id: ${accountId}`);
 }
 
 function getNormalizedAccountType(type: string): string {
@@ -239,6 +254,9 @@ async function createQuilttProfile_WebhookEvent(
 			initialDelay
 		);
 
+		logger.log("info", "Auth0 user:" + auth0User);
+		//console.log("Auth0 user:", auth0User);
+
 		// Ensure the event has a profile with a uuid.
 		if (!event.profile || !event.profile.uuid) {
 			throw new Error("Event profile missing or UUID missing.");
@@ -248,7 +266,8 @@ async function createQuilttProfile_WebhookEvent(
 		// Attempt to add the UUID to the Auth0 user metadata.
 		addUUIDToMetadata(auth0User, uuid);
 	} catch (error) {
-		console.error("Error in createQuilttProfile_WebhookEvent:", error);
+		logger.log("error", "Error in createQuilttProfile_WebhookEvent:" + error);
+		//console.error("Error in createQuilttProfile_WebhookEvent:", error);
 		throw error; // Re-throw the error to allow further handling up the stack.
 	}
 }
@@ -340,7 +359,9 @@ export const quilttWebhookHandler = async (
 	request: Request,
 	response: Response
 ) => {
-	console.log("Quiltt webhook received" + JSON.stringify(request.body));
+	logger.log("info", "Quiltt webhook received" + JSON.stringify(request.body));
+	//	console.log("Quiltt webhook received" + JSON.stringify(request.body));
+	const span = tracer.startSpan("quilttWebhookHandler");
 	try {
 		const webhook: QuilttWebhookObject = {
 			environment: request.body.environment,
@@ -349,8 +370,10 @@ export const quilttWebhookHandler = async (
 		};
 
 		await processQuilttWebhookObject(webhook);
+		span.finish();
 	} catch (error) {
-		console.log("Quiltt Webhook Error:", error);
+		logger.log("error", "Quiltt Webhook Error:" + error);
+		//console.log("Quiltt Webhook Error:", error);
 		return response.status(500).json({
 			message: "Error processing webhook",
 			error: error,

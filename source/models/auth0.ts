@@ -73,4 +73,45 @@ export interface User {
 	passkeys: object;
 }
 
+/**
+ * Type guard function to check if a given array is an array of User objects.
+ *
+ * @param {any[]} users - The array to validate as an array of User objects.
+ * @returns {boolean} - True if every object in the array conforms to the User interface, false otherwise.
+ */
+export function isValidUserArray(users: any[]): users is User[] {
+	return Array.isArray(users) && users.every(isValidUser);
+}
+
+export function isValidUser(user: any): user is User {
+	// Check if all required User properties exist and have the correct type
+	return (
+		typeof user.created_at === "string" &&
+		Array.isArray(user.identities) &&
+		user.identities.every(
+			(identity: Identity) => typeof identity === "object"
+		) &&
+		typeof user.name === "string" &&
+		typeof user.phone_number === "string" &&
+		typeof user.phone_verified === "boolean" &&
+		typeof user.picture === "string" &&
+		typeof user.updated_at === "string" &&
+		typeof user.user_id === "string" &&
+		typeof user.user_metadata === "object" &&
+		typeof user.app_metadata === "object" &&
+		typeof user.family_name === "string" &&
+		typeof user.given_name === "string" &&
+		typeof user.last_ip === "string" &&
+		typeof user.last_login === "string" &&
+		typeof user.logins_count === "number" &&
+		Array.isArray(user.blocked_for) &&
+		user.blocked_for.every((item: string) => typeof item === "string") &&
+		Array.isArray(user.guardian_authenticators) &&
+		user.guardian_authenticators.every(
+			(item: object) => typeof item === "object"
+		) &&
+		Array.isArray(user.passkeys) &&
+		user.passkeys.every((item: object) => typeof item === "object")
+	);
+}
 export type LuceneQuery = string;

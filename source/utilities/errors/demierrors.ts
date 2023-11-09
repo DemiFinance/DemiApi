@@ -78,3 +78,17 @@ export class CreditCard_invalid_payment_date extends Error {
 		this.name = "Credit card payment date is not a date!";
 	}
 }
+
+export class UserID_Not_a_string extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "User ID is not a string!";
+	}
+}
+
+export class User_body_invalid extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "User body is invalid!";
+	}
+}

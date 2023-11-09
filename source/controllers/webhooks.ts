@@ -224,7 +224,7 @@ function calculateDaysUntilDueDate(nextPaymentDueDate: Date): number {
  */
 async function fetchDaysInAdvance(holderId: string): Promise<number> {
 	const daysInAdvance = await fetchDaysInAdvanceByEntityId(holderId);
-	return daysInAdvance !== null ? daysInAdvance : 3; // Defaulting to 3 days if fetch fails.
+	return daysInAdvance !== null ? Number(daysInAdvance) : 3; // Defaulting to 3 days if fetch fails.
 }
 
 /**
@@ -259,7 +259,7 @@ async function sendNotification(
 	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
 	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
 	const heading = "Upcoming Payment Reminder";
-	console.log("the broken date? " + deliveryDate.toISOString().split("T")[0]);
+	console.log("the broken date? " + deliveryDate);
 	await sendNotificationByExternalId(
 		holderId,
 		heading,
