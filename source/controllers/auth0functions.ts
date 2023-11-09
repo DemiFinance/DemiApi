@@ -9,6 +9,7 @@ import {
 } from "../utilities/errors/demierrors";
 import {AppMetadata, LuceneQuery, User} from "../models/auth0";
 import {auth0Api} from "../utilities/axiosHelper";
+import logger from "../wrappers/winstonLogging";
 
 export const searchUsers = async (query: LuceneQuery) => {
 	try {
@@ -23,7 +24,6 @@ export const searchUsers = async (query: LuceneQuery) => {
 		return users; // The response is an array of User objects
 	} catch (error) {
 		logger.log("error", "[Search Users] Error:", error);
-		//console.log("[Search Users] Error:", error);
 		throw new Auth0_Search_User_Error("Failed to search users");
 	}
 };
@@ -67,14 +67,15 @@ export const updateUserMetadata = async (
 	const endpoint = `users/${userId}`;
 	try {
 		await auth0Api.patch(endpoint, {app_metadata: metadata});
-		console.log("User metadata updated successfully");
+		logger.log(
+			"info",
+			"[Update User Metadata] User metadata updated successfully"
+		);
 	} catch (error) {
-		console.error("Error updating user metadata:", error);
+		logger.log("error", "[Update User Metadata] Error:", error);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
-
-// Similar refactoring can be done for other functions that perform user retrieval operations.
 
 /**
  * Update a user's metadata in Auth0.
@@ -102,7 +103,8 @@ export async function updateUserMeta(
 		// Return the response data
 		return response.data;
 	} catch (error) {
-		console.error(
+		logger.log(
+			"error",
 			`Error updating user metadata for user with ID ${userId}:`,
 			error
 		);
@@ -210,6 +212,7 @@ export const getQuilttIdByUserId = async (
 ): Promise<string | null> => {
 	try {
 		const user = await getUserById(userId);
+		logger.log("info", "[getQuilttIdByUserId] User:", user);
 
 		// Assuming the data object is the relevant user
 		return user?.app_metadata.quiltt_account_id || null;
@@ -232,21 +235,21 @@ export const getAuth0IdByQuilttId = async (
 ): Promise<string> => {
 	const query = `app_metadata.quiltt_account_id:"${quilttAccountId}"`;
 	try {
-		console.log("[getAuth0IdByQuilttId]", quilttAccountId);
+		logger.log("info", "[getAuth0IdByQuilttId]", quilttAccountId);
 		const user: User[] = await searchUsers(query);
 		if (!user) {
 			throw new Auth0_Metadata_Search_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
 			);
 		}
-		console.log("user", user);
+		logger.log("info", "[getAuth0IdByQuilttId] User:", user);
 
 		if (typeof user[0].user_id !== "string") {
 			throw new UserID_Not_a_string("User ID must be a string");
 		}
 		return user[0].user_id;
 	} catch (error) {
-		console.error(error);
+		logger.log("error", "[getAuth0IdByQuilttId] Error:", error);
 		throw new Auth0_Metadata_Search_Error((error as Error).message);
 	}
 };
@@ -280,7 +283,7 @@ export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 		}
 	} catch (error) {
 		// Log the error (perhaps consider a more sophisticated error handling strategy)
-		console.error(error);
+		logger.log("error", "[getUserPhoneNumber] Error:", error);
 		// Rethrow the error so it can be handled by the caller
 		throw error;
 	}
@@ -304,10 +307,12 @@ export const addDaysInAdvanceToMetadata = async (
 		await updateUserMetadata(userId, {daysInAdvance});
 		response.json({message: "Days in advance updated successfully."});
 	} catch (error) {
-		console.error(
+		logger.log(
+			"error",
 			`Error updating days in advance for upcoming payments for user with ID ${userId}:`,
 			error
 		);
+
 		response.status(500).json({
 			message: `Failed to update days in advance for upcoming payments: ${error}`,
 		});

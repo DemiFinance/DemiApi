@@ -3,6 +3,7 @@ dotenv.config();
 import {Request, Response} from "express";
 import {Method, Environments, IPaymentListOpts} from "method-node";
 import * as db from "../../database/index.js";
+import logger from "../../wrappers/winstonLogging";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",

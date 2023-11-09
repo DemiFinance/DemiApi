@@ -17,6 +17,7 @@ import {
 import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
+import logger from "../../wrappers/winstonLogging";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -38,9 +39,8 @@ export async function fetchTransactions(
 			accountId
 		);
 		return parseTransactions(transactionsResponse);
-		//return transactionsResponse;
 	} catch (error) {
-		console.error("Failed to fetch or parse transactions:", error);
+		logger.log("error", "Failed to fetch or parse transactions:" + error);
 		throw error;
 	}
 }
@@ -81,7 +81,7 @@ export async function fetchHolderInfo(
 ): Promise<string> {
 	try {
 		const accountResponse = await holderFromAccountId(quilttUserId, accountId);
-		console.log("Account Response:", accountResponse);
+		logger.log("info", "Account Response:" + accountResponse);
 		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
 		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
 
@@ -91,7 +91,7 @@ export async function fetchHolderInfo(
 
 		return entityId;
 	} catch (error) {
-		console.error("Error fetching holder info:", error);
+		logger.log("error", "Error fetching holder info:" + error);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }
@@ -206,16 +206,14 @@ async function createAccount(event: QuilttEvent) {
 			accountType,
 			holderInfo
 		);
-		console.log("Account Output:", account);
+		logger.log("info", "Account Output:" + account);
 
 		createAccountVerification(account.id, accountInfo, transactionsObject);
 		span.finish();
 	} catch (error) {
 		logger.log("error", "Error creating new account:" + error);
-		//console.error("Error creating new account:", error);
 	}
 	logger.log("info", `Created connection with id: ${accountId}`);
-	//console.log(`Created connection with id: ${accountId}`);
 }
 
 function getNormalizedAccountType(type: string): string {
@@ -293,7 +291,7 @@ async function retryAsync<T>(
 		try {
 			return await asyncFn();
 		} catch (error) {
-			console.error(`Retry ${i + 1}/${maxRetries} failed:`, error);
+			logger.log("error", `Retry ${i + 1}/${maxRetries} failed:`, error);
 			if (i < maxRetries - 1) {
 				await new Promise((resolve) =>
 					setTimeout(resolve, Math.min(delay * 2 ** i, 16000))

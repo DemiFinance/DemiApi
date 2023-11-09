@@ -8,6 +8,9 @@ import {
 } from "./auth0functions";
 import {AccountNumbers, Profile} from "../models/quilttmodels";
 import {generateTokenById} from "../utilities/quilttUtil";
+import logger from "../wrappers/winstonLogging";
+import tracer from "../wrappers/datadogTracer";
+import {Quiltt_Token_EnvVar_Error} from "../utilities/errors/demierrors";
 
 /**
  * Generates a new session token for a user.
@@ -19,19 +22,22 @@ import {generateTokenById} from "../utilities/quilttUtil";
  *         or if there is an error generating the session token.
  */
 async function generateToken(userId: string): Promise<string> {
+	const span = tracer.startSpan("generateToken");
+	span.setTag("user.id", userId);
+
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = "https://auth.quiltt.io/v1/users/sessions";
 
-	// Assuming you still want to keep this check
 	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("Internal Server Error");
+		logger.log("error", "QUILTT_TOKEN environment variable is not set or is blank");
+		span.setTag("error", true);
+		span.finish(); // Make sure to finish the span before throwing the error
+		throw new Quiltt_Token_EnvVar_Error("Internal Server Error");
 	}
 
 	try {
-		console.log("Creating new profile with token");
+		logger.log("info", "Creating new profile with token");
 		const phone_number = await getUserPhoneNumber(userId);
-		console.log("phone number: " + phone_number);
 		const data = {phone: phone_number};
 		const config = {
 			headers: {
@@ -39,16 +45,25 @@ async function generateToken(userId: string): Promise<string> {
 			},
 		};
 
+		span.setTag("phone_number", phone_number);
+
 		const response = await axios.post(url, data, config);
-
 		addUserIdToMetadata(userId, response.data.userId);
-
+		span.finish(); // Finish the span on success
 		return response.data.token;
 	} catch (error: any) {
-		console.error("Error generating session token:", error.message);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.object": error,
+			message: error.message,
+			stack: error.stack,
+		});
+		logger.log("error", "Error generating session token:", error.message);
 		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
+			logger.log("error", "Response data:", error.response.data);
+			logger.log("error", "Response status:", error.response.status);
+			span.finish(); // Make sure to finish the span before throwing the error
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
@@ -56,6 +71,7 @@ async function generateToken(userId: string): Promise<string> {
 			);
 		} else {
 			console.log("Quiltt Server Error", error);
+			span.finish(); // Make sure to finish the span before throwing the error
 			throw new Error("Quiltt Server Error");
 		}
 	}
@@ -109,28 +125,39 @@ export async function handleGenerateSessionToken(
 	req: Request,
 	res: Response
 ): Promise<void> {
+	const span = tracer.startSpan("handleGenerateSessionToken");
 	try {
 		const userId = req.body.userId;
-		console.log("Generating session token for User ID:", userId);
+		span.setTag("user.id", userId);
+		logger.log("info", "Generating session token for User ID: " + userId);
 
-		//let sessionToken: string;
+		let sessionToken: string;
 		const quilttId = await getQuilttIdByUserId(userId);
+		span.setTag("quiltt.id", quilttId);
 
 		if (quilttId) {
-			console.log(`Quiltt ID found: ${quilttId}`);
-			const sessionToken: string = await generateTokenById(quilttId);
-			console.log(`Generated Session Token ${sessionToken}`);
-			res.status(200).json({sessionToken});
+			logger.log("info", "Quiltt ID found: " + quilttId);
+			sessionToken = await generateTokenById(quilttId);
+			logger.log("info", `Generated Session Token ${sessionToken}`);
 		} else {
-			console.log("Quiltt ID not found");
-			const sessionToken: string = await generateToken(userId);
-			console.log(`Generated Session Token ${sessionToken}`);
-			res.status(200).json({sessionToken});
+			logger.log("info", "Quiltt ID not found");
+			sessionToken = await generateToken(userId);
+			logger.log("info", `Generated Session Token ${sessionToken}`);
 		}
+		res.status(200).json({sessionToken});
 	} catch (error: any) {
-		console.error(error.message);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.object": error,
+			message: error.message,
+			stack: error.stack,
+		});
+		logger.log("error", error.message);
 		const isInternalError = error.message.includes("Internal Server Error");
 		res.status(isInternalError ? 500 : 400).json({error: error.message});
+	} finally {
+		span.finish();
 	}
 }
 
@@ -151,8 +178,11 @@ export async function createQuilttProfile(
 	const url = "https://api.quiltt.io/v1/profiles";
 
 	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("QUILTT_TOKEN Error");
+		logger.log(
+			"error",
+			"QUILTT_TOKEN environment variable is not set or is blank"
+		);
+		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -166,10 +196,10 @@ export async function createQuilttProfile(
 		const createdProfile: Profile = response.data;
 		return createdProfile.id;
 	} catch (error: any) {
-		console.error("Error creating profile:", error.message);
+		logger.log("error", "Error fetching account:", error.message);
 		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
+			logger.log("error", "Response data:", error.response.data);
+			logger.log("error", "Response status:", error.response.status);
 			throw new Error(
 				`createQuilttProfile Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
@@ -198,8 +228,11 @@ export async function getAccountNumbers(
 	const url = `https://api.quiltt.io/v1/accounts/${accountId}/ach`;
 
 	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("QUILTT_TOKEN Error");
+		logger.log(
+			"error",
+			"QUILTT_TOKEN environment variable is not set or is blank"
+		);
+		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -210,14 +243,12 @@ export async function getAccountNumbers(
 		};
 
 		const response = await axios.get(url, config);
-
-		console.log("Account nutsack:", response);
 		return {accountNumbers: response.data};
 	} catch (error: any) {
-		console.error("Error fetching account:", error.message);
+		logger.log("error", "Error fetching account:", error.message);
 		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
+			logger.log("error", "Response data:", error.response.data);
+			logger.log("error", "Response status:", error.response.status);
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
@@ -246,8 +277,11 @@ export async function fetchAccountInfo(
 	const url = `https://api.quiltt.io/v1/remote/mx/accounts/${accountId}`;
 
 	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
-		throw new Error("QUILTT_TOKEN Error");
+		logger.log(
+			"error",
+			"QUILTT_TOKEN environment variable is not set or is blank"
+		);
+		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
 	try {
@@ -266,10 +300,10 @@ export async function fetchAccountInfo(
 		const type = body.type; // Extracting the 'type' parameter
 		return {body, profileId, type}; // Returning 'type' along with 'body' and 'profileId'
 	} catch (error: any) {
-		console.error("Error fetching account:", error.message);
+		logger.log("error", "Error fetching account:", error.message);
 		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
+			logger.log("error", "Response data:", error.response.data);
+			logger.log("error", "Response status:", error.response.status);
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
