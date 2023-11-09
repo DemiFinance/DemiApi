@@ -14,20 +14,26 @@ const getPaymentsBySourceHolder = async (
 	response: Response
 ) => {
 	try {
-		console.log(
+		logger.log(
+			"info",
 			"Attempting to get payments by sourceHolderId: " + request.params.id
 		);
+		// console.log(
+		// 	"Attempting to get payments by sourceHolderId: " + request.params.id
+		// );
 		const paymentOpts: IPaymentListOpts = {
 			source_holder_id: request.params.id,
 		};
 
 		const payment = await method.payments.list(paymentOpts);
-		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
+		logger.log("info", "[METHOD - Get Payment]" + JSON.stringify(payment));
+		//console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: payment,
 		});
 	} catch (error) {
-		console.log("[METHOD - Get Payment ERROR]" + error);
+		logger.log("error", "[METHOD - Get Payment ERROR]" + error);
+		//console.log("[METHOD - Get Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
@@ -39,20 +45,26 @@ const getPaymentsByDestination = async (
 	response: Response
 ) => {
 	try {
-		console.log(
+		logger.log(
+			"info",
 			"Attempting to get payments by destinationid: " + request.params.id
 		);
+		// console.log(
+		// 	"Attempting to get payments by destinationid: " + request.params.id
+		// );
 		const paymentOpts: IPaymentListOpts = {
 			destination: request.params.id,
 		};
 
 		const payment = await method.payments.list(paymentOpts);
-		console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
+		logger.log("info", "[METHOD - Get Payment]" + JSON.stringify(payment));
+		//console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: payment,
 		});
 	} catch (error) {
-		console.log("[METHOD - Get Payment ERROR]" + error);
+		logger.log("error", "[METHOD - Get Payment ERROR]" + error);
+		//console.log("[METHOD - Get Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
@@ -60,10 +72,14 @@ const getPaymentsByDestination = async (
 };
 
 const sendPayment = async (request: Request, response: Response) => {
-	console.log("Attempting Payment...");
+	logger.log("info", "Attempting Payment...");
+	//console.log("Attempting Payment...");
 	try {
-		console.log(
+		logger.log(
+			"info",
 			"[PAYMENT] Amount: " +
+				//console.log(
+				"[PAYMENT] Amount: " +
 				request.body.amount +
 				" Source: " +
 				request.body.sourceAccount +
@@ -78,12 +94,14 @@ const sendPayment = async (request: Request, response: Response) => {
 			description: "DEMI PYMNT",
 		});
 
-		console.log("[METHOD - New Payment]" + JSON.stringify(payment));
+		logger.info("[METHOD - New Payment]" + JSON.stringify(payment));
+		//console.log("[METHOD - New Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: [payment],
 		});
 	} catch (error) {
-		console.log("[METHOD - New Payment ERROR]" + error);
+		logger.info("[METHOD - New Payment ERROR]" + error);
+		//console.log("[METHOD - New Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});

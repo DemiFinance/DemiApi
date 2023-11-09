@@ -1,5 +1,10 @@
 FROM --platform=linux/amd64 node:18
 
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL}
+ENV DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+
 WORKDIR /usr/deminimbusapi
 COPY package.json .
 RUN npm install

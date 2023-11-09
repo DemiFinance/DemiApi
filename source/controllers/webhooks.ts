@@ -6,6 +6,13 @@ import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
 import {fetchDaysInAdvanceByEntityId} from "../controllers/auth0functions";
+import {
+	CreditCard_Name_bad_format,
+	CreditCard_Name_missing,
+	CreditCard_No_Due_Date,
+	CreditCard_invalid_payment_date,
+	No_CreditCard_found,
+} from "../utilities/errors/demierrors";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -124,42 +131,56 @@ async function updateHasSentNotificationStatus(account: IAccount) {
  * Sends a notification to the user about their upcoming credit card payment.
  * @param {IAccount} account - The account information.
  * @returns {Promise<void>}
- * @throws Will throw an error if the account is not a credit card or if the notification fails to send.
+ * @throws Will throw an error if the account does not have credit card information or if the notification fails to send.
  */
-export async function sendNotificationToUser(account: IAccount) {
-	const creditCard = account?.liability?.credit_card;
-
-	if (!creditCard) {
-		console.log(
+export async function sendNotificationToUser(account: IAccount): Promise<void> {
+	// Check if credit card information is available
+	if (!account.liability?.credit_card) {
+		throw new No_CreditCard_found(
 			`No credit card information available for account ${account.id}`
 		);
-		return;
 	}
 
-	const cardName =
-		typeof creditCard.name === "string" ? creditCard.name : undefined;
-	const nextPaymentDueDate =
-		typeof creditCard.next_payment_due_date === "string"
-			? new Date(creditCard.next_payment_due_date)
-			: undefined;
+	// Destructure necessary properties from the credit card information
+	const {name: cardName, next_payment_due_date: nextPaymentDueDateStr} =
+		account.liability.credit_card;
 
+	// Check if card name is present and is a string
 	if (!cardName) {
-		console.log(`Account ${account.id} does not have a valid card name.`);
-		return;
+		throw new CreditCard_Name_missing(
+			`Card name is missing for account ${account.id}`
+		);
+	}
+	if (typeof cardName !== "string") {
+		throw new CreditCard_Name_bad_format(
+			`Card name must be a string for account ${account.id}`
+		);
 	}
 
-	if (!nextPaymentDueDate) {
-		console.log(`No statement available yet for account ${account.id}`);
-		return;
+	// Check if next payment due date is present and is a string
+	if (!nextPaymentDueDateStr) {
+		throw new CreditCard_No_Due_Date(
+			`Next payment due date is missing for account ${account.id}`
+		);
+	}
+	if (typeof nextPaymentDueDateStr !== "string") {
+		throw new CreditCard_invalid_payment_date(
+			`Next payment due date must be a string for account ${account.id}`
+		);
 	}
 
-	const currentDate = new Date();
-	const differenceInMilliseconds =
-		nextPaymentDueDate.getTime() - currentDate.getTime();
-	const daysUntilDueDate = Math.ceil(
-		differenceInMilliseconds / (1000 * 60 * 60 * 24)
-	);
+	// Convert the next payment due date string to a Date object and check if it's valid
+	const nextPaymentDueDate = new Date(nextPaymentDueDateStr);
+	if (isNaN(nextPaymentDueDate.getTime())) {
+		throw new CreditCard_invalid_payment_date(
+			`Invalid next payment due date for account ${account.id}`
+		);
+	}
 
+	// Calculate the number of days until the due date
+	const daysUntilDueDate = calculateDaysUntilDueDate(nextPaymentDueDate);
+
+	// Check if the due date is not in the past
 	if (daysUntilDueDate <= 0) {
 		console.log(
 			"The payment due date is in the past or today. No notification will be sent."
@@ -167,25 +188,80 @@ export async function sendNotificationToUser(account: IAccount) {
 		return;
 	}
 
-	let daysInAdvance = await fetchDaysInAdvanceByEntityId(account.holder_id);
-	if (daysInAdvance === null) {
-		console.warn(
-			"Failed to fetch days in advance for the user. Defaulting to 3 days."
-		); // Using console.warn for minor issues
-		daysInAdvance = 3;
-	}
+	// Fetch the number of days in advance to send notification
+	const daysInAdvance = await fetchDaysInAdvance(account.holder_id);
 
-	const deliveryDate = new Date(nextPaymentDueDate);
-	deliveryDate.setDate(deliveryDate.getDate() - daysInAdvance - 1); // Subtracting 1 more day for the initial day before the due date
+	// Calculate the delivery date for the notification
+	const deliveryDate = calculateDeliveryDate(nextPaymentDueDate, daysInAdvance);
 
-	const externalId = "ent_ip9e3nE4DLfHi"; // account.holder_id;
-	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
-	const message = `${cardName} payment due in ${daysInAdvance} ${dayWord}`;
-	const heading = "Upcoming Payment Reminder";
-
+	// Log the intent to send notification and call the function to send it
 	console.log("Sending notification to user");
-	return sendNotificationByExternalId(
-		externalId,
+	await sendNotification(
+		account.holder_id,
+		cardName,
+		daysUntilDueDate,
+		deliveryDate
+	);
+}
+
+/**
+ * Calculates the number of days until the payment due date.
+ * @param {Date} nextPaymentDueDate - The next payment due date.
+ * @returns {number} The number of days until the payment is due.
+ */
+function calculateDaysUntilDueDate(nextPaymentDueDate: Date): number {
+	const currentDate = new Date();
+	return Math.ceil(
+		(nextPaymentDueDate.getTime() - currentDate.getTime()) /
+			(1000 * 60 * 60 * 24)
+	);
+}
+
+/**
+ * Fetches the number of days in advance the user prefers to be notified.
+ * @param {string} holderId - The ID of the account holder.
+ * @returns {Promise<number>} The number of days in advance to notify.
+ */
+async function fetchDaysInAdvance(holderId: string): Promise<number> {
+	const daysInAdvance = await fetchDaysInAdvanceByEntityId(holderId);
+	return daysInAdvance !== null ? Number(daysInAdvance) : 3; // Defaulting to 3 days if fetch fails.
+}
+
+/**
+ * Calculates the delivery date for the notification, based on the due date and days in advance.
+ * @param {Date} nextPaymentDueDate - The payment due date.
+ * @param {number} daysInAdvance - The number of days in advance to notify.
+ * @returns {Date} The calculated delivery date.
+ */
+function calculateDeliveryDate(
+	nextPaymentDueDate: Date,
+	daysInAdvance: number
+): Date {
+	const deliveryDate = new Date(nextPaymentDueDate);
+	deliveryDate.setDate(deliveryDate.getDate() - daysInAdvance);
+	return deliveryDate;
+}
+
+/**
+ * Sends the notification to the user with the payment reminder.
+ * @param {string} holderId - The ID of the account holder.
+ * @param {string} cardName - The name of the credit card.
+ * @param {number} daysUntilDueDate - The number of days until the payment is due.
+ * @param {Date} deliveryDate - The date when the notification should be sent.
+ * @returns {Promise<void>}
+ */
+async function sendNotification(
+	holderId: string,
+	cardName: string,
+	daysUntilDueDate: number,
+	deliveryDate: Date
+): Promise<void> {
+	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
+	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
+	const heading = "Upcoming Payment Reminder";
+	console.log("the broken date? " + deliveryDate);
+	await sendNotificationByExternalId(
+		holderId,
 		heading,
 		message,
 		deliveryDate.toISOString().split("T")[0]
