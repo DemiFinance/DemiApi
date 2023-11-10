@@ -212,7 +212,7 @@ export const getQuilttIdByUserId = async (
 ): Promise<string | null> => {
 	try {
 		const user = await getUserById(userId);
-		logger.log("info", "[getQuilttIdByUserId] User:", user);
+		logger.log("info", `[getQuilttIdByUserId] User:${user}`);
 
 		// Assuming the data object is the relevant user
 		return user?.app_metadata.quiltt_account_id || null;

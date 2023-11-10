@@ -1,5 +1,8 @@
 import axios from "axios";
 import {Quiltt_Token_EnvVar_Error} from "./errors/demierrors";
+import logger from "../wrappers/winstonLogging";
+import {log} from "console";
+import tracer from "../wrappers/datadogTracer";
 
 /**
  * Checks the validity of a session token by sending a GET request to the session validation endpoint.
@@ -82,20 +85,29 @@ export async function refreshSessionToken(quilttId: string): Promise<string> {
  * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
  */
 export async function generateTokenById(userId: string): Promise<string> {
+	const span = tracer.startSpan("generateTokenById");
+	span.setTag("user.id", userId);
+
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = "https://auth.quiltt.io/v1/users/sessions";
 
 	if (!authToken) {
-		console.error("QUILTT_TOKEN environment variable is not set or is blank");
+		logger.log(
+			"error",
+			"QUILTT_TOKEN environment variable is not set or is blank"
+		);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			message: "QUILTT_TOKEN environment variable is not set or is blank",
+		});
+		span.finish();
 		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
 	try {
-		console.log("Createing token for exisiting profile");
-		const data = {
-			userId: userId,
-		};
-
+		logger.log("info", "Creating token for existing profile");
+		const data = {userId: userId};
 		const config = {
 			headers: {
 				Authorization: `Bearer ${authToken}`,
@@ -103,19 +115,24 @@ export async function generateTokenById(userId: string): Promise<string> {
 		};
 
 		const response = await axios.post(url, data, config);
+		span.finish(); // Finish the span successfully as the token was generated
 		return response.data.token;
 	} catch (error: any) {
-		console.error("Error generating session token by Id:", error.message);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			message: error.message,
+			"error.object": error,
+			stack: error.stack,
+			"http.status_code": error.response?.status,
+			"http.response.body": error.response?.data,
+		});
+		logger.log("error", "Error generating session token by ID:", error.message);
 		if (error.response) {
-			console.error("Response data:", error.response.data);
-			console.error("Response status:", error.response.status);
-			throw new Error(
-				`Error: ${error.response.status}, ${JSON.stringify(
-					error.response.data
-				)}`
-			);
-		} else {
-			throw new Error("GenerateTokenByID Error");
+			logger.log("error", "Response data:", error.response.data);
+			logger.log("error", "Response status:", error.response.status);
 		}
+		span.finish(); // Finish the span with error information
+		throw new Error("GenerateTokenByID Error");
 	}
 }
