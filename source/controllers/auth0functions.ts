@@ -152,7 +152,7 @@ export const getDaysInAdvanceByEntityId = async (
 		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
 		return response.status(200).json({daysInAdvance});
 	} catch (error) {
-		console.error(error);
+		logger.log("error", "[Get Days In Advance By Entity ID] Error:", error);
 		return response.status(500).json({error: "Internal server error"});
 	}
 };
@@ -177,7 +177,7 @@ export const addQuilttIdToMetadata = async (
 	try {
 		updateUserMetadata(entityId, metadata);
 	} catch (error) {
-		console.error("Error updating metadata:", error);
+		logger.log("error", "[Add Quiltt ID to Metadata] Error:", error);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
@@ -202,7 +202,7 @@ export const addQuilttUuidToMetadata = async (
 	try {
 		updateUserMetadata(auth0Id, metadata);
 	} catch (error) {
-		console.error("Error updating metadata:", error);
+		logger.log("error", "[Add Quiltt UUID to Metadata] Error:", error);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
@@ -211,13 +211,13 @@ export const getQuilttIdByUserId = async (
 	userId: string
 ): Promise<string | null> => {
 	try {
-		const user = await getUserById(userId);
+		const user: User = await getUserById(userId);
 		logger.log("info", `[getQuilttIdByUserId] User:${user}`);
 
 		// Assuming the data object is the relevant user
 		return user?.app_metadata.quiltt_account_id || null;
 	} catch (error) {
-		console.error(`Failed to get QuilttId By User ID ${error}`);
+		logger.log("error", `[getQuilttIdByUserId] Error:${error}`);
 		return null;
 	}
 };
@@ -235,21 +235,21 @@ export const getAuth0IdByQuilttId = async (
 ): Promise<string> => {
 	const query = `app_metadata.quiltt_account_id:"${quilttAccountId}"`;
 	try {
-		logger.log("info", "[getAuth0IdByQuilttId]", quilttAccountId);
+		logger.log("info", `[getAuth0IdByQuilttId] ${quilttAccountId}`);
 		const user: User[] = await searchUsers(query);
 		if (!user) {
 			throw new Auth0_Metadata_Search_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
 			);
 		}
-		logger.log("info", "[getAuth0IdByQuilttId] User:", user);
+		logger.log("info", `[getAuth0IdByQuilttId] User: ${user}`);
 
 		if (typeof user[0].user_id !== "string") {
 			throw new UserID_Not_a_string("User ID must be a string");
 		}
 		return user[0].user_id;
 	} catch (error) {
-		logger.log("error", "[getAuth0IdByQuilttId] Error:", error);
+		logger.log("error", `[getAuth0IdByQuilttId] Error: ${error}`);
 		throw new Auth0_Metadata_Search_Error((error as Error).message);
 	}
 };

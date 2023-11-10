@@ -1,7 +1,6 @@
 import axios from "axios";
 import {Quiltt_Token_EnvVar_Error} from "./errors/demierrors";
 import logger from "../wrappers/winstonLogging";
-import {log} from "console";
 import tracer from "../wrappers/datadogTracer";
 
 /**
