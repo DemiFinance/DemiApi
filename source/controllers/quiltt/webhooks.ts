@@ -249,7 +249,8 @@ async function createQuilttProfile_WebhookEvent(
 		const auth0User = await retryAsync(
 			() => getAuth0IdByQuilttId(quilttId),
 			maxRetries,
-			initialDelay
+			initialDelay,
+			`getAuth0IdByQuilttId(${quilttId})`
 		);
 
 		logger.log("info", "Auth0 user:" + auth0User);
@@ -270,38 +271,66 @@ async function createQuilttProfile_WebhookEvent(
 	}
 }
 
-function assertNever(value: string): never {
-	throw new Error(`Unexpected value: ${value}`);
-}
-
 /**
- * Retries an async function with exponential backoff.
+ * Retries an async function with exponential backoff and tracing.
  *
  * @param {() => Promise<T>} asyncFn - The async function to retry.
  * @param {number} maxRetries - The maximum number of retries.
  * @param {number} delay - The initial delay between retries, in milliseconds.
+ * @param {string} functionName - The name of the function being retried for tracing.
  * @returns {Promise<T>} - The result of the async function.
  */
 async function retryAsync<T>(
 	asyncFn: () => Promise<T>,
 	maxRetries: number,
-	delay: number
+	delay: number,
+	functionName: string // Added parameter for the function name
 ): Promise<T> {
+	let lastError: any;
+
+	// Start a new span for the retry operation
+	const span = tracer.startSpan(`retryAsync.${functionName}`);
+
 	for (let i = 0; i < maxRetries; i++) {
 		try {
+			// Tag the span with the current retry attempt
+			span.setTag("retry.attempt", i + 1);
+			span.setTag("retry.max", maxRetries);
+
 			return await asyncFn();
 		} catch (error) {
-			logger.log("error", `Retry ${i + 1}/${maxRetries} failed:`, error);
+			lastError = error;
+			logger.log(
+				"error",
+				`Retry ${i + 1}/${maxRetries} for ${functionName} failed:`,
+				error
+			);
+			span.setTag("error", true);
+			span.log({
+				event: "error",
+				message: (error as Error).message,
+				stack: (error as Error).stack,
+				"retry.attempt": i + 1,
+			});
+
 			if (i < maxRetries - 1) {
-				await new Promise((resolve) =>
-					setTimeout(resolve, Math.min(delay * 2 ** i, 16000))
-				);
+				// Calculate the delay with exponential backoff
+				const backoffDelay = Math.min(delay * 2 ** i, 16000);
+				span.log({
+					event: "retry.delay",
+					message: `Waiting ${backoffDelay}ms before next retry`,
+					"retry.attempt": i + 1,
+					delay: backoffDelay,
+				});
+				await new Promise((resolve) => setTimeout(resolve, backoffDelay));
 			} else {
-				throw error;
+				span.finish(); // Finish the span before throwing the last error
+				throw lastError;
 			}
 		}
 	}
-	assertNever("Reached unreachable code in retryAsync");
+	span.finish(); // Finish the span if maxRetries reached without throwing an error
+	throw new Error("Reached unreachable code in retryAsync"); // This should never actually happen
 }
 
 /**
