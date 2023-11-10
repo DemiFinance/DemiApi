@@ -29,7 +29,10 @@ async function generateToken(userId: string): Promise<string> {
 	const url = "https://auth.quiltt.io/v1/users/sessions";
 
 	if (!authToken) {
-		logger.log("error", "QUILTT_TOKEN environment variable is not set or is blank");
+		logger.log(
+			"error",
+			"QUILTT_TOKEN environment variable is not set or is blank"
+		);
 		span.setTag("error", true);
 		span.finish(); // Make sure to finish the span before throwing the error
 		throw new Quiltt_Token_EnvVar_Error("Internal Server Error");

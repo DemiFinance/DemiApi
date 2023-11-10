@@ -1,3 +1,5 @@
+import tracer from "./wrappers/datadogTracer";
+
 import * as dotenv from "dotenv";
 dotenv.config();
 import http from "http";
@@ -10,6 +12,7 @@ import paymentRoutes from "./routes/payment";
 import notificationRoutes from "./routes/notifications";
 import webhookRoutes from "./routes/webhooks";
 import quilttRoutes from "./routes/quiltt";
+import logger from "./wrappers/winstonLogging";
 
 const router: Express = express();
 
@@ -56,19 +59,34 @@ router.use("/quiltt", quilttRoutes);
 // });
 
 router.use((req, res) => {
-	const error = new Error("404 - Error not found!");
-	console.error("API Gateway - 404 " + req.originalUrl);
-	return res.status(404).json({
-		message: error.message,
+	const span = tracer.startSpan("web.request", {
+		tags: {
+			"span.kind": "server",
+			"http.method": req.method,
+			"http.url": req.originalUrl,
+			"http.status_code": 404,
+		},
 	});
+
+	const errorMessage = "404 - Not Found";
+	logger.log("error", `API Gateway - 404 ${req.originalUrl}`);
+
+	span.setTag("error", true);
+	span.log({"error.message": errorMessage});
+	res.status(404).json({
+		message: errorMessage,
+	});
+	span.finish();
 });
 
 const startAPI = async function () {
 	const httpServer = http.createServer(router);
 	const PORT: any = process.env.PORT || "8080";
 
-	httpServer.listen(PORT, () =>
-		console.log(`Nimbus API is running on port ${PORT}`)
+	httpServer.listen(
+		PORT,
+		() => logger.log("info", `Nimbus API is running on port ${PORT}`)
+		//console.log(`Nimbus API is running on port ${PORT}`)
 	);
 	return "Server is servering";
 };

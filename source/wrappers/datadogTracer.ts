@@ -1,6 +1,4 @@
 import tracer from "dd-trace";
 
-tracer.init({
-	logInjection: true,
-});
+tracer.init();
 export default tracer;
