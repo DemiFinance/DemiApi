@@ -4,6 +4,8 @@ import {
 	OneSignalAppClient,
 	NotificationByDeviceBuilder,
 } from "onesignal-api-client-core";
+import logger from "../wrappers/winstonLogging";
+import tracer from "../wrappers/datadogTracer";
 
 dotenv.config();
 
@@ -30,9 +32,13 @@ export async function sendNotificationByExternalId(
 	message: string,
 	deliveryDateString: string
 ) {
+	// Start a new Datadog span for sending notification
+	const span = tracer.startSpan("sendNotificationByExternalId");
+	span.setTag("notification.externalId", externalId);
+
 	try {
-		// Log that the function is starting
-		console.log(
+		logger.log(
+			"info",
 			`Attempting to send notification to externalId: ${externalId} with message: ${message}`
 		);
 
@@ -50,26 +56,28 @@ export async function sendNotificationByExternalId(
 
 		const result = await client.createNotification(notification);
 
-		// Ensure there are no errors in the result.
 		if (result.errors && result.errors.length > 0) {
 			throw new Error(
 				`Notification sending failed with errors: ${result.errors.join(", ")}`
 			);
 		}
 
-		// Log success
-		console.log("Notification sent successfully. Result:", result);
-		//this needs to trigger the thing that does the stuff to not renotify a user
+		logger.log("info", `Notification sent successfully. Result: ${result}`);
+		// ... trigger the thing that does the stuff to not renotify a user
+		span.finish(); // Finish the span on successful execution
 	} catch (error) {
-		// Log error
-		console.error(
-			`Failed to send notification to externalId: ${externalId}. Error:`,
-			error
+		logger.log(
+			"error",
+			`Failed to send notification to externalId: ${externalId}. Error: ${error}`
 		);
-
-		// Propagate the error so it can be caught and handled in calling functions
-		throw new Error(
-			`Failed to send notification to externalId: ${externalId}. Reason: ${error}`
-		);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.kind": (error as Error).constructor.name,
+			message: (error as Error).message,
+			stack: (error as Error).stack,
+		});
+		span.finish(); // Finish the span with error information
+		throw error; // Re-throw the error for handling by the caller
 	}
 }

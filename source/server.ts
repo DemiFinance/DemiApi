@@ -13,6 +13,7 @@ import notificationRoutes from "./routes/notifications";
 import webhookRoutes from "./routes/webhooks";
 import quilttRoutes from "./routes/quiltt";
 import logger from "./wrappers/winstonLogging";
+// import {getAccountNumbers} from "./controllers/quiltt";
 
 const router: Express = express();
 
@@ -51,10 +52,11 @@ router.use("/webhook", webhookRoutes);
 router.use("/quiltt", quilttRoutes);
 
 // router.get("/test", async (req, res) => {
-// 	await sendNotificationToUser("lol");
+// 	getAccountNumbers("acct_12usKvMXGnfvrOwAUo1TPR");
+// 	//getAccountNumbers("acct_12usKvMdbUJlIxRa4lapkU");
 
 // 	return res.status(200).json({
-// 		message: "test",
+// 		message: "look at the logs, i dont tell you anythign here",
 // 	});
 // });
 

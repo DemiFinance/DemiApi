@@ -10,7 +10,10 @@ import {AccountNumbers, Profile} from "../models/quilttmodels";
 import {generateTokenById} from "../utilities/quilttUtil";
 import logger from "../wrappers/winstonLogging";
 import tracer from "../wrappers/datadogTracer";
-import {Quiltt_Token_EnvVar_Error} from "../utilities/errors/demierrors";
+import {
+	Account_Numbers_Missing,
+	Quiltt_Token_EnvVar_Error,
+} from "../utilities/errors/demierrors";
 
 /**
  * Generates a new session token for a user.
@@ -227,6 +230,8 @@ export async function createQuilttProfile(
 export async function getAccountNumbers(
 	accountId: string
 ): Promise<{accountNumbers: AccountNumbers}> {
+	const span = tracer.startSpan("getAccountNumbers"); // Start a new span
+
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = `https://api.quiltt.io/v1/accounts/${accountId}/ach`;
 
@@ -235,6 +240,7 @@ export async function getAccountNumbers(
 			"error",
 			"QUILTT_TOKEN environment variable is not set or is blank"
 		);
+		span.finish(); // Finish the span in case of early return
 		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
@@ -246,18 +252,39 @@ export async function getAccountNumbers(
 		};
 
 		const response = await axios.get(url, config);
-		return {accountNumbers: response.data};
+		console.log(response.data);
+
+		// Check if either 'number' or 'routing' is null
+		const accountNumbers = response.data;
+
+		logger.log(
+			"info",
+			`Account numbers fetched successfully ${JSON.stringify(accountNumbers)}`
+		);
+		if (!accountNumbers.number || !accountNumbers.routing) {
+			logger.log("error", "Account number or routing number is null");
+			span.setTag("error", true); // Mark the span as errored
+			span.finish(); // Finish the span before throwing the error
+			throw new Account_Numbers_Missing(
+				"Account number or routing number is null"
+			);
+		}
+		span.finish(); // Finish the span successfully
+		return {accountNumbers};
 	} catch (error: any) {
-		logger.log("error", "Error fetching account:", error.message);
+		logger.log("error", `Error fetching account: ${error.message}`);
 		if (error.response) {
-			logger.log("error", "Response data:", error.response.data);
-			logger.log("error", "Response status:", error.response.status);
+			logger.log("error", `Response data: ${error.response.data}`);
+			logger.log("error", `Response status: ${error.response.status}`);
+			span.setTag("error", true); // Mark the span as errored
+			span.finish(); // Finish the span before throwing the error
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
 				)}`
 			);
 		} else {
+			span.finish(); // Finish the span before throwing the error
 			throw new Error("GetAccountNumber Error");
 		}
 	}
@@ -303,10 +330,10 @@ export async function fetchAccountInfo(
 		const type = body.type; // Extracting the 'type' parameter
 		return {body, profileId, type}; // Returning 'type' along with 'body' and 'profileId'
 	} catch (error: any) {
-		logger.log("error", "Error fetching account:", error.message);
+		logger.log("error", `Error fetching account: ${error.message}`);
 		if (error.response) {
-			logger.log("error", "Response data:", error.response.data);
-			logger.log("error", "Response status:", error.response.status);
+			logger.log("error", `Response data: ${error.response.data}`);
+			logger.log("error", `Response status: ${error.response.status}`);
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data

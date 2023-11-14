@@ -2,6 +2,7 @@ import {Request, Response} from "express";
 import {
 	Auth0_GetUserById_Error,
 	Auth0_Metadata_Search_Error,
+	Auth0_No_User_Found_Error,
 	Auth0_Search_User_Error,
 	Phone_Number_Bad_Format,
 	Phone_Number_Not_Found,
@@ -10,10 +11,11 @@ import {
 import {AppMetadata, LuceneQuery, User} from "../models/auth0";
 import {auth0Api} from "../utilities/axiosHelper";
 import logger from "../wrappers/winstonLogging";
+import tracer from "../wrappers/datadogTracer";
 
 export const searchUsers = async (query: LuceneQuery) => {
 	try {
-		logger.log("info", "[Search Users] Query:", query);
+		logger.log("info", `[Search Users] Query: ${query}`);
 		const response = await auth0Api.get("users", {
 			params: {q: query, search_engine: "v3"},
 		});
@@ -23,7 +25,7 @@ export const searchUsers = async (query: LuceneQuery) => {
 
 		return users; // The response is an array of User objects
 	} catch (error) {
-		logger.log("error", "[Search Users] Error:", error);
+		logger.log("error", `[Search Users] Error: ${error}`);
 		throw new Auth0_Search_User_Error("Failed to search users");
 	}
 };
@@ -72,7 +74,7 @@ export const updateUserMetadata = async (
 			"[Update User Metadata] User metadata updated successfully"
 		);
 	} catch (error) {
-		logger.log("error", "[Update User Metadata] Error:", error);
+		logger.log("error", `[Update User Metadata] Error: ${error}`);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
@@ -105,8 +107,7 @@ export async function updateUserMeta(
 	} catch (error) {
 		logger.log(
 			"error",
-			`Error updating user metadata for user with ID ${userId}:`,
-			error
+			`Error updating user metadata for user with ID ${userId}: ${error}`
 		);
 		throw new Error("Failed to update user metadata");
 	}
@@ -152,7 +153,7 @@ export const getDaysInAdvanceByEntityId = async (
 		const daysInAdvance = await fetchDaysInAdvanceByEntityId(entityId);
 		return response.status(200).json({daysInAdvance});
 	} catch (error) {
-		logger.log("error", "[Get Days In Advance By Entity ID] Error:", error);
+		logger.log("error", `[Get Days In Advance By Entity ID] Error: ${error}`);
 		return response.status(500).json({error: "Internal server error"});
 	}
 };
@@ -177,7 +178,7 @@ export const addQuilttIdToMetadata = async (
 	try {
 		updateUserMetadata(entityId, metadata);
 	} catch (error) {
-		logger.log("error", "[Add Quiltt ID to Metadata] Error:", error);
+		logger.log("error", `[Add Quiltt ID to Metadata] Error: ${error}`);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
@@ -202,7 +203,7 @@ export const addQuilttUuidToMetadata = async (
 	try {
 		updateUserMetadata(auth0Id, metadata);
 	} catch (error) {
-		logger.log("error", "[Add Quiltt UUID to Metadata] Error:", error);
+		logger.log("error", `[Add Quiltt UUID to Metadata] Error: ${error}`);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 };
@@ -233,12 +234,15 @@ export const getQuilttIdByUserId = async (
 export const getAuth0IdByQuilttId = async (
 	quilttAccountId: string
 ): Promise<string> => {
+	// Start a new Datadog span for this operation
+	const span = tracer.startSpan("getAuth0IdByQuilttId");
+	span.setTag("quiltt.account_id", quilttAccountId);
 	const query = `app_metadata.quiltt_account_id:"${quilttAccountId}"`;
 	try {
 		logger.log("info", `[getAuth0IdByQuilttId] ${quilttAccountId}`);
 		const user: User[] = await searchUsers(query);
-		if (!user) {
-			throw new Auth0_Metadata_Search_Error(
+		if (!user || user.length === 0) {
+			throw new Auth0_No_User_Found_Error(
 				`No matching entity found with Quiltt Account ID ${quilttAccountId}`
 			);
 		}
@@ -247,9 +251,19 @@ export const getAuth0IdByQuilttId = async (
 		if (typeof user[0].user_id !== "string") {
 			throw new UserID_Not_a_string("User ID must be a string");
 		}
+
+		span.finish(); // Finish the span successfully
 		return user[0].user_id;
 	} catch (error) {
 		logger.log("error", `[getAuth0IdByQuilttId] Error: ${error}`);
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.kind": (error as Error).constructor.name,
+			message: (error as Error).message,
+			stack: (error as Error).stack,
+		});
+		span.finish(); // Finish the span with error information
 		throw new Auth0_Metadata_Search_Error((error as Error).message);
 	}
 };
@@ -283,7 +297,7 @@ export const getUserPhoneNumber = async (userId: string): Promise<string> => {
 		}
 	} catch (error) {
 		// Log the error (perhaps consider a more sophisticated error handling strategy)
-		logger.log("error", "[getUserPhoneNumber] Error:", error);
+		logger.log("error", `[getUserPhoneNumber] Error: ${error}`);
 		// Rethrow the error so it can be handled by the caller
 		throw error;
 	}

@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {MethodWebhookObject} from "../models/webhook";
 
-import {Method, Environments, IAccount} from "method-node";
+import {IAccount} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
@@ -13,31 +13,27 @@ import {
 	CreditCard_invalid_payment_date,
 	No_CreditCard_found,
 } from "../utilities/errors/demierrors";
-
-const method = new Method({
-	apiKey: process.env.METHOD_API_KEY || "",
-	env: Environments.production,
-});
+import logger from "../wrappers/winstonLogging";
+import {method} from "../wrappers/methodWrapper";
 
 async function createPayment(id: string) {
-	console.log(`Payment with id: ${id} has created`);
+	logger.log("info", `Payment with id: ${id} has created`);
 }
 
 async function updatePayment(id: string) {
-	console.log(`Payment with id: ${id} has updated`);
+	logger.log("info", `Payment with id: ${id} has updated`);
 }
 
 async function createEntity(id: string) {
-	console.log(`Created entity with id: ${id}`);
-	//create quiltt profile... add quiltt id to metadata
+	logger.log("info", `Created entity with id: ${id}`);
 }
 
 async function updateEntity(id: string) {
-	console.log(`Updated entity with id: ${id}`);
+	logger.log("info", `Updated entity with id: ${id}`);
 }
 
 async function createAccount(id: string) {
-	console.log(`Created account with id: ${id}`);
+	logger.log("info", `Created account with id: ${id}`);
 }
 
 /**
@@ -47,18 +43,20 @@ async function createAccount(id: string) {
  */
 async function handleNotification(account: IAccount) {
 	if (await doesNeedNotify(account)) {
-		console.log(`Account ${account.id} Needs notification`);
+		logger.log("info", `Account ${account.id} Needs notification`);
 		try {
 			await sendNotificationToUser(account);
 			await updateHasSentNotificationStatus(account);
-			console.log(`Notification for Account ${account.id} sent`);
-			// Update table to reflect notification sent
+			logger.log("info", `Notification for Account ${account.id} sent`);
 		} catch (error) {
-			console.error("Notification failed to send:", error);
+			logger.log(
+				"error",
+				`Failed to send notification for account ${account.id}`
+			);
 			throw new Error("Failed to send notification");
 		}
 	} else {
-		console.log(`No notification needed for account ${account.id}`);
+		logger.log("info", `No notification needed for account ${account.id}`);
 	}
 }
 
@@ -70,7 +68,7 @@ async function handleNotification(account: IAccount) {
  */
 async function updateAccount(id: string) {
 	try {
-		console.log(`Updating account with id: ${id}`);
+		logger.log("info", `Updating account with id: ${id}`);
 		const account = await method.accounts.get(id);
 
 		if (
@@ -85,10 +83,10 @@ async function updateAccount(id: string) {
 			// Handle notifications
 			await handleNotification(account);
 
-			console.log("Updated account info in DB");
+			logger.log("info", `Updated account ${id} in DB`);
 		}
 	} catch (error) {
-		console.error("Failed to update account:", error);
+		logger.log("error", `Failed to update account with id: ${id}`);
 	}
 }
 
@@ -116,7 +114,7 @@ async function doesNeedNotify(account: IAccount): Promise<boolean> {
 	const sqlData = dbHelpers.generatePaymentNotifiedSQL(account);
 	const result = await db.query(sqlData);
 	if (result.rows.length === 0) {
-		console.log("No result found");
+		logger.log("info", "No result found");
 		return false;
 	}
 	return !result.rows[0].payment_notified;
@@ -182,7 +180,8 @@ export async function sendNotificationToUser(account: IAccount): Promise<void> {
 
 	// Check if the due date is not in the past
 	if (daysUntilDueDate <= 0) {
-		console.log(
+		logger.log(
+			"info",
 			"The payment due date is in the past or today. No notification will be sent."
 		);
 		return;
@@ -195,7 +194,7 @@ export async function sendNotificationToUser(account: IAccount): Promise<void> {
 	const deliveryDate = calculateDeliveryDate(nextPaymentDueDate, daysInAdvance);
 
 	// Log the intent to send notification and call the function to send it
-	console.log("Sending notification to user");
+	logger.log("info", "Sending notification to user");
 	await sendNotification(
 		account.holder_id,
 		cardName,
@@ -259,7 +258,10 @@ async function sendNotification(
 	const dayWord = daysUntilDueDate === 1 ? "day" : "days";
 	const message = `${cardName} payment due in ${daysUntilDueDate} ${dayWord}`;
 	const heading = "Upcoming Payment Reminder";
-	console.log("the broken date? " + deliveryDate);
+	logger.log(
+		"info",
+		`i think this date is breaking sendNotification ${deliveryDate}`
+	);
 	await sendNotificationByExternalId(
 		holderId,
 		heading,
@@ -269,27 +271,27 @@ async function sendNotification(
 }
 
 async function createAccountVerification(id: string) {
-	console.log(`Created account verification with id: ${id}`);
+	logger.log("info", `Created account verification with id: ${id}`);
 }
 
 async function updateAccountVerification(id: string) {
-	console.log(`Updated account verification with id: ${id}`);
+	logger.log("info", `Updated account verification with id: ${id}`);
 }
 
 async function createConnection(id: string) {
-	console.log(`Created connection with id: ${id}`);
+	logger.log("info", `Created connection with id: ${id}`);
 }
 
 async function updateConnection(id: string) {
-	console.log(`Updated connection with id: ${id}`);
+	logger.log("info", `Updated connection with id: ${id}`);
 }
 
 async function createPaymentReversal(id: string) {
-	console.log(`Created payment reversal with id: ${id}`);
+	logger.log("info", `Created payment reversal with id: ${id}`);
 }
 
 async function updatePaymentReversal(id: string) {
-	console.log(`Updated payment reversal with id: ${id}`);
+	logger.log("info", `Updated payment reversal with id: ${id}`);
 }
 
 /**
@@ -333,7 +335,7 @@ async function processWebhookObject(webhookObject: MethodWebhookObject) {
  * @returns {Response} - Returns a response with a status of 200 if successful, or 500 if an error occurs.
  */
 export const webhookHandler = async (request: Request, response: Response) => {
-	console.log("webhook received" + JSON.stringify(request.body));
+	logger.log("info", `webhook received${JSON.stringify(request.body)}`);
 	try {
 		const webhook: MethodWebhookObject = {
 			id: request.body.id,
@@ -343,7 +345,7 @@ export const webhookHandler = async (request: Request, response: Response) => {
 
 		await processWebhookObject(webhook);
 	} catch (error) {
-		console.log("Webhook Error:", error);
+		logger.log("error", `Webhook Error: ${error}`);
 		return response.status(500).json({
 			message: "Error processing webhook",
 			error: error,

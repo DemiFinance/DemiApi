@@ -18,6 +18,10 @@ import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
+import {
+	Auth0_Search_User_Error,
+	Not_ACH_Account,
+} from "../../utilities/errors/demierrors";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -33,14 +37,20 @@ export async function fetchTransactions(
 	sessionToken: string,
 	accountId: string
 ) {
+	const span = tracer.startSpan("fetchTransactions"); // Start a new span
+
 	try {
 		const transactionsResponse = await transactionsByAccountId(
 			sessionToken,
 			accountId
 		);
+		logger.log("info", "Found some transactions...");
+		span.finish(); // Finish the span successfully
 		return parseTransactions(transactionsResponse);
 	} catch (error) {
-		logger.log("error", "Failed to fetch or parse transactions:" + error);
+		logger.log("error", `Failed to fetch or parse transactions: ${error}`);
+		span.setTag("error", true); // Mark the span as errored
+		span.finish(); // Finish the span before throwing the error
 		throw error;
 	}
 }
@@ -127,6 +137,11 @@ async function createAccountInMethod(
 ) {
 	const normalizedAccountType = normalizeAccountType(accountType);
 
+	logger.log(
+		"info",
+		`Creating account in Method... routing number: ${routingNumber} account number: ${accountNumber} account type ${normalizedAccountType} holder id:${holderId}`
+	);
+
 	const account = await method.accounts.create({
 		holder_id: holderId,
 		ach: {
@@ -179,47 +194,71 @@ async function createAccount(event: QuilttEvent) {
 	const {id: accountId} = event.record;
 	try {
 		const fetchedAccount = await fetchAccountInfo(accountId);
+		const accountType = getNormalizedAccountType(fetchedAccount.type);
 		const accountInfo = fetchedAccount.body;
 		const quilttUserId = fetchedAccount.profileId;
 		const sessionToken = await generateTokenById(fetchedAccount.profileId);
-		const accountType = getNormalizedAccountType(fetchedAccount.type);
 
-		const [accountData, transactionsObject] = await Promise.all([
-			tracer.scope().activate(span, () => getAccountNumbers(accountId)),
-			tracer
-				.scope()
-				.activate(span, () => fetchTransactions(sessionToken, accountId)),
-		]);
-		// const [accountData, transactionsObject] = await Promise.all([
-		// 	getAccountNumbers(accountId),
-		// 	fetchTransactions(sessionToken, accountId),
-		// ]);
+		//Setup retry... We basically just need to wait for quiltt to finish syncing
+		const maxRetries = 5;
+		const initialDelay = 60000; // 1min
+		const accountData = await retryAsync(
+			() => getAccountNumbers(accountId),
+			maxRetries,
+			initialDelay,
+			`crateAccount_getAccountNumbers(${accountId})`
+		);
+
+		const transactionsObject = await fetchTransactions(sessionToken, accountId);
+
+		logger.log("info", `Account Data ${JSON.stringify(accountData)}`);
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
 		const {number: accountNumber, routing: routingNumber} =
 			accountData.accountNumbers;
 
+		logger.log(
+			"info",
+			`Account info pre convert ${accountNumber} routing number ${routingNumber}`
+		);
+
+		// Convert accountNumber and routingNumber to strings
+		const accountNumberStr = String(accountNumber);
+		const routingNumberStr = String(routingNumber);
+
+		logger.log(
+			"info",
+			`Account info post convert ${accountNumberStr} routing number ${routingNumberStr}`
+		);
+
 		const account = await createAccountInMethod(
-			accountNumber,
-			routingNumber,
+			accountNumberStr,
+			routingNumberStr,
 			accountType,
 			holderInfo
 		);
-		logger.log("info", "Account Output:" + account);
+		logger.log("info", "Account Output:" + JSON.stringify(account));
 
 		createAccountVerification(account.id, accountInfo, transactionsObject);
 		span.finish();
 	} catch (error) {
-		logger.log("error", "Error creating new account:" + error);
+		if (error instanceof Not_ACH_Account) {
+			// Handle the custom error
+			logger.log("warn", "Not a checking account we good");
+		} else {
+			logger.log("error", "Error creating new account:" + error);
+		}
 	}
 	logger.log("info", `Created connection with id: ${accountId}`);
 }
 
 function getNormalizedAccountType(type: string): string {
-	return type === ACCOUNT_TYPES.CHECKING || type === ACCOUNT_TYPES.SAVINGS
-		? type.toLowerCase()
-		: type;
+	if (type === ACCOUNT_TYPES.CHECKING || type === ACCOUNT_TYPES.SAVINGS) {
+		return type.toLowerCase();
+	} else {
+		throw new Not_ACH_Account(`Invalid account type: ${type}`);
+	}
 }
 
 async function unimplementedFunc(event: QuilttEvent) {
@@ -250,11 +289,10 @@ async function createQuilttProfile_WebhookEvent(
 			() => getAuth0IdByQuilttId(quilttId),
 			maxRetries,
 			initialDelay,
-			`getAuth0IdByQuilttId(${quilttId})`
+			`CreateQuilttProfile_getAuth0IdByQuilttId(${quilttId})`
 		);
 
 		logger.log("info", "Auth0 user:" + auth0User);
-		//console.log("Auth0 user:", auth0User);
 
 		// Ensure the event has a profile with a uuid.
 		if (!event.profile || !event.profile.uuid) {
@@ -265,9 +303,10 @@ async function createQuilttProfile_WebhookEvent(
 		// Attempt to add the UUID to the Auth0 user metadata.
 		addUUIDToMetadata(auth0User, uuid);
 	} catch (error) {
-		logger.log("error", "Error in createQuilttProfile_WebhookEvent:" + error);
-		//console.error("Error in createQuilttProfile_WebhookEvent:", error);
-		throw error; // Re-throw the error to allow further handling up the stack.
+		if (error instanceof Auth0_Search_User_Error) {
+			logger.log("error", "Error in createQuilttProfile_WebhookEvent:" + error);
+			throw error; // Re-throw the error to allow further handling up the stack.
+		}
 	}
 }
 

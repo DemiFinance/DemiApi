@@ -11,6 +11,12 @@ export class Auth0_Search_User_Error extends Error {
 		this.name = "Auth0SearchUserError";
 	}
 }
+export class Auth0_No_User_Found_Error extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "Auth0NoUserFoundError";
+	}
+}
 export class Auth0_GetUserById_Error extends Error {
 	constructor(message: string) {
 		super(message);
@@ -90,5 +96,19 @@ export class User_body_invalid extends Error {
 	constructor(message: string) {
 		super(message);
 		this.name = "UserBodyInvalid";
+	}
+}
+
+export class Account_Numbers_Missing extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "AccountNumbersMissing";
+	}
+}
+
+export class Not_ACH_Account extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "NotACHAccount";
 	}
 }
