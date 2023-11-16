@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {MethodWebhookObject} from "../models/webhook";
 
-import {IAccount} from "method-node";
+import {IAccount, IAccountLiability} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
@@ -69,21 +69,51 @@ async function handleNotification(account: IAccount) {
 async function updateAccount(id: string) {
 	try {
 		logger.log("info", `Updating account with id: ${id}`);
-		const account = await method.accounts.get(id);
+		const account: IAccount = await method.accounts.get(id);
 
-		if (
-			account.type == "liability" &&
-			account.liability?.type == "credit_card"
-		) {
-			await updateAccountInfo(account);
-			await updateLiabilityInfo(account);
-			await updateCreditCardInfo(account);
-			await updateAccountStatementHistory(account);
+		//migrate the account type checking to a switch statement.
+		//then breakout into outher functions for each type. ie updateCreditCard, updateMortgage, etc.
 
-			// Handle notifications
-			await handleNotification(account);
+		const accountType = account.type;
+		const liability: IAccountLiability | null = account.liability;
 
-			logger.log("info", `Updated account ${id} in DB`);
+		switch (accountType) {
+		case "ach":
+			//await updateAchAccount(account);
+			//create ach sql tables
+			break;		
+		case "liability":
+			//process Liability
+			//need full suite of liability tables in db
+			//await updateLiabilityAccount(account);
+			switch (liability?.type) {
+			case "credit_card":
+				await updateAccountInfo(account);
+				await updateLiabilityInfo(account);
+				await updateCreditCardInfo(account);
+				await updateAccountStatementHistory(account);
+	
+				// Handle notifications
+				await handleNotification(account);
+	
+				logger.log("info", `Updated account ${id} in DB`);
+				break;
+			case "mortgage":
+				//await updateMortgageAccount(account);
+				//create mortgage sql tables
+				break;
+			default:
+				logger.log("error", `Account type ${accountType} broke switch statement`);
+				break;
+			}
+			break;
+		case "clearing":
+			//we dont really do anything with clearing accounts
+			//this should log somewhere probably
+			break;
+		default:
+			logger.log("error", `Account type ${accountType} broke switch statement`);
+			break;
 		}
 	} catch (error) {
 		logger.log("error", `Failed to update account with id: ${id}`);
