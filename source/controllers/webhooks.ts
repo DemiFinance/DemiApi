@@ -75,49 +75,67 @@ async function updateAccount(id: string) {
 		//then breakout into outher functions for each type. ie updateCreditCard, updateMortgage, etc.
 
 		const accountType = account.type;
-		const liability: IAccountLiability | null = account.liability;
 
 		switch (accountType) {
-		case "ach":
-			//await updateAchAccount(account);
-			//create ach sql tables
-			break;		
-		case "liability":
-			//process Liability
-			//need full suite of liability tables in db
-			//await updateLiabilityAccount(account);
-			switch (liability?.type) {
-			case "credit_card":
-				await updateAccountInfo(account);
-				await updateLiabilityInfo(account);
-				await updateCreditCardInfo(account);
-				await updateAccountStatementHistory(account);
-	
-				// Handle notifications
-				await handleNotification(account);
-	
-				logger.log("info", `Updated account ${id} in DB`);
+			case "ach":
+				//await updateAchAccount(account);
+				//create ach sql tables
 				break;
-			case "mortgage":
-				//await updateMortgageAccount(account);
-				//create mortgage sql tables
+			case "liability":
+				//process Liability
+				//need full suite of liability tables in db
+				//await updateLiabilityAccount(account);
+				processLiability(account);
+				break;
+			case "clearing":
+				//we dont really do anything with clearing accounts
+				//this should log somewhere probably
 				break;
 			default:
-				logger.log("error", `Account type ${accountType} broke switch statement`);
+				logger.log(
+					"error",
+					`Account type ${accountType} broke switch statement`
+				);
 				break;
-			}
-			break;
-		case "clearing":
-			//we dont really do anything with clearing accounts
-			//this should log somewhere probably
-			break;
-		default:
-			logger.log("error", `Account type ${accountType} broke switch statement`);
-			break;
 		}
 	} catch (error) {
 		logger.log("error", `Failed to update account with id: ${id}`);
 	}
+}
+
+async function processLiability(account: IAccount) {
+	const accountType = account.type;
+	const liability: IAccountLiability | null = account.liability;
+	switch (liability?.type) {
+		case "credit_card":
+			await updateAccountInfo(account);
+			await updateLiabilityInfo(account);
+			await updateCreditCardInfo(account);
+
+			insertAccountStatementHistory(account).then(async (res) => {
+				if (res) {
+					logger.log("info", `Inserted account statement history for account ${account.id}`);
+					// Handle notifications
+					await handleNotification(account);
+				}else{
+					logger.log("error", `Insertion skipped, recorred exists for this month ${account.id}`);
+				}
+			});
+			//await updateAccountStatementHistory(account);
+
+			// Handle notifications
+			await handleNotification(account);
+
+			logger.log("info", `Updated account ${account.id} in DB`);
+			break;
+		case "mortgage":
+			//await updateMortgageAccount(account);
+			//create mortgage sql tables
+			break;
+		default:
+			logger.log("error", `Account type ${accountType} broke switch statement`);
+			break;
+	};
 }
 
 async function updateAccountInfo(account: IAccount) {
@@ -135,9 +153,19 @@ async function updateCreditCardInfo(account: IAccount) {
 	return await db.query(sqlData);
 }
 
-async function updateAccountStatementHistory(account: IAccount) {
-	const sqlData = dbHelpers.generateStatementSQL(account);
-	return await db.query(sqlData);
+// async function updateAccountStatementHistory(account: IAccount) {
+// 	const sqlData = dbHelpers.generateStatementSQL(account);
+// 	return await db.query(sqlData);
+// }
+
+async function insertAccountStatementHistory(account: IAccount) {
+	const sqlData = dbHelpers.insertAccountStatementHistory(account);
+	try {
+		const res = await db.query(sqlData);
+		return res.rows[0].result;
+	}catch(error){
+		logger.log("error", `Failed to insert account statement history for account ${account.id} with error: ${error}`);
+	}
 }
 
 async function doesNeedNotify(account: IAccount): Promise<boolean> {
