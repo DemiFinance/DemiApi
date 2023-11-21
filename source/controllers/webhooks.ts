@@ -56,7 +56,7 @@ async function handleNotification(account: IAccount) {
 			throw new Error("Failed to send notification");
 		}
 	} else {
-		logger.log("info", `No notification needed for account ${account.id}`);
+		logger.log("notice", `No notification needed for account ${account.id}`);
 	}
 }
 

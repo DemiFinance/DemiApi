@@ -1,16 +1,12 @@
-import {log} from "console";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
-import {Method, Environments, IAccountListOpts} from "method-node";
+import {IAccountListOpts} from "method-node";
 
 //import {getToken} from "../auth0functions";
 import * as db from "../../database/index.js";
-
-const method = new Method({
-	apiKey: process.env.METHOD_API_KEY || "",
-	env: Environments.production,
-});
+import logger from "../../wrappers/winstonLogging.js";
+import {method} from "../../wrappers/methodWrapper.js";
 
 //complete
 const getAccountById = async (request: Request, response: Response) => {
@@ -26,19 +22,18 @@ const listAccountsByHolder = async (request: Request, response: Response) => {
 	};
 
 	const accountList: any = (await method.accounts.list(opts)) || null;
-
-	console.log("Recieved GET - /accounts/list/" + request.params.id);
+	logger.log("info", `Recieved GET - /accounts/list/${request.params.id}`);
 
 	return response.status(200).json({accounts: accountList});
 };
 
 const syncNewAccount = async (account: string) => {
 	try {
-		console.log("Syncing account: " + account);
+		logger.log("info", `Syncing account: ${account}`);
 		const newSync = await method.accounts(account).syncs.create();
-		console.log("Sync response: " + JSON.stringify(newSync));
+		logger.log("info", `Sync response: ${JSON.stringify(newSync)}`);
 	} catch (error) {
-		console.error(`Error while syncing account ${account}: ${error}`);
+		logger.log("error", `Error while syncing account ${account}: ${error}`);
 		throw new Error(`Failed to sync account ${account}`);
 	}
 };
@@ -46,7 +41,10 @@ const syncNewAccount = async (account: string) => {
 const processNewConnection = async (request: Request, response: Response) => {
 	try {
 		const {connectionId} = request.body;
-		log("Processing new connection " + JSON.stringify(request.body));
+		logger.log(
+			"info",
+			`Processing new connection ${JSON.stringify(request.body)}`
+		);
 
 		response.status(200).json({success: true});
 
@@ -68,7 +66,7 @@ const processNewConnection = async (request: Request, response: Response) => {
 			await syncNewAccount(account);
 		}
 	} catch (error) {
-		console.error(`Error while processing request: ${error}`);
+		logger.log("error", `Error while processing request: ${error}`);
 		return response.status(500).json({error: "Failed to sync new connection"});
 	}
 };
@@ -96,7 +94,7 @@ const createACHAccount = async (request: Request, response: Response) => {
 			verification: verification,
 		});
 	} catch (error) {
-		console.error("Error creating new account:", error);
+		logger.log("error", `Error creating new account: ${error}`);
 		return response.status(500).json({error: "Failed to create new account"});
 	}
 };
@@ -113,7 +111,7 @@ const createACHVerification = async (request: Request, response: Response) => {
 			verification: verification,
 		});
 	} catch (error) {
-		console.error("Error creating new verification:", error);
+		logger.log("error", `Error creating new verification: ${error}`);
 		return response
 			.status(500)
 			.json({error: "Failed to create new verification"});
@@ -125,8 +123,9 @@ const updateMicroDepositVerification = async (
 	response: Response
 ) => {
 	try {
-		console.log(
-			"Verifying micro deposits for account: " + request.params.account_id
+		logger.log(
+			"info",
+			`Verifying micro deposits for account: ${request.params.account_id}`
 		);
 
 		const verification: any = await method
@@ -136,12 +135,15 @@ const updateMicroDepositVerification = async (
 					amounts: [request.body.amount1, request.body.amount2],
 				},
 			});
-		console.log("Verification response: " + JSON.stringify(verification));
+		logger.log(
+			"info",
+			`Verification response: ${JSON.stringify(verification)}`
+		);
 		return response.status(200).json({
 			verification: verification,
 		});
 	} catch (error) {
-		console.error("Error updating micro deposit verification:", error);
+		logger.log("error", `Error updating micro deposit verification: ${error}`);
 		return response
 			.status(500)
 			.json({error: "Failed to update micro deposit verification"});
@@ -158,7 +160,7 @@ const getCreditScore = async (request: Request, response: Response) => {
 			creditScore: creditScore,
 		});
 	} catch (error) {
-		console.error("Error getting credit score:", error);
+		logger.log("error", `Error getting credit score: ${error}`);
 		return response.status(500).json({error: "Failed to get credit score"});
 	}
 };
@@ -173,7 +175,7 @@ const updateAccountName = async (request: Request, response: Response) => {
 
 		// const token = await getToken();
 		try {
-			console.log("depricated....");
+			logger.log("warn", "depricated....");
 			//changeAccountName(token, userId, accountName, accountId);
 		} catch (error) {
 			console.log("[UPDATE METADATA ERROR]" + error);
