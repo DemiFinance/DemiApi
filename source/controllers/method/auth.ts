@@ -9,6 +9,12 @@ const method = new Method({
 	env: Environments.production,
 });
 
+/**
+ * Creates a new authentication session for the given entity ID.
+ * @param {Request} request - The HTTP request object.
+ * @param {Response} response - The HTTP response object.
+ * @returns {Promise<Response>} - A Promise that resolves with the HTTP response.
+ */
 const newAuthSession = async (request: Request, response: Response) => {
 	try {
 		const id = request.params.id;

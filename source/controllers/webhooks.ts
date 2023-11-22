@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {MethodWebhookObject} from "../models/webhook";
 
-import {IAccount} from "method-node";
+import {IAccount, IAccountLiability} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
@@ -56,7 +56,7 @@ async function handleNotification(account: IAccount) {
 			throw new Error("Failed to send notification");
 		}
 	} else {
-		logger.log("info", `No notification needed for account ${account.id}`);
+		logger.log("notice", `No notification needed for account ${account.id}`);
 	}
 }
 
@@ -69,25 +69,73 @@ async function handleNotification(account: IAccount) {
 async function updateAccount(id: string) {
 	try {
 		logger.log("info", `Updating account with id: ${id}`);
-		const account = await method.accounts.get(id);
+		const account: IAccount = await method.accounts.get(id);
 
-		if (
-			account.type == "liability" &&
-			account.liability?.type == "credit_card"
-		) {
-			await updateAccountInfo(account);
-			await updateLiabilityInfo(account);
-			await updateCreditCardInfo(account);
-			await updateAccountStatementHistory(account);
+		//migrate the account type checking to a switch statement.
+		//then breakout into outher functions for each type. ie updateCreditCard, updateMortgage, etc.
 
-			// Handle notifications
-			await handleNotification(account);
+		const accountType = account.type;
 
-			logger.log("info", `Updated account ${id} in DB`);
+		switch (accountType) {
+			case "ach":
+				//await updateAchAccount(account);
+				//create ach sql tables
+				break;
+			case "liability":
+				//process Liability
+				//need full suite of liability tables in db
+				//await updateLiabilityAccount(account);
+				processLiability(account);
+				break;
+			case "clearing":
+				//we dont really do anything with clearing accounts
+				//this should log somewhere probably
+				break;
+			default:
+				logger.log(
+					"error",
+					`Account type ${accountType} broke switch statement`
+				);
+				break;
 		}
 	} catch (error) {
 		logger.log("error", `Failed to update account with id: ${id}`);
 	}
+}
+
+async function processLiability(account: IAccount) {
+	const accountType = account.type;
+	const liability: IAccountLiability | null = account.liability;
+	switch (liability?.type) {
+		case "credit_card":
+			await updateAccountInfo(account);
+			await updateLiabilityInfo(account);
+			await updateCreditCardInfo(account);
+
+			insertAccountStatementHistory(account).then(async (res) => {
+				if (res) {
+					logger.log("info", `Inserted account statement history for account ${account.id}`);
+					// Handle notifications
+					await handleNotification(account);
+				}else{
+					logger.log("error", `Insertion skipped, recorred exists for this month ${account.id}`);
+				}
+			});
+			//await updateAccountStatementHistory(account);
+
+			// Handle notifications
+			await handleNotification(account);
+
+			logger.log("info", `Updated account ${account.id} in DB`);
+			break;
+		case "mortgage":
+			//await updateMortgageAccount(account);
+			//create mortgage sql tables
+			break;
+		default:
+			logger.log("error", `Account type ${accountType} broke switch statement`);
+			break;
+	};
 }
 
 async function updateAccountInfo(account: IAccount) {
@@ -105,9 +153,19 @@ async function updateCreditCardInfo(account: IAccount) {
 	return await db.query(sqlData);
 }
 
-async function updateAccountStatementHistory(account: IAccount) {
-	const sqlData = dbHelpers.generateStatementSQL(account);
-	return await db.query(sqlData);
+// async function updateAccountStatementHistory(account: IAccount) {
+// 	const sqlData = dbHelpers.generateStatementSQL(account);
+// 	return await db.query(sqlData);
+// }
+
+async function insertAccountStatementHistory(account: IAccount) {
+	const sqlData = dbHelpers.insertAccountStatementHistory(account);
+	try {
+		const res = await db.query(sqlData);
+		return res.rows[0].result;
+	}catch(error){
+		logger.log("error", `Failed to insert account statement history for account ${account.id} with error: ${error}`);
+	}
 }
 
 async function doesNeedNotify(account: IAccount): Promise<boolean> {

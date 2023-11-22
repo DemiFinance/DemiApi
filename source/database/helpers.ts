@@ -197,6 +197,23 @@ export function generateStatementSQL(account: IAccount): QueryParams {
 	};
 }
 
+export function insertAccountStatementHistory(account: IAccount): QueryParams {
+	const cc = account.liability?.credit_card;
+
+	return {
+		desc: `Insert AccountStatementHistory: ${account.id}`,
+		text: `
+        SELECT insert_account_statement_history($1, $2, $3, $4) as result;
+        `,
+		values: [
+			account.id,
+			cc?.last_statement_balance,
+			cc?.next_payment_due_date,
+			cc?.last_statement_balance,
+		],
+	};
+}
+
 /**
  * Generates SQL query parameters to fetch the payment notification status for the latest statement.
  *
