@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {MethodWebhookObject} from "../models/webhook";
 
-import {IAccount, IAccountLiability} from "method-node";
+import {IAccount, IAccountLiability, TAccountTypes} from "method-node";
 import * as db from "../database/index.js";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
@@ -49,11 +49,18 @@ async function handleNotification(account: IAccount) {
 			await updateHasSentNotificationStatus(account);
 			logger.log("info", `Notification for Account ${account.id} sent`);
 		} catch (error) {
-			logger.log(
-				"error",
-				`Failed to send notification for account ${account.id}`
-			);
-			throw new Error("Failed to send notification");
+			if (error instanceof CreditCard_No_Due_Date) {
+				logger.log(
+					"info",
+					`No due date for account ${account.id}. No notification scheduled at this time.`
+				);
+				return;
+			} else {
+				logger.log(
+					"error",
+					`Failed to send notification for account ${account.id} error: ${error}`
+				);
+			}
 		}
 	} else {
 		logger.log("notice", `No notification needed for account ${account.id}`);
@@ -74,7 +81,7 @@ async function updateAccount(id: string) {
 		//migrate the account type checking to a switch statement.
 		//then breakout into outher functions for each type. ie updateCreditCard, updateMortgage, etc.
 
-		const accountType = account.type;
+		const accountType: TAccountTypes = account.type;
 
 		switch (accountType) {
 			case "ach":
@@ -94,7 +101,7 @@ async function updateAccount(id: string) {
 			default:
 				logger.log(
 					"error",
-					`Account type ${accountType} broke switch statement`
+					`Account ${account.id} type ${accountType} broke switch statement`
 				);
 				break;
 		}
@@ -114,11 +121,17 @@ async function processLiability(account: IAccount) {
 
 			insertAccountStatementHistory(account).then(async (res) => {
 				if (res) {
-					logger.log("info", `Inserted account statement history for account ${account.id}`);
+					logger.log(
+						"info",
+						`Inserted account statement history for account ${account.id}`
+					);
 					// Handle notifications
 					await handleNotification(account);
-				}else{
-					logger.log("error", `Insertion skipped, recorred exists for this month ${account.id}`);
+				} else {
+					logger.log(
+						"error",
+						`Insertion skipped, recorred exists for this month ${account.id}`
+					);
 				}
 			});
 			//await updateAccountStatementHistory(account);
@@ -135,7 +148,7 @@ async function processLiability(account: IAccount) {
 		default:
 			logger.log("error", `Account type ${accountType} broke switch statement`);
 			break;
-	};
+	}
 }
 
 async function updateAccountInfo(account: IAccount) {
@@ -163,8 +176,11 @@ async function insertAccountStatementHistory(account: IAccount) {
 	try {
 		const res = await db.query(sqlData);
 		return res.rows[0].result;
-	}catch(error){
-		logger.log("error", `Failed to insert account statement history for account ${account.id} with error: ${error}`);
+	} catch (error) {
+		logger.log(
+			"error",
+			`Failed to insert account statement history for account ${account.id} with error: ${error}`
+		);
 	}
 }
 
@@ -256,7 +272,7 @@ export async function sendNotificationToUser(account: IAccount): Promise<void> {
 	await sendNotification(
 		account.holder_id,
 		cardName,
-		daysUntilDueDate,
+		daysInAdvance,
 		deliveryDate
 	);
 }
