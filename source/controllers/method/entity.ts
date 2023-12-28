@@ -3,7 +3,7 @@
 import {Request, Response} from "express";
 //import axios, {AxiosResponse} from "axios";
 
-import {Method, Environments} from "method-node";
+import {Method, Environments, IEntity} from "method-node";
 
 import {updateUserMeta} from "../auth0functions";
 import {log} from "console";
@@ -79,4 +79,32 @@ const getEntity = async (request: Request, response: Response) => {
 	});
 };
 
-export default {getEntity, postEntity, testWithMethod};
+const getAvailableCapabilities = async (
+	request: Request,
+	response: Response
+) => {
+	const id: string = request.params.id;
+	const requestedEntity: IEntity | null =
+		(await method.entities.get(id)) || null;
+
+	console.log("Requested entity: ", requestedEntity);
+
+	// Check if the entity exists and has available capabilities
+	if (requestedEntity && requestedEntity.available_capabilities) {
+		return response.status(200).json({
+			available_capabilities: requestedEntity.available_capabilities,
+		});
+	} else {
+		// Handle the case where the entity does not exist or does not have available capabilities
+		return response.status(404).json({
+			message: "Entity not found or no available capabilities",
+		});
+	}
+};
+
+export default {
+	getEntity,
+	postEntity,
+	testWithMethod,
+	getAvailableCapabilities,
+};
