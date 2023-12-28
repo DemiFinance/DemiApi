@@ -268,6 +268,10 @@ async function unimplementedFunc(event: QuilttEvent) {
 	//console.log(`Created connection with id: ${event.id}`);
 }
 
+async function quilttVerifiedAccount(event: QuilttEvent) {
+	logger.log("info", "Quiltt Verified Account:" + JSON.stringify(event));
+}
+
 /**
  * Handles the creation of a Quiltt profile via a webhook event.
  *
@@ -394,7 +398,7 @@ const quilttOperationHandlers: {
 	"connection.disconnected": unimplementedFunc,
 	"account.created": createAccount,
 	"account.updated": unimplementedFunc,
-	"account.verified": unimplementedFunc,
+	"account.verified": quilttVerifiedAccount, //lets implement this?
 	"account.deleted": unimplementedFunc,
 };
 
