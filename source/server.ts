@@ -41,7 +41,8 @@ router.get("/ping", (req, res) => {
 });
 const path = require("path");
 
-router.use("/assets", express.static(path.join(__dirname, "/public")));
+router.use(express.static(path.join(__dirname, "public")));
+  
 
 router.use("/entity", entityRoutes);
 router.use("/auth", authRoutes);
