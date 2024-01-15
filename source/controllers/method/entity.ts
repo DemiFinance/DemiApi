@@ -7,6 +7,7 @@ import {Method, Environments, IEntity} from "method-node";
 
 import {updateUserMeta} from "../auth0functions";
 import {log} from "console";
+import logger from "../../wrappers/winstonLogging";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -74,6 +75,8 @@ const getEntity = async (request: Request, response: Response) => {
 
 	console.log("requested entity" + requestedEntity);
 
+	logger.log("info", "Requested entity: ", requestedEntity);
+	
 	return response.status(200).json({
 		entity: requestedEntity,
 	});
@@ -87,7 +90,8 @@ const getAvailableCapabilities = async (
 	const requestedEntity: IEntity | null =
 		(await method.entities.get(id)) || null;
 
-	console.log("Requested entity: ", requestedEntity);
+
+	logger.log("info", "Requested entity: ", requestedEntity);
 
 	// Check if the entity exists and has available capabilities
 	if (requestedEntity && requestedEntity.available_capabilities) {
