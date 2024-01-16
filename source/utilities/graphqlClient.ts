@@ -197,6 +197,74 @@ export async function transactionsByAccountId(
 }
 
 /**
+ * Retrieves transactions by account ID.
+ *
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @return {Promise<any>} The transactions associated with the account ID.
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function plaidTransactionsByAccountId(
+	sessionToken: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const client = createApolloClient(sessionToken);
+		const response = await client.query({
+			query: TransactionsByAccountId,
+			variables: {accountId},
+		});
+
+		if (response.errors && response.errors.length > 0) {
+			throw new Error(
+				`GraphQL errors: ${response.errors
+					.map((error) => error.message)
+					.join(", ")}`
+			);
+		}
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+
+/**
+ * Retrieves transactions by account ID.
+ *
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @return {Promise<any>} The transactions associated with the account ID.
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function mxTransactionsByAccountId(
+	sessionToken: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const client = createApolloClient(sessionToken);
+		const response = await client.query({
+			query: TransactionsByAccountId,
+			variables: {accountId},
+		});
+
+		if (response.errors && response.errors.length > 0) {
+			throw new Error(
+				`GraphQL errors: ${response.errors
+					.map((error) => error.message)
+					.join(", ")}`
+			);
+		}
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+/**
  * Retrieves the Quiltt UUID associated with a specific user ID.
  *
  * @param {string} sessionToken - The session token for authentication.

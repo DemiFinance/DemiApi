@@ -46,6 +46,9 @@ export async function fetchTransactions(
 		);
 		logger.log("info", "Found some transactions...");
 		span.finish(); // Finish the span successfully
+
+		//
+
 		return parseTransactions(transactionsResponse);
 	} catch (error) {
 		logger.log("error", `Failed to fetch or parse transactions: ${error}`);
@@ -80,6 +83,54 @@ function parseTransactions(json: TransactionJSON): MxTransaction[] {
 }
 
 /**
+ * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
+ * in the `json.account.transactions` array and excluding the __typename field.
+ *
+ * @param {TransactionJSON} json - The JSON object containing the transaction data.
+ * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
+ *
+ * @example
+ * // ...
+ */
+function parseMxTransactions(json: TransactionJSON): MxTransaction[] {
+	if (!json || !json.account || !json.account.transactions) {
+		throw new Error("Invalid JSON structure");
+	}
+
+	const transactionsArray = json.account.transactions.map((transaction) => {
+		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
+		__typename; // Use __typename to prevent TypeScript from throwing an error
+		return source;
+	});
+
+	return transactionsArray;
+}
+
+/**
+ * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
+ * in the `json.account.transactions` array and excluding the __typename field.
+ *
+ * @param {TransactionJSON} json - The JSON object containing the transaction data.
+ * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
+ *
+ * @example
+ * // ...
+ */
+function parsePlaidTransactions(json: TransactionJSON): MxTransaction[] {
+	if (!json || !json.account || !json.account.transactions) {
+		throw new Error("Invalid JSON structure");
+	}
+
+	const transactionsArray = json.account.transactions.map((transaction) => {
+		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
+		__typename; // Use __typename to prevent TypeScript from throwing an error
+		return source;
+	});
+
+	return transactionsArray;
+}
+
+/**
  * Fetches holder information for the specified account ID, and retrieves the entity ID associated with the Quiltt account ID.
  * @param {string} quilttUserId - The ID of the Quiltt user.
  * @param {string} accountId - The ID of the account to fetch information for.
@@ -89,6 +140,7 @@ export async function fetchHolderInfo(
 	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
+	const span = tracer.startSpan("fetchTransactions");
 	try {
 		const accountResponse = await holderFromAccountId(quilttUserId, accountId);
 		logger.log("info", "Account Response:" + accountResponse);
@@ -98,10 +150,12 @@ export async function fetchHolderInfo(
 		if (entityId === undefined) {
 			throw new Error("Entity ID is undefined");
 		}
-
+		span.finish();
 		return entityId;
 	} catch (error) {
 		logger.log("error", "Error fetching holder info:" + error);
+		span.setTag("error", true); // Mark the span as errored
+		span.finish();
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }
