@@ -49,8 +49,8 @@ export const AccountDetailsByAccountId = gql`
 	}
 `;
 
-export const TransactionsByAccountId = gql`
-	query TransactionsByAccountId($accountId: ID!) {
+export const MxTransactionsByAccountId = gql`
+	query MxTransactionsByAccountId($accountId: ID!) {
 		account(id: $accountId) {
 			transactions {
 				source(type: MX) {

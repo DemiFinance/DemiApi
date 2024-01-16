@@ -6,10 +6,7 @@ import {
 	fetchAccountInfo,
 	getAccountNumbers,
 } from "../quiltt";
-import {
-	holderFromAccountId,
-	transactionsByAccountId,
-} from "../../utilities/graphqlClient";
+import {holderFromAccountId} from "../../utilities/graphqlClient";
 import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
@@ -18,68 +15,72 @@ import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
+
+import {createApolloClient} from "../../utilities/graphqlClient";
+
 import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
+import {MxTransactionsByAccountId} from "../../utilities/graphqlSchema";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 
 /**
- * Fetches transactions for the specified account ID.
+ * Fetches transactions from two different GraphQL queries.
+ * Tries both queries even if one fails, concatenating results from both.
  *
- * @param {string} accountId - The ID of the account to fetch transactions for.
- * @returns {Promise<any>} The transactions data.
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID for which transactions are fetched.
+ * @returns {Promise<Array>} An array of transaction objects.
  */
 export async function fetchTransactions(
 	sessionToken: string,
 	accountId: string
 ) {
-	const span = tracer.startSpan("fetchTransactions"); // Start a new span
+	const span = tracer.startSpan("fetchTransactions");
+	const client = createApolloClient(sessionToken);
+	let transactions: MxTransaction[] | any[] = [];
 
+	// Check if its an MX Account
 	try {
-		const transactionsResponse = await transactionsByAccountId(
-			sessionToken,
-			accountId
-		);
-		logger.log("info", "Found some transactions...");
-		span.finish(); // Finish the span successfully
+		const mxResponse = await client.query({
+			query: MxTransactionsByAccountId,
+			variables: {accountId},
+		});
 
-		//
-
-		return parseTransactions(transactionsResponse);
+		transactions = parseMxTransactions(mxResponse.data);
 	} catch (error) {
-		logger.log("error", `Failed to fetch or parse transactions: ${error}`);
-		span.setTag("error", true); // Mark the span as errored
-		span.finish(); // Finish the span before throwing the error
-		throw error;
-	}
-}
-
-/**
- * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
- * in the `json.account.transactions` array and excluding the __typename field.
- *
- * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
- *
- * @example
- * // ...
- */
-function parseTransactions(json: TransactionJSON): MxTransaction[] {
-	if (!json || !json.account || !json.account.transactions) {
-		throw new Error("Invalid JSON structure");
+		logger.log("error", `Error in MXTransactions query: ${error}`);
 	}
 
-	const transactionsArray = json.account.transactions.map((transaction) => {
-		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
-		__typename; // Use __typename to prevent TypeScript from throwing an error
-		return source;
-	});
+	// Or is it Plaid?
+	try {
+		const plaidResponse = await client.query({
+			query: SecondGraphQLQuery,
+			variables: {accountId},
+		});
 
-	return transactionsArray;
+		transactions = parsePlaidTransactions(plaidResponse.data);
+	} catch (error) {
+		logger.log("error", `Error in second query: ${error}`);
+	}
+
+	// Finalizing the span and logging the result
+	if (transactions.length === 0) {
+		logger.log("warn", "No transactions fetched from either query.");
+		span.setTag("error", true);
+	} else {
+		logger.log(
+			"info",
+			`${transactions.length} transactions fetched successfully.`
+		);
+	}
+	span.finish();
+
+	return transactions;
 }
 
 /**
