@@ -11,7 +11,11 @@ import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
 } from "../auth0functions";
-import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
+import {
+	MxTransaction,
+	PlaidTransaction,
+	TransactionJSON,
+} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
@@ -22,7 +26,10 @@ import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
-import {MxTransactionsByAccountId} from "../../utilities/graphqlSchema";
+import {
+	MxTransactionsByAccountId,
+	PlaidTransactionsByAccountId,
+} from "../../utilities/graphqlSchema";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -42,7 +49,7 @@ export async function fetchTransactions(
 ) {
 	const span = tracer.startSpan("fetchTransactions");
 	const client = createApolloClient(sessionToken);
-	let transactions: MxTransaction[] | any[] = [];
+	let transactions: MxTransaction[] | PlaidTransaction[] = [];
 
 	// Check if its an MX Account
 	try {
@@ -51,7 +58,7 @@ export async function fetchTransactions(
 			variables: {accountId},
 		});
 
-		transactions = parseMxTransactions(mxResponse.data);
+		transactions = parseTransactions(mxResponse.data) as MxTransaction[];
 	} catch (error) {
 		logger.log("error", `Error in MXTransactions query: ${error}`);
 	}
@@ -59,11 +66,11 @@ export async function fetchTransactions(
 	// Or is it Plaid?
 	try {
 		const plaidResponse = await client.query({
-			query: SecondGraphQLQuery,
+			query: PlaidTransactionsByAccountId,
 			variables: {accountId},
 		});
 
-		transactions = parsePlaidTransactions(plaidResponse.data);
+		transactions = parseTransactions(plaidResponse.data) as PlaidTransaction[];
 	} catch (error) {
 		logger.log("error", `Error in second query: ${error}`);
 	}
@@ -88,47 +95,31 @@ export async function fetchTransactions(
  * in the `json.account.transactions` array and excluding the __typename field.
  *
  * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
+ * @returns {MxTransaction[] | PlaidTransaction[]} An array of parsed transactions without the __typename field.
  *
  * @example
  * // ...
  */
-function parseMxTransactions(json: TransactionJSON): MxTransaction[] {
+function parseTransactions(
+	json: TransactionJSON
+): (MxTransaction | PlaidTransaction)[] {
 	if (!json || !json.account || !json.account.transactions) {
 		throw new Error("Invalid JSON structure");
 	}
 
-	const transactionsArray = json.account.transactions.map((transaction) => {
-		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
+	return json.account.transactions.map((transaction) => {
+		const {__typename, ...source} = transaction.source;
 		__typename; // Use __typename to prevent TypeScript from throwing an error
-		return source;
+		// Here, you can add logic to determine whether 'source' is an MxTransaction or a PlaidTransaction
+		// For example, you might check for the presence of a unique field in each type
+		if ("uniqueMxField" in source) {
+			// It's an MxTransaction
+			return source as MxTransaction;
+		} else {
+			// It's a PlaidTransaction
+			return source as PlaidTransaction;
+		}
 	});
-
-	return transactionsArray;
-}
-
-/**
- * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
- * in the `json.account.transactions` array and excluding the __typename field.
- *
- * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
- *
- * @example
- * // ...
- */
-function parsePlaidTransactions(json: TransactionJSON): MxTransaction[] {
-	if (!json || !json.account || !json.account.transactions) {
-		throw new Error("Invalid JSON structure");
-	}
-
-	const transactionsArray = json.account.transactions.map((transaction) => {
-		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
-		__typename; // Use __typename to prevent TypeScript from throwing an error
-		return source;
-	});
-
-	return transactionsArray;
 }
 
 /**
