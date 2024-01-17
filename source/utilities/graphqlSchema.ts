@@ -49,6 +49,7 @@ export const AccountDetailsByAccountId = gql`
 	}
 `;
 
+//TODO: REFACTORY THIS QUERY TO USE THE NEW TRANSACTION MODEL
 export const MxTransactionsByAccountId = gql`
 	query MxTransactionsByAccountId($accountId: ID!) {
 		account(id: $accountId) {
@@ -86,6 +87,107 @@ export const MxTransactionsByAccountId = gql`
 						type
 						updatedAt
 						userGuid
+					}
+				}
+			}
+		}
+	}
+`;
+
+//TODO: REFACTORY THIS QUERY TO USE THE NEW TRANSACTION MODEL
+export const PlaidTransactionsByAccountId = gql`
+	query PlaidTransactionsByAccountId($accountId: ID!) {
+		account(id: $accountId) {
+			transactions {
+				source(type: PLAID) {
+					... on PlaidTransaction {
+						accountId
+						amount
+						isoCurrencyCode
+						unofficialCurrencyCode
+						category
+						checkNumber
+						categoryId
+						date
+						location {
+							address
+							city
+							lat
+							lon
+							state
+							storeNumber
+							zip
+						}
+						name
+						merchantName
+						originalDescription
+						paymentMeta {
+							referenceNumber
+							ppdId
+							payee
+							byOrderOf
+							payer
+							paymentMethod
+							paymentProcessor
+							ppdId
+							reason
+							referenceNumber
+							referenceNumber
+							scheme
+							statusCode
+							statusDescription
+						}
+						pending
+						pendingTransactionId
+						pendingTransactionDate
+						pendingTransactionAuthorizedDate
+						pendingTransactionPaymentChannel
+						pendingTransactionPaymentMeta {
+							referenceNumber
+							ppdId
+							payee
+							byOrderOf
+							payer
+							paymentMethod
+							paymentProcessor
+							ppdId
+							reason
+							referenceNumber
+							referenceNumber
+							scheme
+							statusCode
+							statusDescription
+						}
+						pendingTransactionPaymentProcessor
+						pendingTransactionStatus
+						pendingTransactionType
+						pendingTransactionDescription
+						pendingTransactionAmount
+						transactionId
+						transactionDate
+						transactionAuthorizedDate
+						transactionPaymentChannel
+						transactionPaymentMeta {
+							referenceNumber
+							ppdId
+							payee
+							byOrderOf
+							payer
+							paymentMethod
+							paymentProcessor
+							ppdId
+							reason
+							referenceNumber
+							referenceNumber
+							scheme
+							statusCode
+							statusDescription
+						}
+						transactionPaymentProcessor
+						transactionStatus
+						transactionType
+						transactionDescription
+						transactionAmount
 					}
 				}
 			}

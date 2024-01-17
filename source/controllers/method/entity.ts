@@ -76,7 +76,7 @@ const getEntity = async (request: Request, response: Response) => {
 	console.log("requested entity" + requestedEntity);
 
 	logger.log("info", "Requested entity: ", requestedEntity);
-	
+
 	return response.status(200).json({
 		entity: requestedEntity,
 	});
@@ -89,7 +89,6 @@ const getAvailableCapabilities = async (
 	const id: string = request.params.id;
 	const requestedEntity: IEntity | null =
 		(await method.entities.get(id)) || null;
-
 
 	logger.log("info", "Requested entity: ", requestedEntity);
 
