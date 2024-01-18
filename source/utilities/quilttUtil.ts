@@ -1,7 +1,12 @@
 import axios from "axios";
-import {Quiltt_Token_EnvVar_Error} from "./errors/demierrors";
+import {
+	Quiltt_Token_EnvVar_Error,
+	Token_Refresh_Error,
+} from "./errors/demierrors";
 import logger from "../wrappers/winstonLogging";
 import tracer from "../wrappers/datadogTracer";
+import {throws} from "assert";
+import {Token} from "graphql";
 
 /**
  * Checks the validity of a session token by sending a GET request to the session validation endpoint.
@@ -69,7 +74,7 @@ export async function refreshSessionToken(quilttId: string): Promise<string> {
 
 		return response.data.token;
 	} catch (error) {
-		throw new Error("Unable to refresh session token");
+		throw new Token_Refresh_Error("Unable to refresh session token");
 	}
 }
 
