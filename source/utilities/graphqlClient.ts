@@ -3,9 +3,10 @@ import {ApolloClient, InMemoryCache, HttpLink} from "@apollo/client/core";
 
 import {
 	MxTransactionsByAccountId,
-	HolderFromAccountId,
+	MxHolderFromAccountId,
 	GetProfileId,
-	AccountDetailsByAccountId,
+	MxAccountDetailsByAccountId,
+	GetAccountType,
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
@@ -79,12 +80,12 @@ export async function executeQuery(
  * @return {Promise<string>} The holder associated with the account ID.
  * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
  */
-export async function holderFromAccountId(
+export async function MxholderFromAccountId(
 	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
 	try {
-		const response = await executeQuery(quilttUserId, HolderFromAccountId, {
+		const response = await executeQuery(quilttUserId, MxHolderFromAccountId, {
 			accountId,
 		});
 
@@ -143,7 +144,7 @@ export async function accountDetailsById(
 	try {
 		const client = createApolloClient(sessionToken);
 		const response = await client.query({
-			query: AccountDetailsByAccountId,
+			query: MxAccountDetailsByAccountId,
 			variables: {accountId},
 		});
 
@@ -161,15 +162,6 @@ export async function accountDetailsById(
 		throw error;
 	}
 }
-
-/**
- * Retrieves transactions by account ID.
- *
- * @param {string} sessionToken - The session token for authentication.
- * @param {string} accountId - The account ID.
- * @return {Promise<any>} The transactions associated with the account ID.
- * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
- */
 
 /**
  * Retrieves transactions by account ID.
@@ -204,6 +196,7 @@ export async function mxTransactionsByAccountId(
 		throw error;
 	}
 }
+
 /**
  * Retrieves the Quiltt UUID associated with a specific user ID.
  *
@@ -239,6 +232,39 @@ export async function getQuilttUuidByUserId(
 	} catch (error) {
 		console.error(error);
 		throw error; // Re-throw the error after logging it.
+	}
+}
+
+/**
+ * Retrieves the account type associated with a specific account ID.
+ *
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID whose account type is to be retrieved.
+ * @returns {Promise<string>} The account type associated with the account ID.
+ */
+export async function getAccountType(
+	sessionToken: string,
+	accountId: string
+): Promise<string> {
+	try {
+		const client = createApolloClient(sessionToken);
+		const response = await client.query({
+			query: GetAccountType,
+			variables: {accountId},
+		});
+
+		if (response.errors && response.errors.length > 0) {
+			throw new Error(
+				`GraphQL errors: ${response.errors
+					.map((error) => error.message)
+					.join(", ")}`
+			);
+		}
+
+		return response.data.account.type;
+	} catch (error) {
+		console.error(error);
+		throw error;
 	}
 }
 

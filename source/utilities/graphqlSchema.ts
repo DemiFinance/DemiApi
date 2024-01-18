@@ -245,3 +245,11 @@ export const GetProfileId = gql`
 		}
 	}
 `;
+
+export const GetAccountType = gql`
+	query GetAccountType($accountId: ID!) {
+		account(id: $accountId) {
+			type
+		}
+	}
+`;
