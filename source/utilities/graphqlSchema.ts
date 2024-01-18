@@ -5,50 +5,50 @@ export const MxAccountDetailsByAccountId = gql`
 		account(id: $accountId) {
 			remoteData {
 				mx {
-				  account {
-					response {
-					  accountNumber
-					  apr
-					  apy
-					  availableBalance
-					  availableCredit
-					  balance
-					  cashBalance
-					  cashSurrenderValue
-					  createdAt
-					  creditLimit
-					  currencyCode
-					  dayPaymentIsDue
-					  deathBenefit
-					  guid
-					  holdingsValue
-					  insuredName
-					  institutionCode
-					  interestRate
-					  isClosed
-					  lastPayment
-					  lastPaymentAt
-					  loanAmount
-					  maturesOn
-					  memberGuid
-					  minimumBalance
-					  minimumPayment
-					  name
-					  originalBalance
-					  paymentDueAt
-					  payoffBalance
-					  payOutAmount
-					  premiumAmount
-					  startedOn
-					  subtype
-					  totalAccountValue
-					  type
-					  updatedAt
-					  userGuid
+					account {
+						response {
+							accountNumber
+							apr
+							apy
+							availableBalance
+							availableCredit
+							balance
+							cashBalance
+							cashSurrenderValue
+							createdAt
+							creditLimit
+							currencyCode
+							dayPaymentIsDue
+							deathBenefit
+							guid
+							holdingsValue
+							insuredName
+							institutionCode
+							interestRate
+							isClosed
+							lastPayment
+							lastPaymentAt
+							loanAmount
+							maturesOn
+							memberGuid
+							minimumBalance
+							minimumPayment
+							name
+							originalBalance
+							paymentDueAt
+							payoffBalance
+							payOutAmount
+							premiumAmount
+							startedOn
+							subtype
+							totalAccountValue
+							type
+							updatedAt
+							userGuid
+						}
 					}
-				  }
 				}
-			  }
+			}
 		}
 	}
 `;
@@ -93,6 +93,22 @@ export const MxTransactionsByAccountId = gql`
 								updatedAt
 								userGuid
 							}
+						}
+					}
+				}
+			}
+		}
+	}
+`;
+
+export const MxGetAccountTypeByAccountId = gql`
+	query MxGetAccountTypeByAccountId($accountId: ID!) {
+		account(id: $accountId) {
+			remoteData {
+				mx {
+					account {
+						response {
+							type
 						}
 					}
 				}
@@ -203,24 +219,24 @@ export const PlaidTransactionsByAccountId = gql`
 `;
 
 export const PlaidAccountDetailsByAccountId = gql`
-query PlaidAccountDetailsByAccountId($accountId: ID!) {
-	account(id: $accountId) {
-		remoteData {
-			plaid {
-			  account {
-				response {
-				  balances {
-					unofficialCurrencyCode
-					limit
-					lastUpdatedDatetime
-					isoCurrencyCode
-					current
-					available
-				  }
+	query PlaidAccountDetailsByAccountId($accountId: ID!) {
+		account(id: $accountId) {
+			remoteData {
+				plaid {
+					account {
+						response {
+							balances {
+								unofficialCurrencyCode
+								limit
+								lastUpdatedDatetime
+								isoCurrencyCode
+								current
+								available
+							}
+						}
+					}
 				}
-			  }
 			}
-		  }
 		}
 	}
 `;

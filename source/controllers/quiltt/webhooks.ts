@@ -1,12 +1,19 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
-import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
+import {
+	Account,
+	QuilttEvent,
+	QuilttWebhookObject,
+} from "../../models/quilttmodels";
 import {
 	addUUIDToMetadata,
 	fetchAccountInfo,
 	getAccountNumbers,
 } from "../quiltt";
-import {holderFromAccountId} from "../../utilities/graphqlClient";
+import {
+	MxholderFromAccountId,
+	getAccountType,
+} from "../../utilities/graphqlClient";
 import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
@@ -132,9 +139,12 @@ export async function fetchHolderInfo(
 	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
-	const span = tracer.startSpan("fetchTransactions");
+	const span = tracer.startSpan("fetch holder info");
 	try {
-		const accountResponse = await holderFromAccountId(quilttUserId, accountId);
+		const accountResponse = await MxholderFromAccountId(
+			quilttUserId,
+			accountId
+		);
 		logger.log("info", "Account Response:" + accountResponse);
 		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
 		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
@@ -315,7 +325,105 @@ async function unimplementedFunc(event: QuilttEvent) {
 }
 
 async function quilttVerifiedAccount(event: QuilttEvent) {
-	logger.log("info", "Quiltt Verified Account:" + JSON.stringify(event));
+	/* THE PLAN	
+		1. Get Account Type
+			1.1. If not checking or savings return, we may need to do something with this later
+		2. Get Account Info
+ 	*/
+
+	//TODO: wrap in try catch
+	const span = tracer.startSpan("account.verified");
+
+	const account = event.record as Account;
+
+	const quiltId = event.profile?.id;
+	if (!quiltId) {
+		logger.log("error", "No profile id found in event");
+		return;
+	}
+	const sessionToken = await generateTokenById(quiltId);
+
+	const accountType = getNormalizedAccountType(
+		await getAccountType(sessionToken, account.id)
+	);
+
+	if (accountType !== "checking" && accountType !== "savings") {
+		logger.log(
+			"error",
+			"Probably not a checking or savings account." +
+				accountType +
+				"account id:" +
+				event.record.id
+		);
+		return;
+	}
+
+	//honestly at this point i think it should call a function to handle the ach account creation and verification process in method that returns a success value or something... it could be a void?
+
+	const eventReccord = event.record as Account;
+	const user = event.profile;
+	const accountId = eventReccord.id;
+	const connectionId = eventReccord.connectionId;
+
+	const tempString =
+		JSON.stringify(user) + " " + accountId + " " + connectionId;
+	logger.log(
+		"info",
+		"Quiltt Verified Account:" + JSON.stringify(event) + tempString
+	);
+	span.finish();
+
+	try {
+		const fetchedAccount = await fetchAccountInfo(accountId);
+
+		const accountInfo = fetchedAccount.body;
+
+		const quilttUserId = fetchedAccount.profileId;
+
+		const sessionToken = await generateTokenById(fetchedAccount.profileId);
+		const accountData = await getAccountNumbers(accountId);
+
+		const transactionsObject = await fetchTransactions(sessionToken, accountId);
+
+		logger.log("info", `Account Data ${JSON.stringify(accountData)}`);
+
+		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
+
+		const {number: accountNumber, routing: routingNumber} =
+			accountData.accountNumbers;
+
+		logger.log(
+			"info",
+			`Account info pre convert ${accountNumber} routing number ${routingNumber}`
+		);
+
+		// Convert accountNumber and routingNumber to strings
+		const accountNumberStr = String(accountNumber);
+		const routingNumberStr = String(routingNumber);
+
+		logger.log(
+			"info",
+			`Account info post convert ${accountNumberStr} routing number ${routingNumberStr}`
+		);
+
+		const account = await createAccountInMethod(
+			accountNumberStr,
+			routingNumberStr,
+			accountType,
+			holderInfo
+		);
+		logger.log("info", "Account Output:" + JSON.stringify(account));
+
+		createAccountVerification(account.id, accountInfo, transactionsObject);
+		span.finish();
+	} catch (error) {
+		if (error instanceof Not_ACH_Account) {
+			// Handle the custom error
+			logger.log("warn", "Not a checking account we good");
+		} else {
+			logger.log("error", "Error creating new account:" + error);
+		}
+	}
 }
 
 /**
