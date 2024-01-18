@@ -168,7 +168,7 @@ export async function fetchHolderInfo(
  * @param {string} accountType - The type of the account (e.g., "CHECKING" or "SAVINGS").
  * @returns {TAccountSubTypes} The normalized account type.
  */
-function normalizeAccountType(accountType: string): TAccountSubTypes {
+export function normalizeAccountType(accountType: string): TAccountSubTypes {
 	const lowerCaseType = accountType.toLowerCase();
 	if (lowerCaseType === "checking" || lowerCaseType === "savings") {
 		return lowerCaseType as TAccountSubTypes;
