@@ -330,33 +330,34 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			1.1. If not checking or savings return, we may need to do something with this later
 		2. Get Account Info
  	*/
+	 const span = tracer.startSpan("account.verified");
+	try {
+		
 
-	//TODO: wrap in try catch
-	const span = tracer.startSpan("account.verified");
+		const account = event.record as Account;
 
-	const account = event.record as Account;
+		const quiltId = event.profile?.id;
+		if (!quiltId) {
+			logger.log("error", "No profile id found in event");
+			return;
+		}
+		const sessionToken = await generateTokenById(quiltId);
 
-	const quiltId = event.profile?.id;
-	if (!quiltId) {
-		logger.log("error", "No profile id found in event");
-		return;
-	}
-	const sessionToken = await generateTokenById(quiltId);
-
-	const accountType = getNormalizedAccountType(
-		await getAccountType(sessionToken, account.id)
-	);
-
-	if (accountType !== "checking" && accountType !== "savings") {
-		logger.log(
-			"error",
-			"Probably not a checking or savings account." +
-				accountType +
-				"account id:" +
-				event.record.id
+		const accountType = getNormalizedAccountType(
+			await getAccountType(sessionToken, account.id)
 		);
-		return;
-	}
+
+		if (accountType !== "checking" && accountType !== "savings") {
+			logger.log(
+				"error",
+				"Probably not a checking or savings account." +
+					accountType +
+					"account id:" +
+					event.record.id
+			);
+			return;
+		}
+	} catch (error) {}
 
 	//honestly at this point i think it should call a function to handle the ach account creation and verification process in method that returns a success value or something... it could be a void?
 
@@ -371,7 +372,7 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		"info",
 		"Quiltt Verified Account:" + JSON.stringify(event) + tempString
 	);
-	span.finish();
+	//span.finish();
 
 	try {
 		const fetchedAccount = await fetchAccountInfo(accountId);
@@ -388,6 +389,8 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		logger.log("info", `Account Data ${JSON.stringify(accountData)}`);
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
+
+		const accountType = getNormalizedAccountType(fetchedAccount.type);
 
 		const {number: accountNumber, routing: routingNumber} =
 			accountData.accountNumbers;

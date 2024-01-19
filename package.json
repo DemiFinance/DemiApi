@@ -17,7 +17,7 @@
 		"build:live": "nodemon source/app.ts",
 		"clean": "tsc --build --clean",
 		"watch-ts": "tsc -w",
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "doppler run -- jest",
 		"dockerize": "npm run docker:build && npm run docker:tag:latest && npm run docker:push:latest",
 		"docker:build": "docker build . -t demiapi --build-arg DD_GIT_REPOSITORY_URL=$(git config --get remote.origin.url) --build-arg DD_GIT_COMMIT_SHA=$(git rev-parse HEAD)",
 		"docker:tag:latest": "docker tag demiapi:latest 792017225318.dkr.ecr.us-east-1.amazonaws.com/demiapi:latest",
@@ -49,6 +49,9 @@
 		"winston": "^3.11.0"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.23.7",
+		"@babel/preset-env": "^7.23.8",
+		"@babel/preset-typescript": "^7.23.3",
 		"@types/auth0": "^3.3.0",
 		"@types/express": "^4.17.17",
 		"@types/jest": "^29.5.11",
@@ -57,9 +60,11 @@
 		"@types/uuid": "^8.3.4",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
 		"@typescript-eslint/parser": "^6.7.0",
+		"babel-jest": "^29.7.0",
 		"eslint": "^8.50.0",
 		"eslint-config-prettier": "^9.0.0",
 		"eslint-plugin-prettier": "^5.0.0",
+		"jest": "^29.7.0",
 		"prettier": "^3.0.3"
 	}
 }
