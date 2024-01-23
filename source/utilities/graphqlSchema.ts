@@ -122,95 +122,65 @@ export const PlaidTransactionsByAccountId = gql`
 	query PlaidTransactionsByAccountId($accountId: ID!) {
 		account(id: $accountId) {
 			transactions {
-				source(type: PLAID) {
-					... on PlaidTransaction {
-						accountId
-						amount
-						isoCurrencyCode
-						unofficialCurrencyCode
-						category
-						checkNumber
-						categoryId
-						date
-						location {
-							address
-							city
-							lat
-							lon
-							state
-							storeNumber
-							zip
+				nodes {
+					remoteData {
+						plaid {
+							transaction {
+								response {
+									accountId
+									accountOwner
+									amount
+									isoCurrencyCode
+									unofficialCurrencyCode
+									category
+									categoryId
+									checkNumber
+									counterparties {
+										name
+										type
+										logoUrl
+										website
+									}
+									date
+									datetime
+									authorizedDate
+									authorizedDatetime
+									location {
+										address
+										city
+										region
+										postalCode
+										country
+										lat
+										lon
+										storeNumber
+									}
+									name
+									merchantName
+									logoUrl
+									website
+									paymentMeta {
+										byOrderOf
+										payee
+										payer
+										paymentProcessor
+										ppdId
+										reason
+										referenceNumber
+									}
+									paymentChannel
+									pending
+									pendingTransactionId
+									personalFinanceCategory {
+										detailed
+										primary
+									}
+									personalFinanceCategoryIconUrl
+									transactionId
+									transactionCode
+								}
+							}
 						}
-						name
-						merchantName
-						originalDescription
-						paymentMeta {
-							referenceNumber
-							ppdId
-							payee
-							byOrderOf
-							payer
-							paymentMethod
-							paymentProcessor
-							ppdId
-							reason
-							referenceNumber
-							referenceNumber
-							scheme
-							statusCode
-							statusDescription
-						}
-						pending
-						pendingTransactionId
-						pendingTransactionDate
-						pendingTransactionAuthorizedDate
-						pendingTransactionPaymentChannel
-						pendingTransactionPaymentMeta {
-							referenceNumber
-							ppdId
-							payee
-							byOrderOf
-							payer
-							paymentMethod
-							paymentProcessor
-							ppdId
-							reason
-							referenceNumber
-							referenceNumber
-							scheme
-							statusCode
-							statusDescription
-						}
-						pendingTransactionPaymentProcessor
-						pendingTransactionStatus
-						pendingTransactionType
-						pendingTransactionDescription
-						pendingTransactionAmount
-						transactionId
-						transactionDate
-						transactionAuthorizedDate
-						transactionPaymentChannel
-						transactionPaymentMeta {
-							referenceNumber
-							ppdId
-							payee
-							byOrderOf
-							payer
-							paymentMethod
-							paymentProcessor
-							ppdId
-							reason
-							referenceNumber
-							referenceNumber
-							scheme
-							statusCode
-							statusDescription
-						}
-						transactionPaymentProcessor
-						transactionStatus
-						transactionType
-						transactionDescription
-						transactionAmount
 					}
 				}
 			}
@@ -225,13 +195,13 @@ export const PlaidAccountDetailsByAccountId = gql`
 				plaid {
 					account {
 						response {
+							accountId
 							balances {
-								unofficialCurrencyCode
-								limit
-								lastUpdatedDatetime
-								isoCurrencyCode
-								current
 								available
+								current
+								isoCurrencyCode
+								limit
+								unofficialCurrencyCode
 							}
 						}
 					}
@@ -248,6 +218,16 @@ export const MxHolderFromAccountId = gql`
 				... on MxAccount {
 					userId
 				}
+			}
+		}
+	}
+`;
+//TODO: NEED TO BIGFIX THIS IT DOESNT WORK
+export const PlaidHolderFromAccountId = gql`
+	query HolderFromAccountId($accountId: ID!) {
+		account(id: $accountId) {
+			remoteData {
+
 			}
 		}
 	}

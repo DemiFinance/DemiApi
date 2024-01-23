@@ -12,31 +12,22 @@ import {
 } from "../quiltt";
 import {
 	MxholderFromAccountId,
+	TransactionsByAccountId_Plaid,
 	getAccountType,
 } from "../../utilities/graphqlClient";
 import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
 } from "../auth0functions";
-import {
-	MxTransaction,
-	PlaidTransaction,
-	TransactionJSON,
-} from "../../models/mx/mxtransaction";
+import {MxTransaction} from "../../models/mx/mxtransaction";
 import {generateTokenById} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
-
-import {createApolloClient} from "../../utilities/graphqlClient";
-
+import { PlaidTransaction } from "../../models/quiltt/plaid";
 import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
-import {
-	MxTransactionsByAccountId,
-	PlaidTransactionsByAccountId,
-} from "../../utilities/graphqlSchema";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -55,29 +46,25 @@ export async function fetchTransactions(
 	accountId: string
 ) {
 	const span = tracer.startSpan("fetchTransactions");
-	const client = createApolloClient(sessionToken);
 	let transactions: MxTransaction[] | PlaidTransaction[] = [];
 
-	// Check if its an MX Account
-	try {
-		const mxResponse = await client.query({
-			query: MxTransactionsByAccountId,
-			variables: {accountId},
-		});
+	//TODO: some selection logic here... were only running plaid atm
 
-		transactions = parseTransactions(mxResponse.data) as MxTransaction[];
-	} catch (error) {
-		logger.log("error", `Error in MXTransactions query: ${error}`);
-	}
+	// // Check if its an MX Account
+	// try {
+	// 	const mxResponse = await client.query({
+	// 		query: MxTransactionsByAccountId,
+	// 		variables: {accountId},
+	// 	});
+
+	// 	transactions = parseTransactions(mxResponse.data) as MxTransaction[];
+	// } catch (error) {
+	// 	logger.log("error", `Error in MXTransactions query: ${error}`);
+	// }
 
 	// Or is it Plaid?
 	try {
-		const plaidResponse = await client.query({
-			query: PlaidTransactionsByAccountId,
-			variables: {accountId},
-		});
-
-		transactions = parseTransactions(plaidResponse.data) as PlaidTransaction[];
+		transactions = await TransactionsByAccountId_Plaid(accountId, sessionToken);
 	} catch (error) {
 		logger.log("error", `Error in second query: ${error}`);
 	}
@@ -95,38 +82,6 @@ export async function fetchTransactions(
 	span.finish();
 
 	return transactions;
-}
-
-/**
- * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
- * in the `json.account.transactions` array and excluding the __typename field.
- *
- * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {MxTransaction[] | PlaidTransaction[]} An array of parsed transactions without the __typename field.
- *
- * @example
- * // ...
- */
-function parseTransactions(
-	json: TransactionJSON
-): (MxTransaction | PlaidTransaction)[] {
-	if (!json || !json.account || !json.account.transactions) {
-		throw new Error("Invalid JSON structure");
-	}
-
-	return json.account.transactions.map((transaction) => {
-		const {__typename, ...source} = transaction.source;
-		__typename; // Use __typename to prevent TypeScript from throwing an error
-		// Here, you can add logic to determine whether 'source' is an MxTransaction or a PlaidTransaction
-		// For example, you might check for the presence of a unique field in each type
-		if ("uniqueMxField" in source) {
-			// It's an MxTransaction
-			return source as MxTransaction;
-		} else {
-			// It's a PlaidTransaction
-			return source as PlaidTransaction;
-		}
-	});
 }
 
 /**
@@ -330,10 +285,8 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			1.1. If not checking or savings return, we may need to do something with this later
 		2. Get Account Info
  	*/
-	 const span = tracer.startSpan("account.verified");
+	const span = tracer.startSpan("account.verified");
 	try {
-		
-
 		const account = event.record as Account;
 
 		const quiltId = event.profile?.id;
@@ -357,7 +310,9 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			);
 			return;
 		}
-	} catch (error) {}
+	} catch (error) {
+		console.log(error);
+	}
 
 	//honestly at this point i think it should call a function to handle the ach account creation and verification process in method that returns a success value or something... it could be a void?
 

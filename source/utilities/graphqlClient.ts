@@ -7,9 +7,12 @@ import {
 	GetProfileId,
 	MxAccountDetailsByAccountId,
 	GetAccountType,
+	PlaidAccountDetailsByAccountId,
+	PlaidTransactionsByAccountId,
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
+import {PlaidTransaction} from "../models/quiltt/plaid";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -96,6 +99,63 @@ export async function MxholderFromAccountId(
 		}
 
 		return resultString;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+/**
+ * Retrieves the Plaid account details from a specific account ID.
+ *
+ * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @returns Plaid account details object
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function AccountDetailsByAccountId_Plaid(
+	quilttUserId: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const response = await executeQuery(
+			quilttUserId,
+			PlaidAccountDetailsByAccountId,
+			{
+				accountId,
+			}
+		);
+
+		return response.account.remoteData.plaid.account.response;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+/**
+ * Retrieves the Plaid account transactions from a specific account ID.
+ *
+ * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @returns {Promise<PlaidTransaction[]>} Plaid account details object
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function TransactionsByAccountId_Plaid(
+	quilttUserId: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const response = await executeQuery(
+			quilttUserId,
+			PlaidTransactionsByAccountId,
+			{
+				accountId,
+			}
+		);
+
+		return response.account.transactions.nodes.remoteData.plaid.transaction
+			.response as PlaidTransaction[];
 	} catch (error) {
 		console.error(error);
 		throw error;
