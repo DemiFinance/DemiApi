@@ -276,7 +276,6 @@ async function unimplementedFunc(event: QuilttEvent) {
 	if (event) {
 		return;
 	}
-	//console.log(`Created connection with id: ${event.id}`);
 }
 
 async function quilttVerifiedAccount(event: QuilttEvent) {
@@ -331,13 +330,22 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 
 	try {
 		const fetchedAccount = await fetchAccountInfo(accountId);
+		const accountType = getNormalizedAccountType(fetchedAccount.type);
 
 		const accountInfo = fetchedAccount.body;
 
 		const quilttUserId = fetchedAccount.profileId;
 
 		const sessionToken = await generateTokenById(fetchedAccount.profileId);
+
+		//get account numbers
 		const accountData = await getAccountNumbers(accountId);
+		const {number: accountNumber, routing: routingNumber} =
+			accountData.accountNumbers;
+					
+		// Convert accountNumber and routingNumber to strings
+		const accountNumberStr = String(accountNumber);
+		const routingNumberStr = String(routingNumber);
 
 		const transactionsObject = await fetchTransactions(sessionToken, accountId);
 
@@ -345,24 +353,6 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
-		const accountType = getNormalizedAccountType(fetchedAccount.type);
-
-		const {number: accountNumber, routing: routingNumber} =
-			accountData.accountNumbers;
-
-		logger.log(
-			"info",
-			`Account info pre convert ${accountNumber} routing number ${routingNumber}`
-		);
-
-		// Convert accountNumber and routingNumber to strings
-		const accountNumberStr = String(accountNumber);
-		const routingNumberStr = String(routingNumber);
-
-		logger.log(
-			"info",
-			`Account info post convert ${accountNumberStr} routing number ${routingNumberStr}`
-		);
 
 		const account = await createAccountInMethod(
 			accountNumberStr,
@@ -372,7 +362,16 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		);
 		logger.log("info", "Account Output:" + JSON.stringify(account));
 
-		createAccountVerification(account.id, accountInfo, transactionsObject);
+		const verification = await createAccountVerification(account.id, accountInfo, transactionsObject);
+		if(verification.status === "success") {
+
+			//send notification to user
+			logger.log("info", "Account Verification Success:" + JSON.stringify(verification));
+		} else {
+			logger.log("error", "Account Verification Failed:" + JSON.stringify(verification));
+		}
+
+
 		span.finish();
 	} catch (error) {
 		if (error instanceof Not_ACH_Account) {
