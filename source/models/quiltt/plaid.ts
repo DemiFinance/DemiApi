@@ -3,14 +3,14 @@ export type PlaidTransactions = {
 };
 
 export type PlaidAccount = {
-    accountId: string;
-    balances: {
-        available: number;
-        current: number;
-        isoCurrencyCode: string;
-        limit: number;
-        unofficialCurrencyCode: string;
-    }
+	accountId: string;
+	balances: {
+		available: number;
+		current: number;
+		isoCurrencyCode: string;
+		limit: number;
+		unofficialCurrencyCode: string;
+	};
 };
 
 export type PlaidTransaction = {

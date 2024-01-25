@@ -6,8 +6,8 @@ import {
 	getQuilttIdByUserId,
 	getUserPhoneNumber,
 } from "./auth0functions";
-import {AccountNumbers, Profile} from "../models/quilttmodels";
-import {generateTokenById} from "../utilities/quilttUtil";
+import {Profile} from "../models/quilttmodels";
+import {generateTokenByQuilttId} from "../utilities/quilttUtil";
 import logger from "../wrappers/winstonLogging";
 import tracer from "../wrappers/datadogTracer";
 import {
@@ -148,7 +148,7 @@ export async function handleGenerateSessionToken(
 
 		if (quilttId) {
 			logger.log("info", "Quiltt ID found: " + quilttId);
-			sessionToken = await generateTokenById(quilttId);
+			sessionToken = await generateTokenByQuilttId(quilttId);
 			logger.log("info", `Generated Session Token ${sessionToken}`);
 		} else {
 			logger.log("info", "Quiltt ID not found");
@@ -234,9 +234,8 @@ export async function createQuilttProfile(
  */
 export async function getAccountNumbers(
 	accountId: string
-): Promise<{accountNumbers: AccountNumbers}> {
-	const span = tracer.startSpan("getAccountNumbers"); // Start a new span
-
+): Promise<{accountNumberStr: string; routingNumberStr: string}> {
+	const span = tracer.startSpan("getAccountNumbers");
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = `https://api.quiltt.io/v1/accounts/${accountId}/ach`;
 
@@ -245,51 +244,51 @@ export async function getAccountNumbers(
 			"error",
 			"QUILTT_TOKEN environment variable is not set or is blank"
 		);
-		span.finish(); // Finish the span in case of early return
+		span.finish();
 		throw new Quiltt_Token_EnvVar_Error("QUILTT_TOKEN Error");
 	}
 
 	try {
 		const config = {
-			headers: {
-				Authorization: `Bearer ${authToken}`,
-			},
+			headers: {Authorization: `Bearer ${authToken}`},
 		};
 
 		const response = await axios.get(url, config);
-		console.log(response.data);
-
-		// Check if either 'number' or 'routing' is null
 		const accountNumbers = response.data;
 
-		logger.log(
-			"info",
-			`Account numbers fetched successfully ${JSON.stringify(accountNumbers)}`
-		);
 		if (!accountNumbers.number || !accountNumbers.routing) {
 			logger.log("error", "Account number or routing number is null");
-			span.setTag("error", true); // Mark the span as errored
-			span.finish(); // Finish the span before throwing the error
+			span.setTag("error", true);
+			span.finish();
 			throw new Account_Numbers_Missing(
 				"Account number or routing number is null"
 			);
 		}
-		span.finish(); // Finish the span successfully
-		return {accountNumbers};
+
+		// Convert accountNumber and routingNumber to strings here
+		const accountNumberStr = String(accountNumbers.number);
+		const routingNumberStr = String(accountNumbers.routing);
+
+		logger.log(
+			"info",
+			"Account numbers fetched and converted to strings successfully"
+		);
+		span.finish();
+		return {accountNumberStr, routingNumberStr};
 	} catch (error: any) {
 		logger.log("error", `Error fetching account: ${error.message}`);
 		if (error.response) {
 			logger.log("error", `Response data: ${error.response.data}`);
 			logger.log("error", `Response status: ${error.response.status}`);
-			span.setTag("error", true); // Mark the span as errored
-			span.finish(); // Finish the span before throwing the error
+			span.setTag("error", true);
+			span.finish();
 			throw new Error(
 				`Error: ${error.response.status}, ${JSON.stringify(
 					error.response.data
 				)}`
 			);
 		} else {
-			span.finish(); // Finish the span before throwing the error
+			span.finish();
 			throw new Error("GetAccountNumber Error");
 		}
 	}

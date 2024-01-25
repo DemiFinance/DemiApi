@@ -11,6 +11,7 @@ import {
 	getAccountNumbers,
 } from "../quiltt";
 import {
+	AccountDetailsByAccountId_Plaid,
 	MxholderFromAccountId,
 	TransactionsByAccountId_Plaid,
 	getAccountType,
@@ -20,14 +21,16 @@ import {
 	getEntityIdByQuilttAccount,
 } from "../auth0functions";
 import {MxTransaction} from "../../models/mx/mxtransaction";
-import {generateTokenById} from "../../utilities/quilttUtil";
+import {generateTokenByQuilttId} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
-import { PlaidTransaction } from "../../models/quiltt/plaid";
+import {PlaidTransaction} from "../../models/quiltt/plaid";
 import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
+import {quilttProfile} from "../../models/quiltt/quilttProfile";
+import {sendNotificationByExternalId} from "../../utilities/onesignal";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -208,7 +211,9 @@ async function createAccount(event: QuilttEvent) {
 		const accountType = getNormalizedAccountType(fetchedAccount.type);
 		const accountInfo = fetchedAccount.body;
 		const quilttUserId = fetchedAccount.profileId;
-		const sessionToken = await generateTokenById(fetchedAccount.profileId);
+		const sessionToken = await generateTokenByQuilttId(
+			fetchedAccount.profileId
+		);
 
 		//Setup retry... We basically just need to wait for quiltt to finish syncing
 		const maxRetries = 5;
@@ -226,26 +231,9 @@ async function createAccount(event: QuilttEvent) {
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
-		const {number: accountNumber, routing: routingNumber} =
-			accountData.accountNumbers;
-
-		logger.log(
-			"info",
-			`Account info pre convert ${accountNumber} routing number ${routingNumber}`
-		);
-
-		// Convert accountNumber and routingNumber to strings
-		const accountNumberStr = String(accountNumber);
-		const routingNumberStr = String(routingNumber);
-
-		logger.log(
-			"info",
-			`Account info post convert ${accountNumberStr} routing number ${routingNumberStr}`
-		);
-
 		const account = await createAccountInMethod(
-			accountNumberStr,
-			routingNumberStr,
+			accountData.accountNumberStr,
+			accountData.routingNumberStr,
 			accountType,
 			holderInfo
 		);
@@ -279,21 +267,28 @@ async function unimplementedFunc(event: QuilttEvent) {
 }
 
 async function quilttVerifiedAccount(event: QuilttEvent) {
-	/* THE PLAN	
-		1. Get Account Type
-			1.1. If not checking or savings return, we may need to do something with this later
-		2. Get Account Info
- 	*/
 	const span = tracer.startSpan("account.verified");
 	try {
 		const account = event.record as Account;
+		const accountId = account.id;
+		const profile = event.profile as quilttProfile;
+		const profileMetadata = profile.metadata;
+		let entityId: string;
 
-		const quiltId = event.profile?.id;
+		if (!profileMetadata) {
+			logger.log("error", "No profile metadata found in event");
+			entityId = await fetchHolderInfo(profile.id, accountId);
+			return;
+		} else {
+			entityId = profileMetadata.entityId;
+		}
+
+		const quiltId = profile.id;
 		if (!quiltId) {
 			logger.log("error", "No profile id found in event");
 			return;
 		}
-		const sessionToken = await generateTokenById(quiltId);
+		const sessionToken = await generateTokenByQuilttId(quiltId);
 
 		const accountType = getNormalizedAccountType(
 			await getAccountType(sessionToken, account.id)
@@ -309,68 +304,52 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			);
 			return;
 		}
-	} catch (error) {
-		console.log(error);
-	}
-
-	//honestly at this point i think it should call a function to handle the ach account creation and verification process in method that returns a success value or something... it could be a void?
-
-	const eventReccord = event.record as Account;
-	const user = event.profile;
-	const accountId = eventReccord.id;
-	const connectionId = eventReccord.connectionId;
-
-	const tempString =
-		JSON.stringify(user) + " " + accountId + " " + connectionId;
-	logger.log(
-		"info",
-		"Quiltt Verified Account:" + JSON.stringify(event) + tempString
-	);
-	//span.finish();
-
-	try {
-		const fetchedAccount = await fetchAccountInfo(accountId);
-		const accountType = getNormalizedAccountType(fetchedAccount.type);
-
-		const accountInfo = fetchedAccount.body;
-
-		const quilttUserId = fetchedAccount.profileId;
-
-		const sessionToken = await generateTokenById(fetchedAccount.profileId);
 
 		//get account numbers
-		const accountData = await getAccountNumbers(accountId);
-		const {number: accountNumber, routing: routingNumber} =
-			accountData.accountNumbers;
-					
-		// Convert accountNumber and routingNumber to strings
-		const accountNumberStr = String(accountNumber);
-		const routingNumberStr = String(routingNumber);
+		const {accountNumberStr, routingNumberStr} =
+			await getAccountNumbers(accountId);
 
-		const transactionsObject = await fetchTransactions(sessionToken, accountId);
-
-		logger.log("info", `Account Data ${JSON.stringify(accountData)}`);
-
-		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
-
-
-		const account = await createAccountInMethod(
+		const methodAccount = await createAccountInMethod(
 			accountNumberStr,
 			routingNumberStr,
 			accountType,
-			holderInfo
+			entityId
 		);
-		logger.log("info", "Account Output:" + JSON.stringify(account));
 
-		const verification = await createAccountVerification(account.id, accountInfo, transactionsObject);
-		if(verification.status === "success") {
+		const transactionsObject = await TransactionsByAccountId_Plaid(
+			accountId,
+			sessionToken
+		);
+		const accountObject = await AccountDetailsByAccountId_Plaid(
+			accountId,
+			sessionToken
+		);
 
+		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
+
+		const verification = await createAccountVerification(
+			account.id,
+			accountObject,
+			transactionsObject
+		);
+		if (verification.status === "success") {
 			//send notification to user
-			logger.log("info", "Account Verification Success:" + JSON.stringify(verification));
+			sendNotificationByExternalId(
+				entityId,
+				"Account Verified",
+				"Your bank account is ready to use!",
+				Date.now().toString()
+			);
+			logger.log(
+				"info",
+				"Account Verification Success:" + JSON.stringify(verification)
+			);
 		} else {
-			logger.log("error", "Account Verification Failed:" + JSON.stringify(verification));
+			logger.log(
+				"error",
+				"Account Verification Failed:" + JSON.stringify(verification)
+			);
 		}
-
 
 		span.finish();
 	} catch (error) {
