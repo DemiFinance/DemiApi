@@ -222,16 +222,7 @@ export const MxHolderFromAccountId = gql`
 		}
 	}
 `;
-//TODO: NEED TO BIGFIX THIS IT DOESNT WORK
-export const PlaidHolderFromAccountId = gql`
-	query HolderFromAccountId($accountId: ID!) {
-		account(id: $accountId) {
-			remoteData {
 
-			}
-		}
-	}
-`;
 
 export const GetProfileId = gql`
 	query GetProfileId {
