@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import {Request, Response} from "express";
 import {Method, Environments, IPaymentListOpts} from "method-node";
-import * as db from "../../database/index.js";
+import * as db from "../../database/index";
 import logger from "../../wrappers/winstonLogging";
 
 const method = new Method({

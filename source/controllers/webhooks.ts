@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import {MethodWebhookObject} from "../models/webhook";
 
 import {IAccount, IAccountLiability, TAccountTypes} from "method-node";
-import * as db from "../database/index.js";
+import * as db from "../database/index";
 import * as dbHelpers from "../database/helpers";
 import {sendNotificationByExternalId} from "../utilities/onesignal";
 import {fetchDaysInAdvanceByEntityId} from "../controllers/auth0functions";

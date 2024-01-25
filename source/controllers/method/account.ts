@@ -4,9 +4,9 @@ import {Request, Response} from "express";
 import {IAccountListOpts} from "method-node";
 
 //import {getToken} from "../auth0functions";
-import * as db from "../../database/index.js";
-import logger from "../../wrappers/winstonLogging.js";
-import {method} from "../../wrappers/methodWrapper.js";
+import * as db from "../../database/index";
+import logger from "../../wrappers/winstonLogging";
+import {method} from "../../wrappers/methodWrapper";
 
 //complete
 const getAccountById = async (request: Request, response: Response) => {
