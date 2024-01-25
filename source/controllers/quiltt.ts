@@ -44,7 +44,12 @@ async function generateToken(userId: string): Promise<string> {
 	try {
 		logger.log("info", "Creating new profile with token");
 		const phone_number = await getUserPhoneNumber(userId);
-		const data = {phone: phone_number};
+		const data = {
+			phone: phone_number,
+			metadata: {
+				userId: userId,
+			},
+		};
 		const config = {
 			headers: {
 				Authorization: `Bearer ${authToken}`,
