@@ -336,8 +336,8 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			//send notification to user
 			sendNotificationByExternalId(
 				entityId,
-				"Account Verified",
-				"Your bank account is ready to use!",
+				"Bank Account Verified",
+				"You can now make payments!",
 				Date.now().toString()
 			);
 			logger.log(
