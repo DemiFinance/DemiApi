@@ -2,13 +2,17 @@
 import {ApolloClient, InMemoryCache, HttpLink} from "@apollo/client/core";
 
 import {
-	TransactionsByAccountId,
-	HolderFromAccountId,
+	MxTransactionsByAccountId,
+	MxHolderFromAccountId,
 	GetProfileId,
-	AccountDetailsByAccountId,
+	MxAccountDetailsByAccountId,
+	GetAccountType,
+	PlaidAccountDetailsByAccountId,
+	PlaidTransactionsByAccountId,
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
+import {PlaidTransaction} from "../models/quiltt/plaid";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -18,7 +22,7 @@ const URI = "https://api.quiltt.io/v1/graphql";
  * @param {string} sessionToken - The session token for authentication.
  * @return {ApolloClient} The Apollo Client instance.
  */
-function createApolloClient(sessionToken: string) {
+export function createApolloClient(sessionToken: string) {
 	const httpLink = new HttpLink({
 		uri: URI,
 		headers: {
@@ -79,12 +83,12 @@ export async function executeQuery(
  * @return {Promise<string>} The holder associated with the account ID.
  * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
  */
-export async function holderFromAccountId(
+export async function MxholderFromAccountId(
 	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
 	try {
-		const response = await executeQuery(quilttUserId, HolderFromAccountId, {
+		const response = await executeQuery(quilttUserId, MxHolderFromAccountId, {
 			accountId,
 		});
 
@@ -95,6 +99,63 @@ export async function holderFromAccountId(
 		}
 
 		return resultString;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+/**
+ * Retrieves the Plaid account details from a specific account ID.
+ *
+ * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @returns Plaid account details object
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function AccountDetailsByAccountId_Plaid(
+	quilttUserId: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const response = await executeQuery(
+			quilttUserId,
+			PlaidAccountDetailsByAccountId,
+			{
+				accountId,
+			}
+		);
+
+		return response.account.remoteData.plaid.account.response;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+/**
+ * Retrieves the Plaid account transactions from a specific account ID.
+ *
+ * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} accountId - The account ID.
+ * @returns {Promise<PlaidTransaction[]>} Plaid account details object
+ * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
+ */
+export async function TransactionsByAccountId_Plaid(
+	quilttUserId: string,
+	accountId: string
+): Promise<any> {
+	try {
+		const response = await executeQuery(
+			quilttUserId,
+			PlaidTransactionsByAccountId,
+			{
+				accountId,
+			}
+		);
+
+		return response.account.transactions.nodes.remoteData.plaid.transaction
+			.response as PlaidTransaction[];
 	} catch (error) {
 		console.error(error);
 		throw error;
@@ -143,7 +204,7 @@ export async function accountDetailsById(
 	try {
 		const client = createApolloClient(sessionToken);
 		const response = await client.query({
-			query: AccountDetailsByAccountId,
+			query: MxAccountDetailsByAccountId,
 			variables: {accountId},
 		});
 
@@ -170,14 +231,14 @@ export async function accountDetailsById(
  * @return {Promise<any>} The transactions associated with the account ID.
  * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
  */
-export async function transactionsByAccountId(
+export async function mxTransactionsByAccountId(
 	sessionToken: string,
 	accountId: string
 ): Promise<any> {
 	try {
 		const client = createApolloClient(sessionToken);
 		const response = await client.query({
-			query: TransactionsByAccountId,
+			query: MxTransactionsByAccountId,
 			variables: {accountId},
 		});
 
@@ -231,6 +292,39 @@ export async function getQuilttUuidByUserId(
 	} catch (error) {
 		console.error(error);
 		throw error; // Re-throw the error after logging it.
+	}
+}
+
+/**
+ * Retrieves the account type associated with a specific account ID.
+ *
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID whose account type is to be retrieved.
+ * @returns {Promise<string>} The account type associated with the account ID.
+ */
+export async function getAccountType(
+	sessionToken: string,
+	accountId: string
+): Promise<string> {
+	try {
+		const client = createApolloClient(sessionToken);
+		const response = await client.query({
+			query: GetAccountType,
+			variables: {accountId},
+		});
+
+		if (response.errors && response.errors.length > 0) {
+			throw new Error(
+				`GraphQL errors: ${response.errors
+					.map((error) => error.message)
+					.join(", ")}`
+			);
+		}
+
+		return response.data.account.type;
+	} catch (error) {
+		console.error(error);
+		throw error;
 	}
 }
 

@@ -1,5 +1,8 @@
 import axios from "axios";
-import {Quiltt_Token_EnvVar_Error} from "./errors/demierrors";
+import {
+	Quiltt_Token_EnvVar_Error,
+	Token_Refresh_Error,
+} from "./errors/demierrors";
 import logger from "../wrappers/winstonLogging";
 import tracer from "../wrappers/datadogTracer";
 
@@ -69,7 +72,7 @@ export async function refreshSessionToken(quilttId: string): Promise<string> {
 
 		return response.data.token;
 	} catch (error) {
-		throw new Error("Unable to refresh session token");
+		throw new Token_Refresh_Error("Unable to refresh session token");
 	}
 }
 
@@ -78,14 +81,16 @@ export async function refreshSessionToken(quilttId: string): Promise<string> {
  *
  * @async
  * @function
- * @param {string} userId - The ID of the user to generate a session token for.
+ * @param {string} quilttId - The ID of the user to generate a session token for.
  * @returns {Promise<string>} - A Promise that resolves to a session token string.
  * @throws Will throw an error if the `QUILTT_TOKEN` environment variable is not set or is blank.
  * @throws Will throw an error if the HTTP request fails, with an error message indicating the status and response data if available, or "Internal Server Error" otherwise.
  */
-export async function generateTokenById(userId: string): Promise<string> {
+export async function generateTokenByQuilttId(
+	quilttId: string
+): Promise<string> {
 	const span = tracer.startSpan("generateTokenById");
-	span.setTag("user.id", userId);
+	span.setTag("quilttId", quilttId);
 
 	const authToken: string | undefined = process.env.QUILTT_TOKEN;
 	const url = "https://auth.quiltt.io/v1/users/sessions";
@@ -106,7 +111,7 @@ export async function generateTokenById(userId: string): Promise<string> {
 
 	try {
 		logger.log("info", "Creating token for existing profile");
-		const data = {userId: userId};
+		const data = {userId: quilttId};
 		const config = {
 			headers: {
 				Authorization: `Bearer ${authToken}`,

@@ -112,3 +112,10 @@ export class Not_ACH_Account extends Error {
 		this.name = "NotACHAccount";
 	}
 }
+
+export class Token_Refresh_Error extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "TokenRefreshError";
+	}
+}

@@ -1,3 +1,5 @@
+import {PlaidTransaction} from "../quiltt/plaid";
+
 export type MxTransaction = {
 	accountGuid: string;
 	amount: number;
@@ -34,7 +36,7 @@ export type MxTransaction = {
 
 export type TransactionObject = {
 	__typename: string;
-	source: MxTransaction & {__typename: string}; // Include __typename in the source object type
+	source: (MxTransaction | PlaidTransaction) & {__typename: string}; // Include __typename in the source object type
 };
 
 export type AccountObject = {

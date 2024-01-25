@@ -1,82 +1,90 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
-import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
+import {
+	Account,
+	QuilttEvent,
+	QuilttWebhookObject,
+} from "../../models/quilttmodels";
 import {
 	addUUIDToMetadata,
 	fetchAccountInfo,
 	getAccountNumbers,
 } from "../quiltt";
 import {
-	holderFromAccountId,
-	transactionsByAccountId,
+	AccountDetailsByAccountId_Plaid,
+	MxholderFromAccountId,
+	TransactionsByAccountId_Plaid,
+	getAccountType,
 } from "../../utilities/graphqlClient";
 import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
 } from "../auth0functions";
-import {MxTransaction, TransactionJSON} from "../../models/mx/mxtransaction";
-import {generateTokenById} from "../../utilities/quilttUtil";
+import {MxTransaction} from "../../models/mx/mxtransaction";
+import {generateTokenByQuilttId} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
+import {PlaidTransaction} from "../../models/quiltt/plaid";
 import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
+import {quilttProfile} from "../../models/quiltt/quilttProfile";
+import {sendNotificationByExternalId} from "../../utilities/onesignal";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
 });
 
 /**
- * Fetches transactions for the specified account ID.
+ * Fetches transactions from two different GraphQL queries.
+ * Tries both queries even if one fails, concatenating results from both.
  *
- * @param {string} accountId - The ID of the account to fetch transactions for.
- * @returns {Promise<any>} The transactions data.
+ * @param {string} sessionToken - The session token for authentication.
+ * @param {string} accountId - The account ID for which transactions are fetched.
+ * @returns {Promise<Array>} An array of transaction objects.
  */
 export async function fetchTransactions(
 	sessionToken: string,
 	accountId: string
 ) {
-	const span = tracer.startSpan("fetchTransactions"); // Start a new span
+	const span = tracer.startSpan("fetchTransactions");
+	let transactions: MxTransaction[] | PlaidTransaction[] = [];
 
+	//TODO: some selection logic here... were only running plaid atm
+
+	// // Check if its an MX Account
+	// try {
+	// 	const mxResponse = await client.query({
+	// 		query: MxTransactionsByAccountId,
+	// 		variables: {accountId},
+	// 	});
+
+	// 	transactions = parseTransactions(mxResponse.data) as MxTransaction[];
+	// } catch (error) {
+	// 	logger.log("error", `Error in MXTransactions query: ${error}`);
+	// }
+
+	// Or is it Plaid?
 	try {
-		const transactionsResponse = await transactionsByAccountId(
-			sessionToken,
-			accountId
-		);
-		logger.log("info", "Found some transactions...");
-		span.finish(); // Finish the span successfully
-		return parseTransactions(transactionsResponse);
+		transactions = await TransactionsByAccountId_Plaid(accountId, sessionToken);
 	} catch (error) {
-		logger.log("error", `Failed to fetch or parse transactions: ${error}`);
-		span.setTag("error", true); // Mark the span as errored
-		span.finish(); // Finish the span before throwing the error
-		throw error;
-	}
-}
-
-/**
- * Parses the transactions from the given JSON object, extracting the "source" object from each transaction
- * in the `json.account.transactions` array and excluding the __typename field.
- *
- * @param {TransactionJSON} json - The JSON object containing the transaction data.
- * @returns {MxTransaction[]} An array of parsed transactions without the __typename field.
- *
- * @example
- * // ...
- */
-function parseTransactions(json: TransactionJSON): MxTransaction[] {
-	if (!json || !json.account || !json.account.transactions) {
-		throw new Error("Invalid JSON structure");
+		logger.log("error", `Error in second query: ${error}`);
 	}
 
-	const transactionsArray = json.account.transactions.map((transaction) => {
-		const {__typename, ...source} = transaction.source; // Exclude __typename using destructuring
-		__typename; // Use __typename to prevent TypeScript from throwing an error
-		return source;
-	});
+	// Finalizing the span and logging the result
+	if (transactions.length === 0) {
+		logger.log("warn", "No transactions fetched from either query.");
+		span.setTag("error", true);
+	} else {
+		logger.log(
+			"info",
+			`${transactions.length} transactions fetched successfully.`
+		);
+	}
+	span.finish();
 
-	return transactionsArray;
+	return transactions;
 }
 
 /**
@@ -89,8 +97,12 @@ export async function fetchHolderInfo(
 	quilttUserId: string,
 	accountId: string
 ): Promise<string> {
+	const span = tracer.startSpan("fetch holder info");
 	try {
-		const accountResponse = await holderFromAccountId(quilttUserId, accountId);
+		const accountResponse = await MxholderFromAccountId(
+			quilttUserId,
+			accountId
+		);
 		logger.log("info", "Account Response:" + accountResponse);
 		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
 		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
@@ -98,10 +110,12 @@ export async function fetchHolderInfo(
 		if (entityId === undefined) {
 			throw new Error("Entity ID is undefined");
 		}
-
+		span.finish();
 		return entityId;
 	} catch (error) {
 		logger.log("error", "Error fetching holder info:" + error);
+		span.setTag("error", true); // Mark the span as errored
+		span.finish();
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }
@@ -112,7 +126,7 @@ export async function fetchHolderInfo(
  * @param {string} accountType - The type of the account (e.g., "CHECKING" or "SAVINGS").
  * @returns {TAccountSubTypes} The normalized account type.
  */
-function normalizeAccountType(accountType: string): TAccountSubTypes {
+export function normalizeAccountType(accountType: string): TAccountSubTypes {
 	const lowerCaseType = accountType.toLowerCase();
 	if (lowerCaseType === "checking" || lowerCaseType === "savings") {
 		return lowerCaseType as TAccountSubTypes;
@@ -197,7 +211,9 @@ async function createAccount(event: QuilttEvent) {
 		const accountType = getNormalizedAccountType(fetchedAccount.type);
 		const accountInfo = fetchedAccount.body;
 		const quilttUserId = fetchedAccount.profileId;
-		const sessionToken = await generateTokenById(fetchedAccount.profileId);
+		const sessionToken = await generateTokenByQuilttId(
+			fetchedAccount.profileId
+		);
 
 		//Setup retry... We basically just need to wait for quiltt to finish syncing
 		const maxRetries = 5;
@@ -215,26 +231,9 @@ async function createAccount(event: QuilttEvent) {
 
 		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
 
-		const {number: accountNumber, routing: routingNumber} =
-			accountData.accountNumbers;
-
-		logger.log(
-			"info",
-			`Account info pre convert ${accountNumber} routing number ${routingNumber}`
-		);
-
-		// Convert accountNumber and routingNumber to strings
-		const accountNumberStr = String(accountNumber);
-		const routingNumberStr = String(routingNumber);
-
-		logger.log(
-			"info",
-			`Account info post convert ${accountNumberStr} routing number ${routingNumberStr}`
-		);
-
 		const account = await createAccountInMethod(
-			accountNumberStr,
-			routingNumberStr,
+			accountData.accountNumberStr,
+			accountData.routingNumberStr,
 			accountType,
 			holderInfo
 		);
@@ -265,11 +264,102 @@ async function unimplementedFunc(event: QuilttEvent) {
 	if (event) {
 		return;
 	}
-	//console.log(`Created connection with id: ${event.id}`);
 }
 
 async function quilttVerifiedAccount(event: QuilttEvent) {
-	logger.log("info", "Quiltt Verified Account:" + JSON.stringify(event));
+	const span = tracer.startSpan("account.verified");
+	try {
+		const account = event.record as Account;
+		const accountId = account.id;
+		const profile = event.profile as quilttProfile;
+		const profileMetadata = profile.metadata;
+		let entityId: string;
+
+		if (!profileMetadata) {
+			logger.log("error", "No profile metadata found in event");
+			entityId = await fetchHolderInfo(profile.id, accountId);
+			return;
+		} else {
+			entityId = profileMetadata.entityId;
+		}
+
+		const quiltId = profile.id;
+		if (!quiltId) {
+			logger.log("error", "No profile id found in event");
+			return;
+		}
+		const sessionToken = await generateTokenByQuilttId(quiltId);
+
+		const accountType = getNormalizedAccountType(
+			await getAccountType(sessionToken, account.id)
+		);
+
+		if (accountType !== "checking" && accountType !== "savings") {
+			logger.log(
+				"error",
+				"Probably not a checking or savings account." +
+					accountType +
+					"account id:" +
+					event.record.id
+			);
+			return;
+		}
+
+		//get account numbers
+		const {accountNumberStr, routingNumberStr} =
+			await getAccountNumbers(accountId);
+
+		const methodAccount = await createAccountInMethod(
+			accountNumberStr,
+			routingNumberStr,
+			accountType,
+			entityId
+		);
+
+		const transactionsObject = await TransactionsByAccountId_Plaid(
+			accountId,
+			sessionToken
+		);
+		const accountObject = await AccountDetailsByAccountId_Plaid(
+			accountId,
+			sessionToken
+		);
+
+		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
+
+		const verification = await createAccountVerification(
+			account.id,
+			accountObject,
+			transactionsObject
+		);
+		if (verification.status === "success") {
+			//send notification to user
+			sendNotificationByExternalId(
+				entityId,
+				"Account Verified",
+				"Your bank account is ready to use!",
+				Date.now().toString()
+			);
+			logger.log(
+				"info",
+				"Account Verification Success:" + JSON.stringify(verification)
+			);
+		} else {
+			logger.log(
+				"error",
+				"Account Verification Failed:" + JSON.stringify(verification)
+			);
+		}
+
+		span.finish();
+	} catch (error) {
+		if (error instanceof Not_ACH_Account) {
+			// Handle the custom error
+			logger.log("warn", "Not a checking account we good");
+		} else {
+			logger.log("error", "Error creating new account:" + error);
+		}
+	}
 }
 
 /**

@@ -1,3 +1,5 @@
+import {quilttProfile} from "./quiltt/quilttProfile";
+
 export interface UnifiedWebhookObject {
 	id?: string;
 	type: string;
@@ -74,6 +76,6 @@ export type RecordType = Profile | Connection | Account;
 export interface QuilttEvent {
 	id: string;
 	type: string;
-	profile?: Profile;
+	profile?: quilttProfile;
 	record: RecordType;
 }
