@@ -223,7 +223,6 @@ export const MxHolderFromAccountId = gql`
 	}
 `;
 
-
 export const GetProfileId = gql`
 	query GetProfileId {
 		profile {

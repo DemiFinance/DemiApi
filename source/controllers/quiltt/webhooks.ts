@@ -19,6 +19,7 @@ import {
 import {
 	getAuth0IdByQuilttId,
 	getEntityIdByQuilttAccount,
+	getEntityIdByUserId,
 } from "../auth0functions";
 import {MxTransaction} from "../../models/mx/mxtransaction";
 import {generateTokenByQuilttId} from "../../utilities/quilttUtil";
@@ -273,14 +274,13 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		const accountId = account.id;
 		const profile = event.profile as quilttProfile;
 		const profileMetadata = profile.metadata;
+		//TODO: Fix this because it doesnt get assigne anything at the moment
 		let entityId: string;
 
 		if (!profileMetadata) {
-			logger.log("error", "No profile metadata found in event");
-			entityId = await fetchHolderInfo(profile.id, accountId);
 			return;
 		} else {
-			entityId = profileMetadata.entityId;
+			entityId = (await getEntityIdByUserId(profileMetadata.entity_Id)) ?? "";
 		}
 
 		const quiltId = profile.id;

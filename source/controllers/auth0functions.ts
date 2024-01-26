@@ -223,6 +223,21 @@ export const getQuilttIdByUserId = async (
 	}
 };
 
+export const getEntityIdByUserId = async (
+	userId: string
+): Promise<string | null> => {
+	try {
+		const user: User = await getUserById(userId);
+		logger.log("info", `[getEntityIdByUserId] User:${user}`);
+
+		// Assuming the data object is the relevant user
+		return user?.app_metadata.entity_id || null;
+	} catch (error) {
+		logger.log("error", `[getEntityIdByUserId] Error:${error}`);
+		return null;
+	}
+};
+
 /**
  * Retrieves the entity ID associated with a given Quiltt account ID by querying the Auth0 Management API.
  *
