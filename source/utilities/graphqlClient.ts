@@ -13,7 +13,6 @@ import {
 
 import {refreshSessionToken} from "./quilttUtil";
 import {
-	PlaidTransaction,
 	extractBalances,
 	extractTransactions,
 } from "../models/quiltt/plaid";
@@ -112,7 +111,7 @@ export async function MxholderFromAccountId(
 /**
  * Retrieves the Plaid account details from a specific account ID.
  *
- * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} quilttUserId - The Quiltt User ID.
  * @param {string} accountId - The account ID.
  * @returns Plaid account details object
  * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.
@@ -140,7 +139,7 @@ export async function AccountDetailsByAccountId_Plaid(
 /**
  * Retrieves the Plaid account transactions from a specific account ID.
  *
- * @param {string} quilttUserId - The session token for authentication.
+ * @param {string} quilttUserId - The Quiltt User ID.
  * @param {string} accountId - The account ID.
  * @returns {Promise<PlaidTransaction[]>} Plaid account details object
  * @throws Will throw an error if the network request fails or if the GraphQL query returns errors.

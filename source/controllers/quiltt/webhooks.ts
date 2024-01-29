@@ -204,6 +204,7 @@ const ACCOUNT_TYPES = {
  *
  * @param {QuilttEvent} event - The event data containing the account ID and other relevant information.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function createAccount(event: QuilttEvent) {
 	const span = tracer.startSpan("create.account");
 	const {id: accountId} = event.record;
@@ -280,7 +281,7 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		if (!profileMetadata) {
 			return;
 		} else {
-			entityId = (await getEntityIdByUserId(profileMetadata.entity_Id)) ?? "";
+			entityId = (await getEntityIdByUserId(profileMetadata.userId)) ?? "";
 		}
 
 		const quiltId = profile.id;
@@ -317,12 +318,12 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		);
 
 		const transactionsObject = await TransactionsByAccountId_Plaid(
-			accountId,
-			sessionToken
+			profile.id,
+			account.id
 		);
 		const accountObject = await AccountDetailsByAccountId_Plaid(
-			accountId,
-			sessionToken
+			profile.id,
+			account.id
 		);
 
 		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
