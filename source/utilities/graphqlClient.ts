@@ -12,7 +12,11 @@ import {
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
-import {PlaidTransaction} from "../models/quiltt/plaid";
+import {
+	PlaidTransaction,
+	extractBalances,
+	extractTransactions,
+} from "../models/quiltt/plaid";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -126,7 +130,7 @@ export async function AccountDetailsByAccountId_Plaid(
 			}
 		);
 
-		return response.account.remoteData.plaid.account.response;
+		return extractBalances(response);
 	} catch (error) {
 		console.error(error);
 		throw error;
@@ -154,8 +158,7 @@ export async function TransactionsByAccountId_Plaid(
 			}
 		);
 
-		return response.account.transactions.nodes.remoteData.plaid.transaction
-			.response as PlaidTransaction[];
+		return extractTransactions(response);
 	} catch (error) {
 		console.error(error);
 		throw error;

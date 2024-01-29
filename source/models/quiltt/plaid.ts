@@ -2,6 +2,39 @@ export type PlaidTransactions = {
 	transactions: PlaidTransaction[];
 };
 
+// Define interfaces
+interface Balances {
+	available: number;
+	current: number;
+	isoCurrencyCode: string;
+	lastUpdatedDatetime: string | null;
+	limit: number | null;
+	unofficialCurrencyCode: string | null;
+}
+
+interface AccountResponse {
+	response: {
+		balances: Balances;
+	};
+}
+
+interface AccountRootObject {
+	data: {
+		account: {
+			remoteData: {
+				plaid: {
+					account: AccountResponse;
+				};
+			};
+		};
+	};
+}
+
+// Function to extract balances
+export function extractBalances(root: AccountRootObject): Balances {
+	return root.data.account.remoteData.plaid.account.response.balances;
+}
+
 export type PlaidAccount = {
 	accountId: string;
 	balances: {
@@ -12,6 +45,37 @@ export type PlaidAccount = {
 		unofficialCurrencyCode: string;
 	};
 };
+
+interface Node {
+	remoteData: {
+		plaid: {
+			transaction: {
+				response: PlaidTransaction;
+			};
+		};
+	};
+}
+
+interface TransactionsRootObject {
+	data: {
+		account: {
+			transactions: {
+				nodes: Node[];
+			};
+		};
+	};
+}
+
+// Function to extract transactions
+export function extractTransactions(
+	root: TransactionsRootObject
+): PlaidTransaction[] {
+	const transactions: PlaidTransaction[] = [];
+	root.data.account.transactions.nodes.forEach((node) => {
+		transactions.push(node.remoteData.plaid.transaction.response);
+	});
+	return transactions;
+}
 
 export type PlaidTransaction = {
 	accountId: string;

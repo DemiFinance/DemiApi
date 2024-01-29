@@ -486,9 +486,9 @@ const quilttOperationHandlers: {
 	"connection.synced.errored.provider": unimplementedFunc,
 	"connection.synced.errored.institution": unimplementedFunc,
 	"connection.disconnected": unimplementedFunc,
-	"account.created": createAccount,
+	"account.created": unimplementedFunc,
 	"account.updated": unimplementedFunc,
-	"account.verified": quilttVerifiedAccount, //lets implement this?
+	"account.verified": quilttVerifiedAccount,
 	"account.deleted": unimplementedFunc,
 };
 
