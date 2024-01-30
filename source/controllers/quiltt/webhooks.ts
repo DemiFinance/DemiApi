@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
 import {
-	Account,
 	QuilttEvent,
 	QuilttWebhookObject,
 } from "../../models/quilttmodels";
@@ -271,12 +270,17 @@ async function unimplementedFunc(event: QuilttEvent) {
 async function quilttVerifiedAccount(event: QuilttEvent) {
 	const span = tracer.startSpan("account.verified");
 	try {
-		const account = event.record as Account;
+		const account = event.record;
 		const accountId = account.id;
 		const profile = event.profile as quilttProfile;
 		const profileMetadata = profile.metadata;
 		//TODO: Fix this because it doesnt get assigne anything at the moment
 		let entityId: string;
+
+		if (!accountId) {
+			logger.log("error", "No account id found in event");
+			return;
+		}
 
 		if (!profileMetadata) {
 			return;
