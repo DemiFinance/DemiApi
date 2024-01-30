@@ -277,7 +277,7 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		//TODO: Fix this because it doesnt get assigne anything at the moment
 		let entityId: string;
 
-		if (!accountId) {
+		if (accountId == "" || !accountId) {
 			logger.log("error", "No account id found in event");
 			return;
 		}
