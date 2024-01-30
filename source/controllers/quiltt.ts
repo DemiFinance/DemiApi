@@ -122,7 +122,11 @@ export async function addUUIDToMetadata(
 		await addQuilttUuidToMetadata(userID, uuid);
 		logger.log("info", `UUID added to metadata for user ${userID}`);
 	} catch (error) {
-		logger.log("error", `Error adding UUID to metadata for user ${userID}:`, error);
+		logger.log(
+			"error",
+			`Error adding UUID to metadata for user ${userID}:`,
+			error
+		);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }

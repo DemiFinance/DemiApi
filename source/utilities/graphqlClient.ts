@@ -14,6 +14,7 @@ import {
 import {refreshSessionToken} from "./quilttUtil";
 import {extractBalances, extractTransactions} from "../models/quiltt/plaid";
 import logger from "../wrappers/winstonLogging";
+import tracer from "dd-trace";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -53,6 +54,7 @@ export async function executeQuery(
 	variables: any
 ): Promise<any> {
 	try {
+		const span = tracer.startSpan("executeQuery");
 		const sessionToken = await refreshSessionToken(quilttUserId);
 
 		const client = createApolloClient(sessionToken);
@@ -69,6 +71,7 @@ export async function executeQuery(
 			);
 		}
 
+		span.finish();
 		return response.data;
 	} catch (error) {
 		console.error(error);
@@ -149,6 +152,7 @@ export async function TransactionsByAccountId_Plaid(
 	accountId: string
 ): Promise<any> {
 	try {
+		const span = tracer.startSpan("TransactionsByAccountId_Plaid");
 		const response = await executeQuery(
 			quilttUserId,
 			PlaidTransactionsByAccountId,
@@ -159,6 +163,7 @@ export async function TransactionsByAccountId_Plaid(
 
 		logger.info("Plaid transactions response: ", JSON.stringify(response));
 
+		span.finish();
 		return extractTransactions(response);
 	} catch (error) {
 		console.error(error);
