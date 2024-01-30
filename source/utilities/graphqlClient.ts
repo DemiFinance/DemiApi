@@ -15,6 +15,7 @@ import {refreshSessionToken} from "./quilttUtil";
 import {extractBalances, extractTransactions} from "../models/quiltt/plaid";
 import logger from "../wrappers/winstonLogging";
 import tracer from "dd-trace";
+import {log} from "console";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -153,6 +154,12 @@ export async function TransactionsByAccountId_Plaid(
 ): Promise<any> {
 	try {
 		const span = tracer.startSpan("TransactionsByAccountId_Plaid");
+		logger.info(
+			"Plaid transactions request, Account ID: ",
+			accountId,
+			" Quiltt User ID: ",
+			quilttUserId
+		);
 		const response = await executeQuery(
 			quilttUserId,
 			PlaidTransactionsByAccountId,
