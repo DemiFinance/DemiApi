@@ -323,11 +323,11 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 
 		const transactionsObject = await TransactionsByAccountId_Plaid(
 			profile.id,
-			account.id
+			accountId
 		);
 		const accountObject = await AccountDetailsByAccountId_Plaid(
 			profile.id,
-			account.id
+			accountId
 		);
 
 		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
