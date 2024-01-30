@@ -81,7 +81,7 @@ async function generateToken(userId: string): Promise<string> {
 				)}`
 			);
 		} else {
-			console.log("Quiltt Server Error", error);
+			logger.log("error", "Quiltt Server Error", error);
 			span.finish(); // Make sure to finish the span before throwing the error
 			throw new Error("Quiltt Server Error");
 		}
@@ -102,9 +102,13 @@ export async function addUserIdToMetadata(
 	try {
 		// Await the promise returned by addQuilttIdToMetadata
 		await addQuilttIdToMetadata(userId, quilttId);
-		console.log(`Metadata updated successfully for user ${userId}`);
+		logger.log("info", `Quiltt ID added to metadata for user ${userId}`);
 	} catch (error) {
-		console.error(`Error updating metadata for user ${userId}:`, error);
+		logger.log(
+			"error",
+			`Error adding Quiltt ID to metadata for user ${userId}:`,
+			error
+		);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }
@@ -116,9 +120,9 @@ export async function addUUIDToMetadata(
 	try {
 		// Await the promise returned by addQuilttIdToMetadata
 		await addQuilttUuidToMetadata(userID, uuid);
-		console.log(`UUID added to metadata for user ${userID}`);
+		logger.log("info", `UUID added to metadata for user ${userID}`);
 	} catch (error) {
-		console.error(`Error adding UUID to metadata for user ${userID}:`, error);
+		logger.log("error", `Error adding UUID to metadata for user ${userID}:`, error);
 		throw error; // Re-throw the error to be handled by the calling function
 	}
 }

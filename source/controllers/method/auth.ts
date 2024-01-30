@@ -3,6 +3,7 @@ dotenv.config();
 import {Request, Response} from "express";
 
 import {Method, Environments} from "method-node";
+import logger from "../../wrappers/winstonLogging";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -43,7 +44,7 @@ const newAuthSession = async (request: Request, response: Response) => {
 			element_token: token.element_token,
 		});
 	} catch (error) {
-		console.error("Error creating new auth session:", error);
+		logger.error("Error creating new auth session:", error);
 		return response
 			.status(500)
 			.json({error: "Failed to create new auth session"});

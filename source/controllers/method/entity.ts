@@ -63,7 +63,7 @@ const postEntity = async (request: Request, response: Response) => {
 
 		return response.status(200).json({newEntity});
 	} catch (error) {
-		console.error("Error creating new entity:", error);
+		logger.log("error", "Error creating new entity:", error);
 		return response.status(500).json({error: "Failed to create new entity"});
 	}
 };
@@ -73,9 +73,7 @@ const getEntity = async (request: Request, response: Response) => {
 	const id: string = request.params.id;
 	const requestedEntity: any = (await method.entities.get(id)) || null;
 
-	console.log("requested entity" + requestedEntity);
-
-	logger.log("info", "Requested entity: ", requestedEntity);
+	logger.log("info", "Requested entity: ", JSON.stringify(requestedEntity));
 
 	return response.status(200).json({
 		entity: requestedEntity,
