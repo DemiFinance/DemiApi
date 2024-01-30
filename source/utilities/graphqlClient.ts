@@ -12,10 +12,8 @@ import {
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
-import {
-	extractBalances,
-	extractTransactions,
-} from "../models/quiltt/plaid";
+import {extractBalances, extractTransactions} from "../models/quiltt/plaid";
+import logger from "../wrappers/winstonLogging";
 
 const URI = "https://api.quiltt.io/v1/graphql";
 
@@ -129,6 +127,8 @@ export async function AccountDetailsByAccountId_Plaid(
 			}
 		);
 
+		logger.info("Plaid accoutns response: ", JSON.stringify(response));
+
 		return extractBalances(response);
 	} catch (error) {
 		console.error(error);
@@ -156,6 +156,8 @@ export async function TransactionsByAccountId_Plaid(
 				accountId,
 			}
 		);
+
+		logger.info("Plaid transactions response: ", JSON.stringify(response));
 
 		return extractTransactions(response);
 	} catch (error) {
