@@ -27,7 +27,7 @@ import {
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
 import {quilttProfile} from "../../models/quiltt/quilttProfile";
-import {sendNotificationByExternalId, sendNotificationByExternalIdNow} from "../../utilities/onesignal";
+import {sendNotificationByExternalIdNow} from "../../utilities/onesignal";
 import {createPlaidVerification} from "../method/accounts/verification/plaid";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
