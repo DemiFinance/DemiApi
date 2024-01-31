@@ -1,9 +1,6 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
-import {
-	QuilttEvent,
-	QuilttWebhookObject,
-} from "../../models/quilttmodels";
+import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
 import {
 	addUUIDToMetadata,
 	fetchAccountInfo,
@@ -30,7 +27,8 @@ import {
 	Not_ACH_Account,
 } from "../../utilities/errors/demierrors";
 import {quilttProfile} from "../../models/quiltt/quilttProfile";
-import {sendNotificationByExternalId} from "../../utilities/onesignal";
+import {sendNotificationByExternalId, sendNotificationByExternalIdNow} from "../../utilities/onesignal";
+import {createPlaidVerification} from "../method/accounts/verification/plaid";
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -282,6 +280,11 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			return;
 		}
 
+		logger.log(
+			"info",
+			`Account ID: ${accountId} but from reccord ${event.record.id}`
+		);
+
 		if (!profileMetadata) {
 			return;
 		} else {
@@ -332,18 +335,17 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 
 		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
 
-		const verification = await createAccountVerification(
-			account.id,
+		const verification = await createPlaidVerification(
+			methodAccount.id,
 			accountObject,
 			transactionsObject
 		);
-		if (verification.status === "success") {
+		if (verification.status === "verified") {
 			//send notification to user
-			sendNotificationByExternalId(
+			sendNotificationByExternalIdNow(
 				entityId,
 				"Bank Account Verified",
-				"You can now make payments!",
-				Date.now().toString()
+				"You can now make payments!"
 			);
 			logger.log(
 				"info",
@@ -362,7 +364,7 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			// Handle the custom error
 			logger.log("warn", "Not a checking account we good");
 		} else {
-			logger.log("error", "Error creating new account:" + error);
+			logger.log("error", "Error creating new account: " + error);
 		}
 	}
 }

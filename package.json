@@ -1,6 +1,6 @@
 {
 	"name": "demi-api",
-	"version": "2024.01.25",
+	"version": "2024.01.30",
 	"description": "",
 	"main": "index.js",
 	"scripts": {

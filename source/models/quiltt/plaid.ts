@@ -3,7 +3,7 @@ export type PlaidTransactions = {
 };
 
 // Define interfaces
-interface Balances {
+export interface Balances {
 	available: number;
 	current: number;
 	isoCurrencyCode: string;
@@ -12,18 +12,14 @@ interface Balances {
 	unofficialCurrencyCode: string | null;
 }
 
-interface AccountResponse {
-	response: {
-		balances: Balances;
-	};
-}
-
 interface AccountRootObject {
-	data: {
-		account: {
-			remoteData: {
-				plaid: {
-					account: AccountResponse;
+	account: {
+		remoteData: {
+			plaid: {
+				account: {
+					response: {
+						balances: Balances;
+					};
 				};
 			};
 		};
@@ -32,7 +28,7 @@ interface AccountRootObject {
 
 // Function to extract balances
 export function extractBalances(root: AccountRootObject): Balances {
-	return root.data.account.remoteData.plaid.account.response.balances;
+	return root.account.remoteData.plaid.account.response.balances;
 }
 
 export type PlaidAccount = {
@@ -57,11 +53,9 @@ interface Node {
 }
 
 interface TransactionsRootObject {
-	data: {
-		account: {
-			transactions: {
-				nodes: Node[];
-			};
+	account: {
+		transactions: {
+			nodes: Node[];
 		};
 	};
 }
@@ -71,7 +65,7 @@ export function extractTransactions(
 	root: TransactionsRootObject
 ): PlaidTransaction[] {
 	const transactions: PlaidTransaction[] = [];
-	root.data.account.transactions.nodes.forEach((node) => {
+	root.account.transactions.nodes.forEach((node) => {
 		transactions.push(node.remoteData.plaid.transaction.response);
 	});
 	return transactions;

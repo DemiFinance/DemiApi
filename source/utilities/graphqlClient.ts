@@ -130,7 +130,11 @@ export async function AccountDetailsByAccountId_Plaid(
 			}
 		);
 
-		logger.info("Plaid accoutns response: ", JSON.stringify(response));
+		logger.info(
+			`Plaid account response: ${JSON.stringify(
+				response
+			)} non stringified: ${response}`
+		);
 
 		return extractBalances(response);
 	} catch (error) {
@@ -153,12 +157,12 @@ export async function TransactionsByAccountId_Plaid(
 ): Promise<any> {
 	try {
 		const span = tracer.startSpan("TransactionsByAccountId_Plaid");
-		logger.info(
-			"Plaid transactions request, Account ID: ",
-			accountId,
-			" Quiltt User ID: ",
-			quilttUserId
+
+		logger.log(
+			"info",
+			`Plaid transactions request, Account ID:  ${accountId}, Quiltt User ID: ${quilttUserId}`
 		);
+
 		const response = await executeQuery(
 			quilttUserId,
 			PlaidTransactionsByAccountId,
@@ -167,9 +171,14 @@ export async function TransactionsByAccountId_Plaid(
 			}
 		);
 
-		logger.info("Plaid transactions response: ", JSON.stringify(response));
+		logger.info(
+			`Plaid transactions response: ${JSON.stringify(
+				response
+			)} non stringified: ${response}`
+		);
 
 		span.finish();
+
 		return extractTransactions(response);
 	} catch (error) {
 		console.error(error);

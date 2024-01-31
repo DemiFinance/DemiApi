@@ -195,7 +195,6 @@ export const PlaidAccountDetailsByAccountId = gql`
 				plaid {
 					account {
 						response {
-							accountId
 							balances {
 								available
 								current
