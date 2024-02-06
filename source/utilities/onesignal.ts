@@ -78,7 +78,6 @@ export async function sendNotificationByExternalId(
 			stack: (error as Error).stack,
 		});
 		span.finish(); // Finish the span with error information
-		throw error; // Re-throw the error for handling by the caller
 	}
 }
 
@@ -140,6 +139,5 @@ export async function sendNotificationByExternalIdNow(
 			stack: (error as Error).stack,
 		});
 		span.finish(); // Finish the span with error information
-		throw error; // Re-throw the error for handling by the caller
 	}
 }
