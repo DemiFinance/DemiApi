@@ -1,5 +1,6 @@
 import {IAccount} from "method-node";
 import {QueryParams} from "../models/queryParams";
+import {DemiAchAccount} from "../models/demi/achAccount";
 
 /**
  * Generates SQL query parameters for inserting or updating an account.
@@ -273,5 +274,40 @@ export function updateHasSentNotificationStatus(
                 );
         `,
 		values: [account.id],
+	};   
+}
+
+/**
+ * Generates SQL Query paramters to add a row to the achAccount Table
+ * @param {DemiAchAccount} account - The account data.
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function insertAchAccount(account: DemiAchAccount): QueryParams {
+	return {
+		desc: `Insert ACH Account, Method Id: ${account.method_accountID}, Quiltt Account Id: ${account.quiltt_accountId}, Method Entity Id: ${account.method_entityId}`,
+		text: `INSERT INTO ACHAccount (
+            method_account_id, 
+            quiltt_account_id, 
+            quiltt_user_id, 
+            method_entity_id, 
+            account_type, account_name, 
+            balance_available, 
+            balance_current, 
+            iso_currency_code, 
+            created_at, 
+            updated_at);`,
+		values: [
+			account.method_accountID,
+			account.quiltt_accountId,
+			account.quiltt_userId,
+			account.method_entityId,
+			account.account_type,
+			account.account_name,
+			account.balance_available,
+			account.balance_current,
+			account.iso_currency_code,
+			account.created_at,
+			account.updated_at,
+		],
 	};
 }
