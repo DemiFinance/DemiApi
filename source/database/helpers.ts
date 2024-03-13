@@ -274,7 +274,7 @@ export function updateHasSentNotificationStatus(
                 );
         `,
 		values: [account.id],
-	};   
+	};
 }
 
 /**
@@ -294,8 +294,7 @@ export function insertAchAccount(account: DemiAchAccount): QueryParams {
             balance_available, 
             balance_current, 
             iso_currency_code, 
-            created_at, 
-            updated_at);`,
+            created_at);`,
 		values: [
 			account.method_accountID,
 			account.quiltt_accountId,
@@ -307,7 +306,37 @@ export function insertAchAccount(account: DemiAchAccount): QueryParams {
 			account.balance_current,
 			account.iso_currency_code,
 			account.created_at,
-			account.updated_at,
 		],
+	};
+}
+
+/**
+ * Generates SQL Query paramters to update the balance of an ACH account
+ * @param {DemiAchAccount} account - the account data
+ * @returns {QueryParams} - The SQL query text and values.
+ */
+export function updateAchBalance(account: DemiAchAccount): QueryParams {
+	return {
+		desc: `Update ACH Account MethId: ${account.quiltt_accountId}`,
+		text: "UPDATE account_info SET balance_available = $1, balance_current = $2, updated_at = CURRENT_TIMESTAMP WHERE quiltt_accountId = $3",
+		values: [
+			account.balance_available,
+			account.balance_current,
+			account.quiltt_accountId,
+		],
+	};
+}
+
+/**
+ * Generates SQL Query paramters to get ACH Accounts by Entity Id
+ * @param {string} entityId - The entity id
+ * @returns {QueryParams} - The SQL query text and values.
+ * */
+
+export function getAchAccountsByEntity_Id(entityId: string): QueryParams {
+	return {
+		desc: `Get ACH Accounts for Entity Id: ${entityId}`,
+		text: "SELECT * FROM ACHAccount WHERE method_entityid = $1",
+		values: [entityId],
 	};
 }

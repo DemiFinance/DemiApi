@@ -8,6 +8,69 @@ import * as db from "../../database/index";
 import logger from "../../wrappers/winstonLogging";
 import {method} from "../../wrappers/methodWrapper";
 
+import tracer from "../../wrappers/datadogTracer";
+import {DemiAchAccount} from "../../models/demi/achAccount";
+import {getAchAccountsByEntity_Id} from "../../database/helpers";
+
+async function fetchAndParseAchAccounts(
+	entity_id: string
+): Promise<DemiAchAccount[]> {
+	try {
+		const result = await db.query(getAchAccountsByEntity_Id(entity_id));
+
+		// Assuming the actual data is in a 'rows' property
+		const data = result.rows; // Adjust this line based on the actual structure
+
+		const achAccounts: DemiAchAccount[] = data.map((item: any) => {
+			// Basic validation
+			if (
+				typeof item.balance_available !== "number" ||
+				typeof item.balance_current !== "number"
+			) {
+				throw new Error("Invalid data structure for DemiAchAccount");
+			}
+
+			return {
+				method_accountID: item.method_accountID,
+				quiltt_accountId: item.quiltt_accountId,
+				quiltt_userId: item.quiltt_userId,
+				method_entityId: item.method_entityId,
+				account_type: item.account_type,
+				account_name: item.account_name,
+				balance_available: item.balance_available,
+				balance_current: item.balance_current,
+				iso_currency_code: item.iso_currency_code,
+				created_at: item.created_at ? new Date(item.created_at) : undefined,
+				updated_at: item.updated_at ? new Date(item.updated_at) : undefined,
+			} as DemiAchAccount;
+		});
+
+		return achAccounts;
+	} catch (error) {
+		console.error("Failed to fetch or parse ACH accounts:", error);
+		throw error;
+	}
+}
+
+// Replace 'path-to-demi-ach-account-model' with the actual path to your DemiAchAccount interface definition
+
+const getAchwithBalance = async (request: Request, response: Response) => {
+	try {
+		const entity_id = request.params.id;
+		const span = tracer.startSpan("getAchwithBalance");
+		const achaccounts: DemiAchAccount[] =
+			await fetchAndParseAchAccounts(entity_id);
+		span.finish();
+
+		return response.status(200).json({achaccounts});
+	} catch (error) {
+		logger.log("error", `Error getting ACH accounts with balance: ${error}`);
+		return response
+			.status(500)
+			.json({error: "Failed to get ACH accounts with balance"});
+	}
+};
+
 //complete
 const getAccountById = async (request: Request, response: Response) => {
 	const account: any = await method.accounts.get(request.params.id);
@@ -333,6 +396,7 @@ const pushAccountstoDB = async (request: Request, response: Response) => {
 };
 
 export default {
+	getAchwithBalance,
 	getAccountById,
 	listAccountsByHolder,
 	createACHAccount,

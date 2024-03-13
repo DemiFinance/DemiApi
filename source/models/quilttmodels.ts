@@ -71,7 +71,16 @@ export interface Account {
 	updatedAt: string;
 }
 
-export type RecordType = Profile | Connection | Account;
+export interface Balance {
+	id: string;
+	accountId: string;
+	at: string;
+	available: number;
+	current: number;
+	limit: number | null;
+}
+
+export type RecordType = Profile | Connection | Account | Balance;
 
 export interface QuilttEvent {
 	id: string;

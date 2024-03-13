@@ -1,5 +1,6 @@
 import express from "express";
 import entityController from "../controllers/method/entity";
+import accountController from "../controllers/method/account";
 import {
 	addDaysInAdvanceToMetadata,
 	getDaysInAdvanceByEntityId,
@@ -16,6 +17,11 @@ router.get(
 	"/:id/getAvailableCapabilities",
 	jwtCheck,
 	entityController.getAvailableCapabilities
+);
+router.get(
+	"/:id/getAchAccounts",
+	jwtCheck,
+	accountController.getAchwithBalance
 );
 
 export = router;

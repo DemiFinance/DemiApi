@@ -1,6 +1,10 @@
 import {Request, Response} from "express";
 import {Method, Environments, TAccountSubTypes} from "method-node";
-import {QuilttEvent, QuilttWebhookObject} from "../../models/quilttmodels";
+import {
+	Balance,
+	QuilttEvent,
+	QuilttWebhookObject,
+} from "../../models/quilttmodels";
 import {
 	addUUIDToMetadata,
 	fetchAccountInfo,
@@ -29,6 +33,11 @@ import {
 import {quilttProfile} from "../../models/quiltt/quilttProfile";
 import {sendNotificationByExternalIdNow} from "../../utilities/onesignal";
 import {createPlaidVerification} from "../method/accounts/verification/plaid";
+import {DemiAchAccount} from "../../models/demi/achAccount";
+
+import * as db from "../../database/index";
+import * as dbHelpers from "../../database/helpers";
+
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
 	env: Environments.production,
@@ -145,7 +154,8 @@ async function createAccountInMethod(
 	accountNumber: string,
 	routingNumber: string,
 	accountType: string,
-	holderId: string
+	holderId: string,
+	quilltAccountId: string
 ) {
 	const normalizedAccountType = normalizeAccountType(accountType);
 
@@ -160,6 +170,9 @@ async function createAccountInMethod(
 			routing: routingNumber,
 			number: accountNumber,
 			type: normalizedAccountType,
+		},
+		metadata: {
+			quilttAccountId: quilltAccountId,
 		},
 	});
 
@@ -234,7 +247,8 @@ async function createAccount(event: QuilttEvent) {
 			accountData.accountNumberStr,
 			accountData.routingNumberStr,
 			accountType,
-			holderInfo
+			holderInfo,
+			accountId
 		);
 		logger.log("info", "Account Output:" + JSON.stringify(account));
 
@@ -265,6 +279,21 @@ async function unimplementedFunc(event: QuilttEvent) {
 	}
 }
 
+async function insertAchToDatabase(account: DemiAchAccount) {
+	const span = tracer.startSpan("insertAchToDatabase");
+	try {
+		const sqlData = dbHelpers.insertAchAccount(account);
+		const result = await db.query(sqlData);
+		span.setTag("db.query.result", result);
+		return result;
+	} catch (error) {
+		span.setTag("error", error);
+		throw error;
+	} finally {
+		span.finish();
+	}
+}
+
 async function quilttVerifiedAccount(event: QuilttEvent) {
 	const span = tracer.startSpan("account.verified");
 	try {
@@ -272,7 +301,7 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		const accountId = account.id;
 		const profile = event.profile as quilttProfile;
 		const profileMetadata = profile.metadata;
-		//TODO: Fix this because it doesnt get assigne anything at the moment
+
 		let entityId: string;
 
 		if (accountId == "" || !accountId) {
@@ -321,7 +350,8 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			accountNumberStr,
 			routingNumberStr,
 			accountType,
-			entityId
+			entityId,
+			accountId
 		);
 
 		const transactionsObject = await TransactionsByAccountId_Plaid(
@@ -332,6 +362,25 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			profile.id,
 			accountId
 		);
+
+		//push acct to db bruh
+
+		const newAch: DemiAchAccount = {
+			method_accountID: methodAccount.id,
+			quiltt_accountId: accountId,
+			quiltt_userId: profile.id,
+			method_entityId: entityId,
+			account_type: accountType,
+			account_name: accountObject.name,
+			balance_available: accountObject.balances.available,
+			balance_current: accountObject.balances.current,
+			iso_currency_code: accountObject.balances.isoCurrencyCode,
+			created_at: new Date(),
+		};
+
+		insertAchToDatabase(newAch);
+
+		console.log("NewAch: " + JSON.stringify(newAch));
 
 		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
 
@@ -473,6 +522,38 @@ async function retryAsync<T>(
 	throw new Error("Reached unreachable code in retryAsync"); // This should never actually happen
 }
 
+async function balanceCreated(event: QuilttEvent) {
+	try {
+		const balance = event.record as Balance;
+		const balanceId = balance.id;
+		const accountId = balance.accountId;
+
+		const span = tracer.startSpan("balance.created");
+
+		logger.log(
+			"info",
+			"Balance Updated for account: " + JSON.stringify(accountId)
+		);
+
+		span.addTags({
+			"balance.id": balanceId,
+			"balance.accountId": accountId,
+		});
+
+		const updatedBalanceObject: DemiAchAccount = {
+			quiltt_accountId: accountId,
+			balance_available: balance.available,
+			balance_current: balance.current,
+		};
+
+		dbHelpers.updateAchBalance(updatedBalanceObject);
+
+		span.finish();
+	} catch (error) {
+		logger.log("error", "Error in balanceCreated:" + error);
+	}
+}
+
 /**
  * Maps operation types to their respective handler functions.
  * @type {Object.<string, function(string): Promise<void>>}
@@ -497,6 +578,7 @@ const quilttOperationHandlers: {
 	"account.updated": unimplementedFunc,
 	"account.verified": quilttVerifiedAccount,
 	"account.deleted": unimplementedFunc,
+	"balance.created": balanceCreated,
 };
 
 /**
