@@ -130,11 +130,7 @@ export async function AccountDetailsByAccountId_Plaid(
 			}
 		);
 
-		logger.info(
-			`Plaid account response: ${JSON.stringify(
-				response
-			)} non stringified: ${response}`
-		);
+		logger.info(`Plaid account response: ${JSON.stringify(response)}`);
 
 		return extractBalances(response);
 	} catch (error) {
