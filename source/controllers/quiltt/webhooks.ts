@@ -195,7 +195,7 @@ async function createAccountVerification(
 	const verification = await method.accounts(accountId).verification.create({
 		type: "mx",
 		mx: {
-			account: accountObject,
+			accounts: accountObject,
 			transactions: transactionsObject,
 		},
 	});
@@ -546,7 +546,7 @@ async function balanceCreated(event: QuilttEvent) {
 			balance_current: balance.current,
 		};
 
-		dbHelpers.updateAchBalance(updatedBalanceObject);
+		await db.query(dbHelpers.updateAchBalance(updatedBalanceObject));
 
 		span.finish();
 	} catch (error) {

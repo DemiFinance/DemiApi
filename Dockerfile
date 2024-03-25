@@ -22,10 +22,10 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
 
 
 ENV DD_SERVICE demi-api
-ENV DD_VERSION 2024.03.12
+ENV DD_VERSION 2024.03.25
 
 LABEL com.datadoghq.tags.service="demi-api"
-LABEL com.datadoghq.tags.version="2024.03.12"
+LABEL com.datadoghq.tags.version="2024.03.25"
 
 
 CMD [ "doppler", "run", "--", "node", "build/app.js" ]

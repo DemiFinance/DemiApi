@@ -1,0 +1,10 @@
+rulesets:
+  - docker-best-practices
+  - typescript-best-practices       # ensure best practices are followed
+  - typescript-code-style           # code-style enforcement for TypeScript
+  - typescript-inclusive            # ensure that we use inclusive wording in our codebasenpm
+  - typescript-common-security      # ensure your TypeScript code is safe and secure
+  - typescript-node-security        # rules specific for Node.js security
+  - typescript-express              # rules specific for express.js security
+  - typescript-aws                  # rules specific for aws sdk security
+ignorePaths: []

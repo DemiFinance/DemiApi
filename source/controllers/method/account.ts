@@ -16,38 +16,39 @@ async function fetchAndParseAchAccounts(
 	entity_id: string
 ): Promise<DemiAchAccount[]> {
 	try {
+		const span = tracer.startSpan("fetchAndParseAchAccounts");
+		logger.info("Fetching ACH accounts from DB for entityid: " + entity_id);
 		const result = await db.query(getAchAccountsByEntity_Id(entity_id));
 
 		// Assuming the actual data is in a 'rows' property
 		const data = result.rows; // Adjust this line based on the actual structure
 
 		const achAccounts: DemiAchAccount[] = data.map((item: any) => {
-			// Basic validation
-			if (
-				typeof item.balance_available !== "number" ||
-				typeof item.balance_current !== "number"
-			) {
-				throw new Error("Invalid data structure for DemiAchAccount");
-			}
+			// Parse the dates directly, assuming they're in ISO 8601 format
+			const createdAt = item.created_at ? new Date(item.created_at) : undefined;
+			const updatedAt = item.updated_at ? new Date(item.updated_at) : undefined;
 
 			return {
-				method_accountID: item.method_accountID,
-				quiltt_accountId: item.quiltt_accountId,
-				quiltt_userId: item.quiltt_userId,
-				method_entityId: item.method_entityId,
+				method_accountID: item.method_accountid,
+				quiltt_accountId: item.quiltt_accountid,
+				quiltt_userId: item.quiltt_userid,
+				method_entityId: item.method_entityid,
 				account_type: item.account_type,
 				account_name: item.account_name,
-				balance_available: item.balance_available,
-				balance_current: item.balance_current,
+				balance_available: Number(item.balance_available),
+				balance_current: Number(item.balance_current),
 				iso_currency_code: item.iso_currency_code,
-				created_at: item.created_at ? new Date(item.created_at) : undefined,
-				updated_at: item.updated_at ? new Date(item.updated_at) : undefined,
+				created_at: createdAt ? createdAt.toISOString() : undefined,
+				updated_at: updatedAt ? updatedAt.toISOString() : undefined,
 			} as DemiAchAccount;
 		});
 
+		logger.info(`Fetched and parsed ${achAccounts.length} ACH accounts`);
+
+		span.finish();
 		return achAccounts;
 	} catch (error) {
-		console.error("Failed to fetch or parse ACH accounts:", error);
+		logger.error("Failed to fetch or parse ACH accounts:", error);
 		throw error;
 	}
 }
@@ -241,7 +242,7 @@ const updateAccountName = async (request: Request, response: Response) => {
 			logger.log("warn", "depricated....");
 			//changeAccountName(token, userId, accountName, accountId);
 		} catch (error) {
-			console.log("[UPDATE METADATA ERROR]" + error);
+			logger.log("error", "Error changing account name: " + error);
 		}
 		const account: any = await method.accounts(account_id).update({});
 
@@ -249,7 +250,7 @@ const updateAccountName = async (request: Request, response: Response) => {
 			account: account,
 		});
 	} catch (error) {
-		console.error("Error changing account name:", error);
+		logger.log("error", `Error changing account name: ${error}`);
 		return response.status(500).json({error: "Failed to change account name"});
 	}
 };
@@ -263,7 +264,7 @@ const getFakeAccount = async (request: Request, response: Response) => {
 			account: accountList,
 		});
 	} catch (error) {
-		console.error("Error retrieving fake account:", error);
+		logger.log("error", `Error retrieving fake account: ${error}`);
 		return response
 			.status(500)
 			.json({error: "Failed to retrieve fake account"});
@@ -385,8 +386,7 @@ const pushAccountstoDB = async (request: Request, response: Response) => {
 	} catch (error) {
 		// Roll back in case of any errors
 		await db.query({text: "ROLLBACK"});
-
-		console.error("Error pushing accounts to db:", error);
+		logger.error("Error pushing accounts to db:", error);
 		return response.status(500).json({error: "Failed to push accounts to db"});
 	} finally {
 		// Release the client

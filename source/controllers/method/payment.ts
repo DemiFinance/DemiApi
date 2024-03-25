@@ -4,6 +4,7 @@ import {Request, Response} from "express";
 import {Method, Environments, IPaymentListOpts} from "method-node";
 import * as db from "../../database/index";
 import logger from "../../wrappers/winstonLogging";
+import tracer from "../../wrappers/datadogTracer";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -19,22 +20,17 @@ const getPaymentsBySourceHolder = async (
 			"info",
 			"Attempting to get payments by sourceHolderId: " + request.params.id
 		);
-		// console.log(
-		// 	"Attempting to get payments by sourceHolderId: " + request.params.id
-		// );
 		const paymentOpts: IPaymentListOpts = {
 			source_holder_id: request.params.id,
 		};
 
 		const payment = await method.payments.list(paymentOpts);
 		logger.log("info", "[METHOD - Get Payment]" + JSON.stringify(payment));
-		//console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: payment,
 		});
 	} catch (error) {
 		logger.log("error", "[METHOD - Get Payment ERROR]" + error);
-		//console.log("[METHOD - Get Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
@@ -50,22 +46,17 @@ const getPaymentsByDestination = async (
 			"info",
 			"Attempting to get payments by destinationid: " + request.params.id
 		);
-		// console.log(
-		// 	"Attempting to get payments by destinationid: " + request.params.id
-		// );
 		const paymentOpts: IPaymentListOpts = {
 			destination: request.params.id,
 		};
 
 		const payment = await method.payments.list(paymentOpts);
 		logger.log("info", "[METHOD - Get Payment]" + JSON.stringify(payment));
-		//console.log("[METHOD - Get Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: payment,
 		});
 	} catch (error) {
 		logger.log("error", "[METHOD - Get Payment ERROR]" + error);
-		//console.log("[METHOD - Get Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
@@ -74,12 +65,10 @@ const getPaymentsByDestination = async (
 
 const sendPayment = async (request: Request, response: Response) => {
 	logger.log("info", "Attempting Payment...");
-	//console.log("Attempting Payment...");
 	try {
 		logger.log(
 			"info",
 			"[PAYMENT] Amount: " +
-				//console.log(
 				"[PAYMENT] Amount: " +
 				request.body.amount +
 				" Source: " +
@@ -96,13 +85,11 @@ const sendPayment = async (request: Request, response: Response) => {
 		});
 
 		logger.info("[METHOD - New Payment]" + JSON.stringify(payment));
-		//console.log("[METHOD - New Payment]" + JSON.stringify(payment));
 		return response.status(200).json({
 			payment: [payment],
 		});
 	} catch (error) {
 		logger.info("[METHOD - New Payment ERROR]" + error);
-		//console.log("[METHOD - New Payment ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
@@ -110,12 +97,15 @@ const sendPayment = async (request: Request, response: Response) => {
 };
 
 const getUpcomingByHolder = async (request: Request, response: Response) => {
+	const span = tracer.startSpan("getUpcomingByHolder");
 	try {
-		console.log(
+		logger.log(
+			"info",
 			"Attempting to get upcoming payments by holderId: " + request.params.id
 		);
 		const holderId = request.params.id;
 		const queryString = {
+			desc: "Get upcoming payments by holderId",
 			text: `SELECT a.id AS account_id 
 			FROM Account a 
 			WHERE a.holder_id = $1 
@@ -140,10 +130,14 @@ const getUpcomingByHolder = async (request: Request, response: Response) => {
 			accountIds,
 		});
 	} catch (error) {
-		console.log("[Get Upcoming Payments ERROR]" + error);
+		span.setTag("error", true);
+		span.log({"error.message": error});
+		logger.log("error", "[Get Upcoming Payments ERROR]" + error);
 		return response.status(400).json({
 			error: error,
 		});
+	} finally {
+		span.finish();
 	}
 };
 

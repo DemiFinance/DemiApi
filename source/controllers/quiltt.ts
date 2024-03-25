@@ -15,6 +15,8 @@ import {
 	Quiltt_Token_EnvVar_Error,
 } from "../utilities/errors/demierrors";
 
+import * as db from "../database/index";
+import * as helpers from "../database/helpers";
 /**
  * Generates a new session token for a user.
  *
@@ -353,6 +355,86 @@ export async function fetchAccountInfo(
 			);
 		} else {
 			throw new Error("FetchAccountInfo Error");
+		}
+	}
+}
+
+export async function refreshBalancesByQuilttId(
+	req: Request,
+	res: Response
+): Promise<void> {
+	const span = tracer.startSpan("refreshBalancesByQuilttId");
+	try {
+		const quilttId = req.params.id;
+		span.setTag("quiltt.id", quilttId);
+		logger.log("info", "Refreshing balances for Quiltt ID: " + quilttId);
+
+		const dbResult = await db.query(helpers.getAchQuilttIdByEntityId(quilttId));
+		const result = dbResult.rows;
+		logger.log("info", "Quiltt accounts fetched successfully");
+
+		const accountsIds: string[] = result.map(
+			(account: any) => account.quiltt_accountid
+		);
+
+		accountsIds.forEach((accountId: string) => {
+			refreshAchBalance(accountId);
+		});
+
+		res.status(200);
+	} catch (error: any) {
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.object": error,
+			message: error.message,
+			stack: error.stack,
+		});
+		logger.log("error", error.message);
+		const isInternalError = error.message.includes("Internal Server Error");
+		res.status(isInternalError ? 500 : 400).json({error: error.message});
+	} finally {
+		span.finish();
+	}
+}
+
+/**
+ * Refreshes the ACH balance for a given ID.
+ *
+ * @async
+ * @function refreshAchBalance
+ * @param {string} id - The ID of the account to refresh the balance for.
+ * @returns {Promise<number>} The HTTP status code of the refresh request.
+ */
+async function refreshAchBalance(id: string): Promise<number> {
+	const span = tracer.startSpan("refreshAchBalance");
+	logger.log("info", "Requesting ACH balance for account ID: " + id);
+	span.setTag("account.id", id);
+	const baseUrl = "https://api.quiltt.io/v1/accounts";
+	const url = `${baseUrl}/${id}/balances/refresh`;
+	try {
+		const apiKey = process.env.QUILTT_TOKEN;
+		const response = await axios.post(url, {
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+		span.addTags({
+			"response.status": response.status,
+			"response.data": response.data,
+		});
+		span.finish();
+		logger.log("info", "ACH balance refreshed successfully");
+		logger.log("info", `Response status: ${response.status}`);
+		logger.log("info", `Response data: ${response.data}`);
+		return response.status;
+	} catch (error) {
+		if (axios.isAxiosError(error) && error.response) {
+			span.finish();
+			return error.response.status;
+		} else {
+			span.finish();
+			return 500;
 		}
 	}
 }
