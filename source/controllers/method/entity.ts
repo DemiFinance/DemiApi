@@ -6,7 +6,6 @@ import {Request, Response} from "express";
 import {Method, Environments, IEntity} from "method-node";
 
 import {updateUserMeta} from "../auth0functions";
-import {log} from "console";
 import logger from "../../wrappers/winstonLogging";
 
 const method = new Method({
@@ -24,18 +23,21 @@ const testWithMethod = async (request: Request, response: Response) => {
 				phone: "+19056162504",
 			},
 		});
-		console.log("[ENTITY] " + JSON.stringify(ent));
+		logger.log("info", "Entity created: ", JSON.stringify(ent));
 
 		return response.status(200).json({
 			entity: ent,
 		});
 	} catch (error) {
-		console.log("[ENTITY ERROR] " + error);
+		logger.log("error", "Error creating new entity:", error);
 	}
 };
 
 const postEntity = async (request: Request, response: Response) => {
-	log("Attempting to create new entity... " + JSON.stringify(request.body));
+	logger.log(
+		"info",
+		"Attempting to create new entity... " + JSON.stringify(request.body)
+	);
 	try {
 		const {auth0_id, first_name, last_name, phone} = request.body;
 

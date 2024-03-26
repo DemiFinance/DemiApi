@@ -38,7 +38,7 @@ const newAuthSession = async (request: Request, response: Response) => {
 			throw new Error("Failed to create token");
 		}
 
-		console.log(token.element_token);
+		logger.info("Created new auth session:", token.element_token);
 
 		return response.status(200).json({
 			element_token: token.element_token,
