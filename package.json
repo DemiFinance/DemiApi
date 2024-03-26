@@ -17,7 +17,7 @@
 		"build:live": "nodemon source/app.ts",
 		"clean": "tsc --build --clean",
 		"watch-ts": "tsc -w",
-		"test": "doppler run -- jest",
+		"test": "jest",
 		"dockerize": "npm run docker:build && npm run docker:tag:latest && npm run docker:push:latest",
 		"docker:build": "docker build . -t demiapi --build-arg DD_GIT_REPOSITORY_URL=$(git config --get remote.origin.url) --build-arg DD_GIT_COMMIT_SHA=$(git rev-parse HEAD)",
 		"docker:tag:latest": "docker tag demiapi:latest 792017225318.dkr.ecr.us-east-1.amazonaws.com/demiapi:latest",
