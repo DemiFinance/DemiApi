@@ -35,7 +35,7 @@ jobs:
     - name: Run tests
       run: npm run test
       env:
-        DD_CIVISIBILTY_AGENTLESS_ENABLED: true
+        DD_CIVISIBILITY_AGENTLESS_ENABLED: true
         DD_API_KEY: ${{ secrets.DD_API_KEY }}
         DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
         DD_SITE: datadoghq.com
