@@ -380,8 +380,6 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 
 		insertAchToDatabase(newAch);
 
-		console.log("NewAch: " + JSON.stringify(newAch));
-
 		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
 
 		const verification = await createPlaidVerification(

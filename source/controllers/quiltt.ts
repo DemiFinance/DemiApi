@@ -429,6 +429,12 @@ async function refreshAchBalance(id: string): Promise<number> {
 		logger.log("info", `Response data: ${response.data}`);
 		return response.status;
 	} catch (error) {
+		span.setTag("error", true);
+		span.log({
+			event: "error",
+			"error.object": error,
+		});
+
 		if (axios.isAxiosError(error) && error.response) {
 			span.finish();
 			return error.response.status;
