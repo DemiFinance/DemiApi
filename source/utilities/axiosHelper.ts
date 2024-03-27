@@ -1,4 +1,6 @@
 import axios from "axios";
+import logger from "../wrappers/winstonLogging";
+import tracer from "../wrappers/datadogTracer";
 
 export async function getToken(): Promise<string> {
 	const options = {
@@ -13,14 +15,18 @@ export async function getToken(): Promise<string> {
 		}),
 	};
 
+	const span = tracer.startSpan("auth0.getToken");
 	try {
 		const response = await axios.request(options);
-		console.log("[AUTH0 Response - Token] " + response.data.access_token);
+		logger.info("[AUTH0 Response - Token] " + response.data.access_token);
 
 		return response.data.access_token;
 	} catch (error) {
-		console.error("[AUTH0 Response - Token Fetching Error] " + error);
+		span.setTag("error", error);
+		logger.error("[AUTH0 Response - Token Fetching Error] " + error);
 		return "";
+	} finally {
+		span.finish();
 	}
 }
 
@@ -43,7 +49,7 @@ auth0Api.interceptors.request.use(
 // Error handling function
 export const handleApiError = (error: Error) => {
 	// Log error or send it to an error tracking service
-	console.error(error);
+	logger.error(error);
 	// Throw a custom error or handle it as needed
 	throw new Error("An error occurred while making an API request to Auth0.");
 };

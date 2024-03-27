@@ -556,7 +556,7 @@ async function balanceCreated(event: QuilttEvent) {
  * Maps operation types to their respective handler functions.
  * @type {Object.<string, function(string): Promise<void>>}
  */
-const quilttOperationHandlers: {
+export const quilttOperationHandlers: {
 	[key: string]: (event: QuilttEvent) => Promise<void>;
 } = {
 	"profile.created": createQuilttProfile_WebhookEvent,
