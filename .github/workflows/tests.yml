@@ -26,6 +26,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Install ddtrace
+      run: npm install --save-dev dd-trace
+
     - name: Build project
       run: npm run build
 
@@ -36,5 +39,8 @@ jobs:
         DD_API_KEY: ${{ secrets.DD_API_KEY }}
         DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
         DD_SITE: datadoghq.com
+        DD_ENV: ci
+        DD_SERVICE: demi-api
         METHOD_API_KEY: ${{ secrets.METHOD_API_KEY }}
         DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        NODE_OPTIONS: '-r dd-trace/ci/init'
