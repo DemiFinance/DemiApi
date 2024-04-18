@@ -575,6 +575,7 @@ export const quilttOperationHandlers: {
 	"account.created": unimplementedFunc,
 	"account.updated": unimplementedFunc,
 	"account.verified": quilttVerifiedAccount,
+	"account.reconnected": unimplementedFunc,
 	"account.deleted": unimplementedFunc,
 	"balance.created": balanceCreated,
 };
