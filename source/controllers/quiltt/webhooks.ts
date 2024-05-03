@@ -362,6 +362,8 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			profile.id,
 			accountId
 		);
+		//this resturns a formatted object of just the balances currently... at the root the graphql needs to be modified to return more of teh accounts information like name and such
+		//this also means that the models that use this data need to be updated to reflect the new data structure...aka kill me.
 
 		//push acct to db bruh
 
@@ -371,10 +373,10 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			quiltt_userId: profile.id,
 			method_entityId: entityId,
 			account_type: accountType,
-			account_name: accountObject.name,
-			balance_available: accountObject.balances.available,
-			balance_current: accountObject.balances.current,
-			iso_currency_code: accountObject.balances.isoCurrencyCode,
+			account_name: "Bank Account", //TODO: get this from the account object
+			balance_available: accountObject.available,
+			balance_current: accountObject.current,
+			iso_currency_code: accountObject.isoCurrencyCode,
 			created_at: new Date(),
 		};
 
