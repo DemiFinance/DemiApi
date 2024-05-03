@@ -12,7 +12,11 @@ import {
 } from "./graphqlSchema";
 
 import {refreshSessionToken} from "./quilttUtil";
-import {extractBalances, extractTransactions} from "../models/quiltt/plaid";
+import {
+	Balances,
+	extractBalances,
+	extractTransactions,
+} from "../models/quiltt/plaid";
 import logger from "../wrappers/winstonLogging";
 import tracer from "dd-trace";
 
@@ -120,7 +124,7 @@ export async function MxholderFromAccountId(
 export async function AccountDetailsByAccountId_Plaid(
 	quilttUserId: string,
 	accountId: string
-): Promise<any> {
+): Promise<Balances> {
 	try {
 		const response = await executeQuery(
 			quilttUserId,

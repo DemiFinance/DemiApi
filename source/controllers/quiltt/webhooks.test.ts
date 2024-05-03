@@ -44,27 +44,39 @@ describe("quilttOperationHandlers", () => {
 	});
 
 	it("'connection.synced.successful' defined", () => {
-		expect(quilttOperationHandlers["connection.synced.successful"]).toBeDefined();
+		expect(
+			quilttOperationHandlers["connection.synced.successful"]
+		).toBeDefined();
 	});
 
 	it("'connection.synced.successful.historical' defined", () => {
-		expect(quilttOperationHandlers["connection.synced.successful.historical"]).toBeDefined();
+		expect(
+			quilttOperationHandlers["connection.synced.successful.historical"]
+		).toBeDefined();
 	});
 
 	it("'connection.synced.errored.repairable' defined", () => {
-		expect(quilttOperationHandlers["connection.synced.errored.repairable"]).toBeDefined();
+		expect(
+			quilttOperationHandlers["connection.synced.errored.repairable"]
+		).toBeDefined();
 	});
 
 	it("'connection.synced.errored.service' defined", () => {
-		expect(quilttOperationHandlers["connection.synced.errored.service"]).toBeDefined();
+		expect(
+			quilttOperationHandlers["connection.synced.errored.service"]
+		).toBeDefined();
 	});
 
-	it("'connection.synced.errored.provider' defined", () => {	
-		expect(quilttOperationHandlers["connection.synced.errored.provider"]).toBeDefined();
+	it("'connection.synced.errored.provider' defined", () => {
+		expect(
+			quilttOperationHandlers["connection.synced.errored.provider"]
+		).toBeDefined();
 	});
 
 	it("'connection.synced.errored.institution' defined", () => {
-		expect(quilttOperationHandlers["connection.synced.errored.institution"]).toBeDefined();
+		expect(
+			quilttOperationHandlers["connection.synced.errored.institution"]
+		).toBeDefined();
 	});
 
 	it("'connection.disconnected' defined", () => {
@@ -79,7 +91,7 @@ describe("quilttOperationHandlers", () => {
 		expect(quilttOperationHandlers["account.updated"]).toBeDefined();
 	});
 
-	it ("'account.deleted' defined", () => {
+	it("'account.deleted' defined", () => {
 		expect(quilttOperationHandlers["account.deleted"]).toBeDefined();
 	});
 
