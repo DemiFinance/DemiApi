@@ -109,4 +109,5 @@ build/
 #macos shenanegans
 .DS_Store
 
-.tar.gz
+//built project
+*.tar.gz
