@@ -31,3 +31,9 @@ jobs:
         title: "Development Build"
         files: |
           *.tar.gz
+    - uses: robinraju/release-downloader@v1.10
+      with:
+        latest: true
+        preRelease: true
+        tarball: true
+        extract: true
