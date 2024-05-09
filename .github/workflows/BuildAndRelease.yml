@@ -27,10 +27,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Configure git user
+        run: |
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+
       - name: Increment version and tag
         run: |
-          npm version patch -m "Upgrade to %s for reasons"
-          git push --follow-tags
+          NEW_VERSION=$(npm version patch -m "Upgrade to %s for reasons")
+          echo "New version: $NEW_VERSION"
+          git push origin main --tags
 
       - name: Run build
         run: npm run build
