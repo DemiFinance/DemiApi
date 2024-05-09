@@ -63,7 +63,7 @@ async function handleNotification(account: IAccount) {
 			}
 		}
 	} else {
-		logger.log("notice", `No notification needed for account ${account.id}`);
+		logger.log("info", `No notification needed for account ${account.id}`);
 	}
 }
 
