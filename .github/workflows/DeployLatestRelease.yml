@@ -1,8 +1,13 @@
 name: Deployment Latest Release Workflow
 
 on:
-  release:
-    types: [created, published, edited, released]
+  workflow_run:
+    workflows: ["Build and Release Workflow"]
+    types:
+      - completed
+    branches:
+      - main
+
 
 jobs:
   deploy:
