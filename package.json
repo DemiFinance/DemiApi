@@ -6,7 +6,7 @@
 	"scripts": {
 		"serve": "node build/app.js",
 		"serve:dev": "doppler run -- node build/app.js",
-		"start": "npm run build:live",
+		"start": "node build/app.js",
 		"dev": "doppler run -- nodemon source/app.ts",
 		"build": "npm run lint && npm run build-ts && npm run build-cp",
 		"build:aws": "npm run build-ts && npm run build-cp",

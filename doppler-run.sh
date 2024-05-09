@@ -1,1 +1,1 @@
-doppler run -- npm deploy
+doppler run -- npm start
