@@ -1,0 +1,60 @@
+name: Build and Release Workflow
+
+on:
+  workflow_run:
+    workflows: ["run Tests"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.x' # Specify your Node.js version here
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Increment version and tag
+        run: |
+          npm version patch -m "Upgrade to %s for reasons"
+          git push --follow-tags
+
+      - name: Run build
+        run: npm run build
+
+      - name: Run archive
+        run: npm run archive
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          release_name: Release ${{ steps.version.outputs.new_tag }}
+          draft: false
+          prerelease: false
+
+      - name: Upload build archive to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./path/to/your/build.tar.gz
+          asset_name: build.tar.gz
+          asset_content_type: application/gzip
