@@ -29,8 +29,8 @@ jobs:
 
       - name: Configure git user
         run: |
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
+          git config --global user.email "GHRunner@demifinance.com"
+          git config --global user.name "GH Runner"
 
       - name: Increment version and tag
         run: |
@@ -38,11 +38,8 @@ jobs:
           echo "New version: $NEW_VERSION"
           git push origin main --tags
 
-      - name: Run build
-        run: npm run build
-
       - name: Run archive
-        run: npm run archive
+        run: npm run build:archive
 
       - name: Create Release
         id: create_release
