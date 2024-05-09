@@ -2,7 +2,7 @@ name: Deployment Latest Release Workflow
 
 on:
   release:
-    types: [created]
+    types: [created, published, edited, released]
 
 jobs:
   deploy:
