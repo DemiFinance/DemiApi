@@ -1,8 +1,8 @@
 {
 	"name": "demi-api",
-	"version": "2024.05.08",
+	"version": "0.10.1",
 	"description": "",
-	"main": "index.js",
+	"main": "app.js",
 	"scripts": {
 		"serve": "node build/app.js",
 		"serve:dev": "doppler run -- node build/app.js",
