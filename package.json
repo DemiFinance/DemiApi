@@ -12,6 +12,7 @@
 		"build:aws": "npm run build-ts && npm run build-cp",
 		"build-ts": "tsc -p .",
 		"build-cp": "cp -R ./source/public build/",
+		"build:archive": "npm run build && tar -czf build.tar.gz build",
 		"lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
 		"format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
 		"build:live": "nodemon source/app.ts",
