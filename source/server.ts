@@ -87,7 +87,7 @@ const startAPI = async function () {
 
 	httpServer.listen(
 		PORT,
-		() => logger.log("info", `Nimbus API is running on port ${PORT}`)
+		() => logger.log("info", `Demi-API running on port ${PORT}`)
 		//console.log(`Nimbus API is running on port ${PORT}`)
 	);
 	return "Server is servering";
