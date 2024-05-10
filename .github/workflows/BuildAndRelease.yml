@@ -52,12 +52,15 @@ jobs:
 
       - name: Push Docker image to GitHub Packages
         run: |
+          export VERSION=$(git describe --tags --always | tr '[:upper:]' '[:lower:]')
+          export COMMIT_SHA=$(git rev-parse --short HEAD | tr '[:upper:]' '[:lower:]')
+          export REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
           echo "Pushing ghcr.io/$REPO_NAME:$VERSION"
           docker push ghcr.io/$REPO_NAME:$VERSION
           echo "Pushing ghcr.io/$REPO_NAME:$COMMIT_SHA"
           docker push ghcr.io/$REPO_NAME:$COMMIT_SHA
           echo "Pushing ghcr.io/$REPO_NAME:latest"
-          docker push ghcr.io/$REPO_NAME:late
+          docker push ghcr.io/$REPO_NAME:latest
 
       - name: Create Release
         id: create_release
