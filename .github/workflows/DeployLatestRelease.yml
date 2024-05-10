@@ -16,9 +16,11 @@ jobs:
       - name: Get latest release and Download Source Code Archive
         run: |
           URL=$(curl -sH "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/DemiFinance/DemiApi/releases/latest | \
+          "https://api.github.com/repos/DemiFinance/DemiApi/releases/latest" | \
           jq -r ".tarball_url")
-          curl -sL -o source-code.tar.gz $URL
+          echo "Download URL: $URL" # This will print the URL to the log
+          curl -sL -o source-code.tar.gz "$URL"
+
 
       - name: Download Source Code Archive
         run: curl -sL -o source-code.tar.gz $(cat $GITHUB_ENV)
