@@ -40,19 +40,24 @@ jobs:
           VERSION=$(git describe --tags --always | tr '[:upper:]' '[:lower:]')
           COMMIT_SHA=$(git rev-parse --short HEAD | tr '[:upper:]' '[:lower:]')
           REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
-          docker build . -t $REPO_NAME:$VERSION \
-                         -t $REPO_NAME:$COMMIT_SHA \
-                         -t $REPO_NAME:latest
+          echo "VERSION: $VERSION"
+          echo "COMMIT_SHA: $COMMIT_SHA"
+          echo "REPO_NAME: $REPO_NAME"
+          docker build . -t ghcr.io/$REPO_NAME:$VERSION \
+                         -t ghcr.io/$REPO_NAME:$COMMIT_SHA \
+                         -t ghcr.io/$REPO_NAME:latest
 
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push Docker image to GitHub Packages
         run: |
+          echo "Pushing ghcr.io/$REPO_NAME:$VERSION"
           docker push ghcr.io/$REPO_NAME:$VERSION
+          echo "Pushing ghcr.io/$REPO_NAME:$COMMIT_SHA"
           docker push ghcr.io/$REPO_NAME:$COMMIT_SHA
+          echo "Pushing ghcr.io/$REPO_NAME:latest"
           docker push ghcr.io/$REPO_NAME:latest
-
 
       - name: Create Release
         id: create_release
