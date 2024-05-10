@@ -1,6 +1,6 @@
 {
 	"name": "demi-api",
-	"version": "0.10.29",
+	"version": "0.10.30",
 	"description": "",
 	"main": "app.js",
 	"scripts": {
