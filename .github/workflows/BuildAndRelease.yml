@@ -40,9 +40,9 @@ jobs:
           VERSION=$(git describe --tags --always | tr '[:upper:]' '[:lower:]')
           COMMIT_SHA=$(git rev-parse --short HEAD | tr '[:upper:]' '[:lower:]')
           REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
-          echo "VERSION: $VERSION"
-          echo "COMMIT_SHA: $COMMIT_SHA"
-          echo "REPO_NAME: $REPO_NAME"
+          echo "VERSION: '$VERSION'"
+          echo "COMMIT_SHA: '$COMMIT_SHA'"
+          echo "REPO_NAME: '$REPO_NAME'"
           docker build . -t ghcr.io/$REPO_NAME:$VERSION \
                          -t ghcr.io/$REPO_NAME:$COMMIT_SHA \
                          -t ghcr.io/$REPO_NAME:latest
@@ -57,7 +57,7 @@ jobs:
           echo "Pushing ghcr.io/$REPO_NAME:$COMMIT_SHA"
           docker push ghcr.io/$REPO_NAME:$COMMIT_SHA
           echo "Pushing ghcr.io/$REPO_NAME:latest"
-          docker push ghcr.io/$REPO_NAME:latest
+          docker push ghcr.io/$REPO_NAME:late
 
       - name: Create Release
         id: create_release
