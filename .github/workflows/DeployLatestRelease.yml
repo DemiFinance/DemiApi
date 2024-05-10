@@ -15,21 +15,6 @@ jobs:
     steps:
       - name: Ensure runner user has proper permissions
         run: sudo chown -R $(whoami):$(whoami) . && sudo chmod -R 755 .
-        
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1  
-
-      - name: Install wget (if needed)
-        run: |
-          if ! command -v wget &> /dev/null
-          then
-            sudo apt-get update
-            sudo apt-get install -y wget
-          else
-            echo "wget is already installed."
-          fi
 
       - name: Download Docker Image from Release Asset
         run: |
