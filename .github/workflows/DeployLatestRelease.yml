@@ -13,14 +13,10 @@ jobs:
   deploy:
     runs-on: self-hosted # Ensure this matches the label of your self-hosted runner
     steps:
-      - name: Get latest release and Download Source Code Archive
+      - name: Download Source Code Archive
         run: |
-          URL=$(curl -sH "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/DemiFinance/DemiApi/releases/latest" | \
-          jq -r ".tarball_url")
-          echo "Download URL: $URL" # This will print the URL to the log
-          curl -sL -o source-code.tar.gz "$URL"
-
+          curl -sL -o source-code.tar.gz $(curl -sH "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/DemiFinance/DemiApi/releases/latest" | jq -r ".tarball_url")
 
       - name: Download Source Code Archive
         run: curl -sL -o source-code.tar.gz $(cat $GITHUB_ENV)
