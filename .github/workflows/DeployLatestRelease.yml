@@ -13,6 +13,9 @@ jobs:
     runs-on: self-hosted # Ensure this targets your self-hosted runner with Docker installed
 
     steps:
+      - name: Ensure runner user has proper permissions
+        run: sudo chown -R $(whoami):$(whoami) . && sudo chmod -R 755 .
+        
       - name: Checkout code
         uses: actions/checkout@v4
 
