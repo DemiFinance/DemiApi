@@ -22,7 +22,7 @@ jobs:
         run: tar -xzvf source-code.tar.gz -C .
 
       - name: Extract Nested build.tar.gz
-        run: tar -xzvf DemiApi-*-build.tar.gz -C .
+        run: tar -xzvf DemiFinance-*.tar.gz -C .
 
       - name: Install dependencies
         run: npm ci
