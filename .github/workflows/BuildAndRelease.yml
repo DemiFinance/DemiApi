@@ -46,6 +46,7 @@ jobs:
           docker build . -t ghcr.io/$REPO_NAME:$VERSION \
                          -t ghcr.io/$REPO_NAME:$COMMIT_SHA \
                          -t ghcr.io/$REPO_NAME:latest
+          docker save ghcr.io/$REPO_NAME:$VERSION -o ./demidocker.tar
 
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -79,6 +80,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./path-to-your-image.tar # Replace with the path to your Docker image tarball
-          asset_name: image.tar
+          asset_path: ./demidocker.tar # Replace with the path to your Docker image tarball
+          asset_name: demidocker.tar
           asset_content_type: application/octet-stream
