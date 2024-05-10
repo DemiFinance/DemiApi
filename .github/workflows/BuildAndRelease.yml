@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Docker Image
-        run: npm run docker:build
-
       - name: Configure git user
         run: |
           git config --global user.email "GHActions@demifinance.com"
@@ -40,12 +37,14 @@ jobs:
 
       - name: Build Docker image
         run: |
-          VERSION=$(git describe --tags --always)
-          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^a-zA-Z0-9]/-/g')
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          docker build . -t ${{ github.repository }}:$VERSION \
-                         -t ${{ github.repository }}:$COMMIT_SHA \
-                         -t ${{ github.repository }}:latest
+          VERSION=$(git describe --tags --always | tr '[:upper:]' '[:lower:]')
+          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+          COMMIT_SHA=$(git rev-parse --short HEAD | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          docker build . -t $REPO_NAME:$VERSION \
+                         -t $REPO_NAME:$COMMIT_SHA \
+                         -t $REPO_NAME:latest
+
                          
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
