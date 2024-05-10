@@ -25,15 +25,15 @@ jobs:
 
       - name: Load Docker Image
         run: |
-          docker load -i demidocker.tar
+         sudo docker load -i demidocker.tar
 
       - name: Stop Existing Container
         run: |
-          docker stop my-container || true
-          docker rm my-container || true
+          sudo docker stop demidocker || true
+          docker rm demidocker || true
 
       - name: Run Docker Container
         run: |
-          docker run -d --name my-container -p 8080:8080 your_image_name # Replace `your_image_name` and ports as needed
+         sudo docker run -d --name demidocker -p 8080:8080 demidocker # Replace `your_image_name` and ports as needed
 
 
