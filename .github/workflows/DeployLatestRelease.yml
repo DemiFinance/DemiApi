@@ -8,29 +8,42 @@ on:
     branches:
       - main
 
-
 jobs:
   deploy:
-    runs-on: self-hosted # Ensure this matches the label of your self-hosted runner
+    runs-on: self-hosted # Ensure this targets your self-hosted runner with Docker installed
+
     steps:
-      - name: Download Source Code Archive
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install wget (if needed)
         run: |
-          curl -sL -o source-code.tar.gz $(curl -sH "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/DemiFinance/DemiApi/releases/latest" | jq -r ".tarball_url")
+          if ! command -v wget &> /dev/null
+          then
+            sudo apt-get update
+            sudo apt-get install -y wget
+          else
+            echo "wget is already installed."
+          fi
 
-      - name: Create extraction directory
-        run: mkdir -p extractedRelease
+      - name: Download Docker Image from Release Asset
+        run: |
+          ASSET_URL=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | \
+            grep "browser_download_url.*demidocker.tar" | \
+            cut -d '"' -f 4)
+          wget -O demidocker.tar "${ASSET_URL}" --header 'Authorization: token ${{ secrets.GITHUB_TOKEN }}'
 
-      - name: Extract the Source Code Archive
-        run: tar -xzvf source-code.tar.gz -C extractedRelease
+      - name: Load Docker Image
+        run: |
+          docker load -i demidocker.tar
 
-      - name: Extract Nested build.tar.gz
-        run: tar -xzvf extractedRelease/build.tar.gz -C .
+      - name: Stop Existing Container
+        run: |
+          docker stop my-container || true
+          docker rm my-container || true
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Run Docker Container
+        run: |
+          docker run -d --name my-container -p 8080:8080 your_image_name # Replace `your_image_name` and ports as needed
 
-      - name: Start or Reload application using PM2
-        run: pm2 reload all || pm2 start doppler-run.sh --name demi-api
-        env:
-          NODE_ENV: production
+
