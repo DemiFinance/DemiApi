@@ -179,34 +179,10 @@ async function createAccountInMethod(
 	return account;
 }
 
-/**
- * Creates a verification object for the specified account ID, account object, and transactions object.
- *
- * @param {string} accountId - The ID of the account.
- * @param {any} accountObject - The account object containing account information.
- * @param {any} transactionsObject - The transactions object containing transactions data.
- * @returns {Promise<any>} The created verification data.
- */
-async function createAccountVerification(
-	accountId: string,
-	accountObject: any,
-	transactionsObject: any
-) {
-	const verification = await method.accounts(accountId).verification.create({
-		type: "mx",
-		mx: {
-			accounts: accountObject,
-			transactions: transactionsObject,
-		},
-	});
-	return verification;
-}
-
 const ACCOUNT_TYPES = {
 	CHECKING: "CHECKING",
 	SAVINGS: "SAVINGS",
 };
-
 /**
  * Creates an account based on the specified event data, and performs additional operations such as
  * fetching account info, fetching transactions, creating an account in the method service, and creating
