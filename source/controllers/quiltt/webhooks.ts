@@ -6,7 +6,7 @@ import {
 	QuilttWebhookObject,
 } from "../../models/quilttmodels";
 import {
-	addUUIDToMetadata,
+import {axiosGqlClient} from "../../utilities/graphqlClient";
 	fetchAccountInfo,
 	getAccountNumbers,
 } from "../quiltt";
@@ -25,7 +25,13 @@ import {MxTransaction} from "../../models/mx/mxtransaction";
 import {generateTokenByQuilttId} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
-import {PlaidTransaction} from "../../models/quiltt/plaid";
+import {
+	AccountDataGQLResponse,
+	TransactionDataGQLResponse,
+	extractTransactions,
+	extractBalances,
+	AccountTypeGQLResponse,
+} from "../../models/quiltt/plaid";
 import {
 	Auth0_Search_User_Error,
 	Not_ACH_Account,
@@ -37,6 +43,11 @@ import {DemiAchAccount} from "../../models/demi/achAccount";
 
 import * as db from "../../database/index";
 import * as dbHelpers from "../../database/helpers";
+import {
+	GetAccountType,
+	PlaidAccountBalancesForMethodVerification,
+	PlaidAccountTransactionsForMethodVerification,
+} from "../../utilities/graphqlSchema";
 
 const method = new Method({
 	apiKey: process.env.METHOD_API_KEY || "",
@@ -302,9 +313,18 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 			return;
 		}
 		const sessionToken = await generateTokenByQuilttId(quiltId);
+		// const accountType = getNormalizedAccountType(
+		// 	await getAccountType(sessionToken, accountId)
+		// );
+
+		const RawAccountType = await axiosGqlClient<AccountTypeGQLResponse>(
+			sessionToken,
+			GetAccountType,
+			{accountId}
+		);
 
 		const accountType = getNormalizedAccountType(
-			await getAccountType(sessionToken, account.id)
+			RawAccountType.data.account.type
 		);
 
 		if (accountType !== "checking" && accountType !== "savings") {
