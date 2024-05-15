@@ -96,6 +96,7 @@ const sendPayment = async (request: Request, response: Response) => {
 	}
 };
 
+//TODO: Update func to include payments due on the current date too
 const getUpcomingByHolder = async (request: Request, response: Response) => {
 	const span = tracer.startSpan("getUpcomingByHolder");
 	try {

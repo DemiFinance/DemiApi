@@ -10,7 +10,7 @@ export async function createPlaidVerification(
 	const verification = await method.accounts(accountId).verification.create({
 		type: "plaid",
 		plaid: {
-			balances: accountBalances,
+			balances: {accountBalances},
 			transactions: accountTransactions,
 		},
 	});

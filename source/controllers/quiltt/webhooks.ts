@@ -5,23 +5,9 @@ import {
 	QuilttEvent,
 	QuilttWebhookObject,
 } from "../../models/quilttmodels";
-import {
+import {addUUIDToMetadata, getAccountNumbers} from "../quiltt";
 import {axiosGqlClient} from "../../utilities/graphqlClient";
-	fetchAccountInfo,
-	getAccountNumbers,
-} from "../quiltt";
-import {
-	AccountDetailsByAccountId_Plaid,
-	MxholderFromAccountId,
-	TransactionsByAccountId_Plaid,
-	getAccountType,
-} from "../../utilities/graphqlClient";
-import {
-	getAuth0IdByQuilttId,
-	getEntityIdByQuilttAccount,
-	getEntityIdByUserId,
-} from "../auth0functions";
-import {MxTransaction} from "../../models/mx/mxtransaction";
+import {getAuth0IdByQuilttId, getEntityIdByUserId} from "../auth0functions";
 import {generateTokenByQuilttId} from "../../utilities/quilttUtil";
 import tracer from "../../wrappers/datadogTracer";
 import logger from "../../wrappers/winstonLogging";
@@ -55,90 +41,6 @@ const method = new Method({
 });
 
 /**
- * Fetches transactions from two different GraphQL queries.
- * Tries both queries even if one fails, concatenating results from both.
- *
- * @param {string} sessionToken - The session token for authentication.
- * @param {string} accountId - The account ID for which transactions are fetched.
- * @returns {Promise<Array>} An array of transaction objects.
- */
-export async function fetchTransactions(
-	sessionToken: string,
-	accountId: string
-) {
-	const span = tracer.startSpan("fetchTransactions");
-	let transactions: MxTransaction[] | PlaidTransaction[] = [];
-
-	//TODO: some selection logic here... were only running plaid atm
-
-	// // Check if its an MX Account
-	// try {
-	// 	const mxResponse = await client.query({
-	// 		query: MxTransactionsByAccountId,
-	// 		variables: {accountId},
-	// 	});
-
-	// 	transactions = parseTransactions(mxResponse.data) as MxTransaction[];
-	// } catch (error) {
-	// 	logger.log("error", `Error in MXTransactions query: ${error}`);
-	// }
-
-	// Or is it Plaid?
-	try {
-		transactions = await TransactionsByAccountId_Plaid(accountId, sessionToken);
-	} catch (error) {
-		logger.log("error", `Error in second query: ${error}`);
-	}
-
-	// Finalizing the span and logging the result
-	if (transactions.length === 0) {
-		logger.log("warn", "No transactions fetched from either query.");
-		span.setTag("error", true);
-	} else {
-		logger.log(
-			"info",
-			`${transactions.length} transactions fetched successfully.`
-		);
-	}
-	span.finish();
-
-	return transactions;
-}
-
-/**
- * Fetches holder information for the specified account ID, and retrieves the entity ID associated with the Quiltt account ID.
- * @param {string} quilttUserId - The ID of the Quiltt user.
- * @param {string} accountId - The ID of the account to fetch information for.
- * @returns {Promise<string>} The entity ID associated with the Quiltt account ID.
- */
-export async function fetchHolderInfo(
-	quilttUserId: string,
-	accountId: string
-): Promise<string> {
-	const span = tracer.startSpan("fetch holder info");
-	try {
-		const accountResponse = await MxholderFromAccountId(
-			quilttUserId,
-			accountId
-		);
-		logger.log("info", "Account Response:" + accountResponse);
-		const quilttUuid = accountResponse; // Assuming accountResponse.data is the Quiltt account ID
-		const entityId = await getEntityIdByQuilttAccount(quilttUuid);
-
-		if (entityId === undefined) {
-			throw new Error("Entity ID is undefined");
-		}
-		span.finish();
-		return entityId;
-	} catch (error) {
-		logger.log("error", "Error fetching holder info:" + error);
-		span.setTag("error", true); // Mark the span as errored
-		span.finish();
-		throw error; // Re-throw the error to be handled by the calling function
-	}
-}
-
-/**
  * Normalizes the account type to lowercase and ensures it's one of the allowed types.
  *
  * @param {string} accountType - The type of the account (e.g., "CHECKING" or "SAVINGS").
@@ -151,6 +53,10 @@ export function normalizeAccountType(accountType: string): TAccountSubTypes {
 	}
 	throw new Error(`Invalid account type: ${accountType}`);
 }
+const ACCOUNT_TYPES = {
+	CHECKING: "CHECKING",
+	SAVINGS: "SAVINGS",
+};
 
 /**
  * Creates an account in the method service.
@@ -190,68 +96,6 @@ async function createAccountInMethod(
 	return account;
 }
 
-const ACCOUNT_TYPES = {
-	CHECKING: "CHECKING",
-	SAVINGS: "SAVINGS",
-};
-/**
- * Creates an account based on the specified event data, and performs additional operations such as
- * fetching account info, fetching transactions, creating an account in the method service, and creating
- * an account verification object.
- *
- * @param {QuilttEvent} event - The event data containing the account ID and other relevant information.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function createAccount(event: QuilttEvent) {
-	const span = tracer.startSpan("create.account");
-	const {id: accountId} = event.record;
-	try {
-		const fetchedAccount = await fetchAccountInfo(accountId);
-		const accountType = getNormalizedAccountType(fetchedAccount.type);
-		const accountInfo = fetchedAccount.body;
-		const quilttUserId = fetchedAccount.profileId;
-		const sessionToken = await generateTokenByQuilttId(
-			fetchedAccount.profileId
-		);
-
-		//Setup retry... We basically just need to wait for quiltt to finish syncing
-		const maxRetries = 5;
-		const initialDelay = 60000; // 1min
-		const accountData = await retryAsync(
-			() => getAccountNumbers(accountId),
-			maxRetries,
-			initialDelay,
-			`crateAccount_getAccountNumbers(${accountId})`
-		);
-
-		const transactionsObject = await fetchTransactions(sessionToken, accountId);
-
-		logger.log("info", `Account Data ${JSON.stringify(accountData)}`);
-
-		const holderInfo = await fetchHolderInfo(quilttUserId, accountId);
-
-		const account = await createAccountInMethod(
-			accountData.accountNumberStr,
-			accountData.routingNumberStr,
-			accountType,
-			holderInfo,
-			accountId
-		);
-		logger.log("info", "Account Output:" + JSON.stringify(account));
-
-		createAccountVerification(account.id, accountInfo, transactionsObject);
-		span.finish();
-	} catch (error) {
-		if (error instanceof Not_ACH_Account) {
-			// Handle the custom error
-			logger.log("warn", "Not a checking account we good");
-		} else {
-			logger.log("error", "Error creating new account:" + error);
-		}
-	}
-	logger.log("info", `Created connection with id: ${accountId}`);
-}
-
 function getNormalizedAccountType(type: string): string {
 	if (type === ACCOUNT_TYPES.CHECKING || type === ACCOUNT_TYPES.SAVINGS) {
 		return type.toLowerCase();
@@ -270,6 +114,7 @@ async function insertAchToDatabase(account: DemiAchAccount) {
 	const span = tracer.startSpan("insertAchToDatabase");
 	try {
 		const sqlData = dbHelpers.insertAchAccount(account);
+		logger.log("debug", `Inserting ACH Account: ${JSON.stringify(account)}`);
 		const result = await db.query(sqlData);
 		span.setTag("db.query.result", result);
 		return result;
@@ -281,38 +126,31 @@ async function insertAchToDatabase(account: DemiAchAccount) {
 	}
 }
 
-async function quilttVerifiedAccount(event: QuilttEvent) {
+async function accountVerified(event: QuilttEvent) {
 	const span = tracer.startSpan("account.verified");
 	try {
 		const account = event.record;
 		const accountId = account.id;
-		const profile = event.profile as quilttProfile;
-		const profileMetadata = profile.metadata;
+		const quilttProfile = event.profile as quilttProfile;
+		const quiltUserId = quilttProfile.id;
 
-		let entityId: string;
-
-		if (accountId == "" || !accountId) {
-			logger.log("error", "No account id found in event");
-			return;
-		}
-
-		logger.log(
-			"info",
-			`Account ID: ${accountId} but from reccord ${event.record.id}`
-		);
+		const profileMetadata = quilttProfile.metadata;
+		let methodEntityId: string;
 
 		if (!profileMetadata) {
 			return;
 		} else {
-			entityId = (await getEntityIdByUserId(profileMetadata.userId)) ?? "";
+			methodEntityId =
+				(await getEntityIdByUserId(profileMetadata.userId)) ?? "";
 		}
 
-		const quiltId = profile.id;
-		if (!quiltId) {
-			logger.log("error", "No profile id found in event");
+		if (accountId === "" || !accountId) {
+			logger.log("error", "No account id found in event");
 			return;
 		}
-		const sessionToken = await generateTokenByQuilttId(quiltId);
+
+		const sessionToken = await generateTokenByQuilttId(quiltUserId);
+
 		// const accountType = getNormalizedAccountType(
 		// 	await getAccountType(sessionToken, accountId)
 		// );
@@ -330,87 +168,86 @@ async function quilttVerifiedAccount(event: QuilttEvent) {
 		if (accountType !== "checking" && accountType !== "savings") {
 			logger.log(
 				"error",
-				"Probably not a checking or savings account." +
-					accountType +
-					"account id:" +
-					event.record.id
+				`Probably not a checking or savings account: ${accountType}. Account ID: ${accountId}`
 			);
 			return;
 		}
-
-		//get account numbers
 		const {accountNumberStr, routingNumberStr} =
 			await getAccountNumbers(accountId);
 
-		const methodAccount = await createAccountInMethod(
+		const newAcctInMethod = await createAccountInMethod(
 			accountNumberStr,
 			routingNumberStr,
 			accountType,
-			entityId,
+			methodEntityId,
 			accountId
 		);
 
-		const transactionsObject = await TransactionsByAccountId_Plaid(
-			profile.id,
-			accountId
-		);
-		const accountObject = await AccountDetailsByAccountId_Plaid(
-			profile.id,
-			accountId
-		);
-		//this resturns a formatted object of just the balances currently... at the root the graphql needs to be modified to return more of teh accounts information like name and such
-		//this also means that the models that use this data need to be updated to reflect the new data structure...aka kill me.
+		const accountBalancesObjectbyaxios =
+			await axiosGqlClient<AccountDataGQLResponse>(
+				sessionToken,
+				PlaidAccountBalancesForMethodVerification,
+				{accountId}
+			);
 
-		//push acct to db bruh
+		const balances = extractBalances(accountBalancesObjectbyaxios.data);
+
+		const accountTransactionsObjectbyaxios =
+			await axiosGqlClient<TransactionDataGQLResponse>(
+				sessionToken,
+				PlaidAccountTransactionsForMethodVerification,
+				{accountId}
+			);
+
+		const transactions = extractTransactions(
+			accountTransactionsObjectbyaxios.data
+		);
+
+		const verification = await createPlaidVerification(
+			newAcctInMethod.id,
+			balances,
+			transactions
+		);
 
 		const newAch: DemiAchAccount = {
-			method_accountID: methodAccount.id,
+			method_accountID: newAcctInMethod.id,
 			quiltt_accountId: accountId,
-			quiltt_userId: profile.id,
-			method_entityId: entityId,
+			quiltt_userId: quiltUserId,
+			method_entityId: methodEntityId,
 			account_type: accountType,
-			account_name: "Bank Account", //TODO: get this from the account object
-			balance_available: accountObject.available,
-			balance_current: accountObject.current,
-			iso_currency_code: accountObject.isoCurrencyCode,
+			account_name: accountBalancesObjectbyaxios.data.account.name,
+			balance_available: balances ? balances.available ?? 0 : 0,
+			balance_current: balances ? balances.current ?? 0 : 0,
+			iso_currency_code: balances ? balances.isoCurrencyCode ?? "" : "",
 			created_at: new Date(),
 		};
 
-		insertAchToDatabase(newAch);
+		logger.log("info", `New ACH Account: ${JSON.stringify(newAch)}`);
 
-		logger.log("info", "Account Output:" + JSON.stringify(methodAccount));
+		const dbresult = await insertAchToDatabase(newAch);
 
-		const verification = await createPlaidVerification(
-			methodAccount.id,
-			accountObject,
-			transactionsObject
-		);
+		logger.log("info", `database result: ${JSON.stringify(dbresult)}`);
+
 		if (verification.status === "verified") {
-			//send notification to user
 			sendNotificationByExternalIdNow(
-				entityId,
+				methodEntityId,
 				"Bank Account Verified",
 				"You can now make payments!"
 			);
 			logger.log(
 				"info",
-				"Account Verification Success:" + JSON.stringify(verification)
+				`Account Verification Success: ${JSON.stringify(verification)}`
 			);
 		} else {
 			logger.log(
 				"error",
-				"Account Verification Failed:" + JSON.stringify(verification)
+				`Account Verification Failed: ${JSON.stringify(verification)}`
 			);
 		}
-
-		span.finish();
 	} catch (error) {
-		if (error instanceof Not_ACH_Account) {
-			// Handle the custom error
-			logger.log("warn", "Not a checking account we good");
-		} else {
-			logger.log("error", "Error creating new account: " + error);
-		}
+		logger.log("error", "Error in accountVerified: " + error);
+	} finally {
+		span.finish();
 	}
 }
 
@@ -572,7 +409,7 @@ export const quilttOperationHandlers: {
 	"connection.disconnected": unimplementedFunc,
 	"account.created": unimplementedFunc,
 	"account.updated": unimplementedFunc,
-	"account.verified": quilttVerifiedAccount,
+	"account.verified": accountVerified,
 	"account.reconnected": unimplementedFunc,
 	"account.deleted": unimplementedFunc,
 	"balance.created": balanceCreated,
