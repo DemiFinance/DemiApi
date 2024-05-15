@@ -285,16 +285,18 @@ export function updateHasSentNotificationStatus(
 export function insertAchAccount(account: DemiAchAccount): QueryParams {
 	return {
 		desc: `Insert ACH Account, Method Id: ${account.method_accountID}, Quiltt Account Id: ${account.quiltt_accountId}, Method Entity Id: ${account.method_entityId}`,
-		text: `INSERT INTO ACHAccount (
-            method_account_id, 
-            quiltt_account_id, 
-            quiltt_user_id, 
-            method_entity_id, 
-            account_type, account_name, 
+		text: `INSERT INTO achaccounts (
+            method_accountid, 
+            quiltt_accountid, 
+            quiltt_userid, 
+            method_entityid, 
+            account_type, 
+            account_name, 
             balance_available, 
             balance_current, 
             iso_currency_code, 
-            created_at);`,
+            created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
 		values: [
 			account.method_accountID,
 			account.quiltt_accountId,
