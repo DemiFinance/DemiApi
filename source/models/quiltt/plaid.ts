@@ -2,10 +2,50 @@ export type PlaidTransactions = {
 	transactions: PlaidTransaction[];
 };
 
+//start axios stuff
+
+export interface AccountDataGQLResponse {
+	data: {
+		account: {
+			name: string;
+			mask: string;
+			remoteData: {
+				plaid: {
+					account: {
+						response: {
+							balances: Balances;
+						};
+					};
+				};
+			};
+		};
+	};
+}
+
+export interface TransactionDataGQLResponse {
+	data: {
+		account: {
+			transactions: {
+				nodes: Node[];
+			};
+		};
+	};
+}
+
+export interface AccountTypeGQLResponse {
+	data: {
+		account: {
+			type: string;
+		};
+	};
+}
+
+//end axios stuff
+
 // Define interfaces
 export interface Balances {
-	available: number;
-	current: number;
+	available: number | null;
+	current: number | null;
 	isoCurrencyCode: string;
 	lastUpdatedDatetime: string | null;
 	limit: number | null;
@@ -60,16 +100,43 @@ interface TransactionsRootObject {
 	};
 }
 
-// Function to extract transactions
 export function extractTransactions(
 	root: TransactionsRootObject
 ): PlaidTransaction[] {
 	const transactions: PlaidTransaction[] = [];
-	root.account.transactions.nodes.forEach((node) => {
-		transactions.push(node.remoteData.plaid.transaction.response);
-	});
+	// Check if the account and transactions exist
+	if (
+		root.account &&
+		root.account.transactions &&
+		Array.isArray(root.account.transactions.nodes)
+	) {
+		root.account.transactions.nodes.forEach((node) => {
+			// Ensure that all nested properties exist before pushing
+			if (
+				node.remoteData &&
+				node.remoteData.plaid &&
+				node.remoteData.plaid.transaction &&
+				node.remoteData.plaid.transaction.response
+			) {
+				transactions.push(node.remoteData.plaid.transaction.response);
+			} else {
+				console.log("Skipped a node due to missing data");
+			}
+		});
+	}
 	return transactions;
 }
+
+// // Function to extract transactions
+// export function extractTransactions(
+// 	root: TransactionsRootObject
+// ): PlaidTransaction[] {
+// 	const transactions: PlaidTransaction[] = [];
+// 	root.account.transactions.nodes.forEach((node) => {
+// 		transactions.push(node.remoteData.plaid.transaction.response);
+// 	});
+// 	return transactions;
+// }
 
 export type PlaidTransaction = {
 	accountId: string;
