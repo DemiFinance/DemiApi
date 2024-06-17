@@ -1,5 +1,6 @@
 import express from "express";
 import paymentController from "../controllers/method/payment";
+import autopayController from "../controllers/autopay";
 import jwtCheck from "../middleware/auth0";
 
 const router = express.Router();
@@ -20,5 +21,8 @@ router.get(
 	jwtCheck,
 	paymentController.getUpcomingByHolder
 );
+
+router.post("/autopay", jwtCheck, autopayController.newAutoPayment);
+//router.get("/autopay/:id", jwtCheck, paymentController.getAutoPay);
 
 export = router;
