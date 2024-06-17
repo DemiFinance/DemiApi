@@ -356,14 +356,11 @@ async function retryAsync<T>(
 }
 
 async function balanceCreated(event: QuilttEvent) {
-
 	const span = tracer.startSpan("balance.created");
 	try {
-		
 		const balance = event.record as Balance;
 		const balanceId = balance.id;
 		const accountId = balance.accountId;
-
 
 		logger.log(
 			"info",
@@ -382,13 +379,10 @@ async function balanceCreated(event: QuilttEvent) {
 		};
 
 		await db.query(dbHelpers.updateAchBalance(updatedBalanceObject));
-
 	} catch (error) {
 		logger.log("error", "Error in balanceCreated:" + error);
-	}
-	finally {
+	} finally {
 		span.finish();
-	
 	}
 }
 
