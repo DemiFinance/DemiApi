@@ -1,4 +1,3 @@
-import { get } from "http";
 import logger from "../wrappers/winstonLogging";
 import {Request, Response} from "express";
 
@@ -42,31 +41,31 @@ const newAutoPayment = async (request: Request, response: Response) => {
 	}
 };
 
-async function CreateAutoPayment() {
-	// code to create a new auto payment
-	console.log("Creating a new auto payment");
-}
+// async function CreateAutoPayment() {
+// 	// code to create a new auto payment
+// 	console.log("Creating a new auto payment");
+// }
 
-async function getAutoPayments() {
-	// code to get all auto payments
-	console.log("Getting all auto payments");
-}
+// async function getAutoPayments() {
+// 	// code to get all auto payments
+// 	console.log("Getting all auto payments");
+// }
 
-async function GetAutoPayment(id: string) {
-	// code to get a specific auto payment
-	console.log("Getting auto payment with id: " + id);
+// async function GetAutoPayment(id: string) {
+// 	// code to get a specific auto payment
+// 	console.log("Getting auto payment with id: " + id);
 
-}
+// }
 
-async function UpdateAutoPayment(id: string) {
-	// code to update a specific auto payment
-	console.log("Updating auto payment with id: " + id);
-}
+// async function UpdateAutoPayment(id: string) {
+// 	// code to update a specific auto payment
+// 	console.log("Updating auto payment with id: " + id);
+// }
 
-async function DeleteAutoPayment(id: string) {
-	// code to delete a specific auto payment
-	console.log("Deleting auto payment with id: " + id);
-}
+// async function DeleteAutoPayment(id: string) {
+// 	// code to delete a specific auto payment
+// 	console.log("Deleting auto payment with id: " + id);
+// }
 
 export default {
 	ScheduleNewAutoPayment,
