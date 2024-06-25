@@ -23,6 +23,7 @@ router.get(
 );
 
 router.post("/autopay", jwtCheck, autopayController.newAutoPayment);
+
 //router.get("/autopay/:id", jwtCheck, paymentController.getAutoPay);
 
 export = router;
