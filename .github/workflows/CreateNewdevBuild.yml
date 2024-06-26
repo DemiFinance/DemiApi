@@ -1,4 +1,4 @@
-name: Build and Release Workflow
+name: Create New Dev Build Workflow
 
 on:
   workflow_run:
@@ -6,7 +6,7 @@ on:
     types:
       - completed
     branches:
-      - main
+      - dev
 
 jobs:
   build-and-release:
