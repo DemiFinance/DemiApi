@@ -1,5 +1,5 @@
 {
-	"name": "demi-api",
+	"name": "demi-monolith-api",
 	"version": "0.10.37",
 	"description": "",
 	"main": "app.js",
