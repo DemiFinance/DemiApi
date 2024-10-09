@@ -214,6 +214,7 @@ const updateMicroDepositVerification = async (
 	}
 };
 
+//todo: add factors to req body
 const getCreditScore = async (request: Request, response: Response) => {
 	try {
 		const creditScore: any = await method.entities.getCreditScore(
